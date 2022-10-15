@@ -36,8 +36,15 @@ The map isnt actually infinite, its impossible to go past the source bounds, so 
 
 * CTakeDamageInfo:GetDamagePosition
 
+* NextBot:GetRangeSquaredTo
+* NextBot:GetRangeTo
+
+* CLuaLocomotionMT:Approach
+* CLuaLocomotionMT:FaceTowards
+
 * Player:ShootPos
 
 * util.TraceLine
 * util.TraceHull
 * util.TraceEntity
+* util.IsInWorld
