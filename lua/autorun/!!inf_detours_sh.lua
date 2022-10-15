@@ -151,8 +151,8 @@ end
 // faster lookup
 local istable = istable
 local IsEntity = IsEntity
-local function modify_trace_data(data, trace_func, extra)
-	local data = table.Copy(data)
+local function modify_trace_data(orig_data, trace_func, extra)
+	local data = table.Copy(orig_data)
 	// #1 localize start and end position of trace
 	local start_pos, start_offset = InfMap.localize_vector(data.start)
 	data.start = start_pos
@@ -208,6 +208,10 @@ end
 
 // no need to detour GetEyeTrace or util.GetPlayerTrace as it uses already detoured functions
 
+// infinite map.. nothing can be inside the world!
+function util.IsInWorld(pos)
+	return false 
+end
 
 
 // when entities are spawned, reset them
@@ -270,3 +274,4 @@ end
 
 hook.Add("PlayerCanPickupWeapon", "infinite_entdetour", can_pickup)
 hook.Add("PlayerCanPickuItem", "infinite_entdetour", can_pickup)
+hook.Add("GravGunPickupAllowed", "infinite_entdetour", can_pickup)

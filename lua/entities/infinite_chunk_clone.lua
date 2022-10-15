@@ -28,7 +28,14 @@ local function unfuck_table(verts)
 end
 
 function ENT:Initialize()
-    if CLIENT then return end
+    if CLIENT then 
+        self:SetSolid(SOLID_VPHYSICS) // init physics object on client
+        self:SetMoveType(MOVETYPE_VPHYSICS)
+        self:PhysicsInit(SOLID_VPHYSICS)
+        self:SetNoDraw(true)
+        return 
+    end
+
     local parent = self.REFERENCE_DATA[1]
     local phys = parent:GetPhysicsObject()
     if !phys:IsValid() then     
@@ -54,7 +61,6 @@ function ENT:Initialize()
     self:SetMoveType(MOVETYPE_VPHYSICS)
     self:EnableCustomCollisions(true)
     self:PhysWake()
-    self:SetNoDraw(true)
     self:SetCollisionGroup(parent:GetCollisionGroup())
     if self:GetPhysicsObject():IsValid() then
         self:GetPhysicsObject():EnableMotion(false)
@@ -64,7 +70,16 @@ function ENT:Initialize()
 end
 
 function ENT:Think()
-    if CLIENT then return end
+    if CLIENT then 
+        local phys = self:GetPhysicsObject()
+        if phys:IsValid() then
+            phys:EnableMotion(false)
+            phys:SetPos(self:GetPos())
+            phys:SetAngles(self:GetAngles())
+        end
+        return 
+    end
+
     local data = self.REFERENCE_DATA
     if !data then 
         SafeRemoveEntity(self)
@@ -74,8 +89,10 @@ function ENT:Think()
         SafeRemoveEntity(self)
         return
     end
+
     self:InfMap_SetPos(data[1]:InfMap_GetPos() + data[3])
     self:SetAngles(data[1]:GetAngles())
+    
     local phys = self:GetPhysicsObject()
     if phys:IsValid() then phys:EnableMotion(false) end
 end

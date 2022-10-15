@@ -48,8 +48,8 @@ hook.Add("RenderScene", "infinite_update_visbounds", function(eyePos, eyeAngles)
 		// when bounding box is outside of world bounds the object isn't rendered even though IT SHOULD BE
 		// just throw the bounding box right infront of the players eyes, whats the worst that could happen?
 		local world_chunk_offset = (ent.CHUNK_OFFSET or Vector()) - lp_chunk_offset
-		if world_chunk_offset == Vector() then return end
-
+		if world_chunk_offset == Vector() then continue end
+		
 		local chunk_offset = world_chunk_offset * InfMap.chunk_size * 2
 		local prop_dir = (chunk_offset + ent:GetPos() - eyePos)
 		if prop_dir:LengthSqr() > 5397 * 5397 then 	// if render bounds is outside normal source bounds it does not render
@@ -113,8 +113,10 @@ hook.Add("PropUpdateChunk", "infinite_clientrecev", function(ent, chunk)
 
 	// if in same chunk, ignore
 	// set render bounds back to the value it was at when first stored, if it doesnt exist set it to the model renderbounds
+	ent.RenderOverride = ent.OldRenderOverride
 	if chunk_offset == Vector() or ent:GetOwner() == LocalPlayer() then 
-		ent.RenderOverride = nil
+		//ent.RenderOverride = ent.OldRenderOverride
+		ent.OldRenderOverride = nil
 		
 		local min, max
 		if ent.RENDER_BOUNDS then min, max = ent.RENDER_BOUNDS[1], ent.RENDER_BOUNDS[2] end
@@ -146,6 +148,7 @@ hook.Add("PropUpdateChunk", "infinite_clientrecev", function(ent, chunk)
 		if mat_str == "" then mat_str = ent:GetMaterials()[1] end
 		if !mat_str then mat_str = "models/wireframe" end
 		local mat = Material(mat_str)
+		ent.OldRenderOverride = ent.OldRenderOverride or ent.RenderOverride
 		ent.RenderOverride = function(self)	// high lod
 			render_ResetModelLighting(1, 1, 1)
 			render_SetMaterial(mat)
@@ -155,9 +158,14 @@ hook.Add("PropUpdateChunk", "infinite_clientrecev", function(ent, chunk)
 		local cam_Start3D = cam.Start3D
 		local cam_End3D = cam.End3D
 		local eyePos = EyePos
+		ent.OldRenderOverride = ent.OldRenderOverride or ent.RenderOverride
 		ent.RenderOverride = function(self)	// low lod
 			cam_Start3D(eyePos() - visual_offset)
+			if !ent.OldRenderOverride then
 				self:DrawModel()
+			else
+				ent.OldRenderOverride()
+			end
 			cam_End3D()
 		end
 		

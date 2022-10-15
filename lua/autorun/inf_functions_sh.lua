@@ -137,8 +137,9 @@ function InfMap.constrained_status(ent)
 
 	ent.CONSTRAINED_DATA = InfMap.get_all_constrained(ent)
 	// first pass, these entities arent valid
-	if InfMap.filter_entities(ent) or !ent:IsSolid() or ent:GetNoDraw() then 
-		ent.CONSTRAINED_MAIN = true
+	if InfMap.filter_entities(ent) or (!ent:IsSolid() and ent:GetNoDraw()) or ent:GetParent():IsValid() then 
+		ent.CONSTRAINED_MAIN = false
+		return ent.CONSTRAINED_MAIN
 	end
 	local ent_index = ent:EntIndex()
 	for _, constrained_ent in ipairs(ent.CONSTRAINED_DATA) do
@@ -147,7 +148,7 @@ function InfMap.constrained_status(ent)
 			return ent.CONSTRAINED_MAIN
 		end
 
-		if constrained_ent:EntIndex() < ent_index and !InfMap.filter_entities(constrained_ent) and constrained_ent:IsSolid() and !constrained_ent:GetNoDraw() then 
+		if constrained_ent:EntIndex() < ent_index and !InfMap.filter_entities(constrained_ent) and (constrained_ent:IsSolid() or !constrained_ent:GetNoDraw()) and !constrained_ent:GetParent():IsValid() then 
 			ent.CONSTRAINED_MAIN = false
 			return ent.CONSTRAINED_MAIN
 		end
