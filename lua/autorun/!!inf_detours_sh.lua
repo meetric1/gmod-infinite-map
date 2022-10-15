@@ -180,7 +180,7 @@ end
 // when entities are spawned, reset them
 hook.Add("PlayerSpawn", "infinite_plyreset", function(ply, trans)
 	timer.Simple(0, function()	// players weapons are invalid for first tick
-		//hook.Run("PropUpdateChunk", ply, Vector())	// not required now that we detoured setpos
+		hook.Run("PropUpdateChunk", ply, Vector())	// still required because weapon entities are changed
 		print("Resetting " .. ply:Nick() .." to chunk 0,0,0")
 		ply:SetPos(Vector(math.random() * 100, math.random() * 100))
 	end)
