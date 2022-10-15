@@ -129,24 +129,32 @@ function NextBotMT:GetRangeTo(to)
 end
 
 /*************** CLuaLocomotion Metatable *****************/
+if SERVER then
+	CLuaLocomotionMT.InfMap_Approach = CLuaLocomotionMT.InfMap_Approach or CLuaLocomotionMT.Approach
+	function CLuaLocomotionMT:Approach(goal, goalweight)
+		local nb = self:GetNextBot()
+		local dir = (goal - nb:GetPos()):GetNormalized()
+		local pos = InfMap.localize_vector(nb:GetPos() + dir)
+		return CLuaLocomotionMT.InfMap_Approach(self, pos, goalweight)
+	end
 
-CLuaLocomotionMT.InfMap_Approach = CLuaLocomotionMT.InfMap_Approach or CLuaLocomotionMT.Approach
-function CLuaLocomotionMT:Approach(goal, goalweight)
-	local nb = self:GetNextBot()
-	local dir = (goal - nb:GetPos()):GetNormalized()
-	local pos = InfMap.localize_vector(nb:GetPos() + dir)
-	return CLuaLocomotionMT.InfMap_Approach(self, pos, goalweight)
-end
-
-CLuaLocomotionMT.InfMap_FaceTowards = CLuaLocomotionMT.InfMap_FaceTowards or CLuaLocomotionMT.FaceTowards
-function CLuaLocomotionMT:FaceTowards(goal)
-	local nb = self:GetNextBot()
-	local dir = (goal - nb:GetPos()):GetNormalized()
-	local pos = InfMap.localize_vector(nb:GetPos() + dir)
-	return CLuaLocomotionMT.InfMap_FaceTowards(self, pos)
+	CLuaLocomotionMT.InfMap_FaceTowards = CLuaLocomotionMT.InfMap_FaceTowards or CLuaLocomotionMT.FaceTowards
+	function CLuaLocomotionMT:FaceTowards(goal)
+		local nb = self:GetNextBot()
+		local dir = (goal - nb:GetPos()):GetNormalized()
+		local pos = InfMap.localize_vector(nb:GetPos() + dir)
+		return CLuaLocomotionMT.InfMap_FaceTowards(self, pos)
+	end
 end
 
 /**************** Other Functions ********************/
+
+// infinite map.. nothing can be inside the world!
+function util.IsInWorld(pos)
+	return false 
+end
+
+
 
 // faster lookup
 local istable = istable
@@ -154,7 +162,9 @@ local IsEntity = IsEntity
 local function modify_trace_data(orig_data, trace_func, extra)
 	local data = table.Copy(orig_data)
 	// #1 localize start and end position of trace
+
 	local start_pos, start_offset = InfMap.localize_vector(data.start)
+
 	data.start = start_pos
 	data.endpos = data.endpos - InfMap.unlocalize_vector(Vector(), start_offset)
 
@@ -207,11 +217,6 @@ function util.TraceEntity(data, ent)
 end
 
 // no need to detour GetEyeTrace or util.GetPlayerTrace as it uses already detoured functions
-
-// infinite map.. nothing can be inside the world!
-function util.IsInWorld(pos)
-	return false 
-end
 
 
 // when entities are spawned, reset them

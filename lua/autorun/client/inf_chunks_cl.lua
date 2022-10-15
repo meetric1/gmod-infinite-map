@@ -33,10 +33,10 @@ local function update_ents(all)
 	end
 end
 
-local update_all = 0
-timer.Create("infinite_chunkmove_update", 0.1, 0, function()
-	update_all = (update_all + 1) % 10
-	update_ents(update_all == 0)
+local update_all = false
+timer.Create("infinite_chunkmove_update", 1, 0, function()
+	update_ents(true)
+	update_all = true
 end)
 hook.Add("RenderScene", "infinite_update_visbounds", function(eyePos, eyeAngles)
 	local chunk_size = Vector(1, 1, 1) * InfMap.chunk_size
@@ -50,8 +50,7 @@ hook.Add("RenderScene", "infinite_update_visbounds", function(eyePos, eyeAngles)
 		local world_chunk_offset = (ent.CHUNK_OFFSET or Vector()) - lp_chunk_offset
 		if world_chunk_offset == Vector() then continue end
 		
-		local chunk_offset = world_chunk_offset * InfMap.chunk_size * 2
-		local prop_dir = (chunk_offset + ent:GetPos() - eyePos)
+		local prop_dir = (InfMap.unlocalize_vector(ent:GetPos(), world_chunk_offset) - eyePos)
 		if prop_dir:LengthSqr() > 5397 * 5397 then 	// if render bounds is outside normal source bounds it does not render
 			prop_dir = prop_dir:GetNormalized() * 5397 // normal source bounds = 2^13
 		end
@@ -62,11 +61,18 @@ hook.Add("RenderScene", "infinite_update_visbounds", function(eyePos, eyeAngles)
 			ent.RENDER_BOUNDS = {min, max}
 		end
 
-		if world_chunk_offset:LengthSqr() > 2.5 and ent:GetClass() != "infinite_chunk_terrain" then
+		if world_chunk_offset:LengthSqr() > 9 and ent:GetClass() != "infinite_chunk_terrain" then
 			ent:SetRenderBoundsWS(eyePos + prop_dir, eyePos + prop_dir)
 		else
-			ent:SetRenderBoundsWS(eyePos + prop_dir + ent.RENDER_BOUNDS[1], eyePos + prop_dir + ent.RENDER_BOUNDS[2])
+			local min, max = ent:GetRotatedAABB(ent.RENDER_BOUNDS[1], ent.RENDER_BOUNDS[2])
+			ent:SetRenderBoundsWS(eyePos + prop_dir + min, eyePos + prop_dir + max)
+			//debugoverlay.Box(eyePos + prop_dir, min, max, 0, Color(255, 255, 255, 0))
 		end
+	end
+
+	if update_all then 
+		update_ents()
+		update_all = false
 	end
 end)
 
@@ -104,7 +110,6 @@ hook.Add("PropUpdateChunk", "infinite_clientrecev", function(ent, chunk)
 
 			hook.Run("PropUpdateChunk", v, (v.CHUNK_OFFSET or Vector()))
 		end
-		timer.Simple(0, function() update_ents(true) end)	// let clients position update
 		return 
 	end
 
@@ -121,7 +126,6 @@ hook.Add("PropUpdateChunk", "infinite_clientrecev", function(ent, chunk)
 		local min, max
 		if ent.RENDER_BOUNDS then min, max = ent.RENDER_BOUNDS[1], ent.RENDER_BOUNDS[2] end
 		if min and max then ent:SetRenderBounds(min, max) end
-		ent.RENDER_BOUNDS = nil
 		if ent.ORIGINAL_PHYSGUN_COLOR then
 			ent:SetWeaponColor(ent.ORIGINAL_PHYSGUN_COLOR)
 			ent.ORIGINAL_PHYSGUN_COLOR = nil
@@ -130,6 +134,9 @@ hook.Add("PropUpdateChunk", "infinite_clientrecev", function(ent, chunk)
 	end
 	
 	print("Detouring rendering of entity:", ent)
+
+	// put ent in table to update renderbounds
+	table.insert(all_ents, ent)
 
 	// physgun glow and beam can be seen from any chunk
 	// turn physgun off by setting its color to negative infinity if its not in our chunk

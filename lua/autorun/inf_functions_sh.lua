@@ -54,8 +54,6 @@ function InfMap.should_collide(ent1, ent2)
 		return math.abs(ent1.CHUNK_OFFSET[1]) <= 25 and math.abs(ent1.CHUNK_OFFSET[2]) <= 25 and ent1.CHUNK_OFFSET[3] == 0
 	end
 
-	if ent1_class == "gmod_safespace_interior" or ent2_class == "gmod_safespace_interior" then return true end
-
 	return false
 end
 

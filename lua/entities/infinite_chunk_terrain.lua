@@ -78,7 +78,6 @@ else
         hook.Run("PropUpdateChunk", e, Vector(0, 0, 0))
         physenv.SetPerformanceSettings({MaxVelocity = 2^31})
     end)
-    
 end
 
 function ENT:CanProperty()
