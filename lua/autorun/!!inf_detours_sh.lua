@@ -11,6 +11,8 @@ local EntityMT = FindMetaTable("Entity")
 local VehicleMT = FindMetaTable("Vehicle")
 local PhysObjMT = FindMetaTable("PhysObj")
 local PlayerMT = FindMetaTable("Player")
+local NextBotMT = FindMetaTable("NextBot")
+local CLuaLocomotionMT = FindMetaTable("CLuaLocomotion")
 local CTakeDamageInfoMT = FindMetaTable("CTakeDamageInfo")
 
 /*********** Entity Metatable *************/
@@ -111,6 +113,37 @@ end
 PlayerMT.InfMap_GetShootPos = PlayerMT.InfMap_GetShootPos or PlayerMT.GetShootPos
 function PlayerMT:GetShootPos()
 	return InfMap.unlocalize_vector(self:InfMap_GetShootPos(), self.CHUNK_OFFSET)
+end
+
+/**************** NextBot Metatable *****************/
+
+NextBotMT.InfMap_GetRangeSquaredTo = NextBotMT.InfMap_GetRangeSquaredTo or NextBotMT.GetRangeSquaredTo
+function NextBotMT:GetRangeSquaredTo(to)
+	if isentity(to) then to = to:GetPos() end
+	return self:GetPos():DistToSqr(to)
+end
+
+NextBotMT.InfMap_GetRangeTo = NextBotMT.InfMap_GetRangeTo or NextBotMT.GetRangeTo
+function NextBotMT:GetRangeTo(to)
+	return math.sqrt(self:GetRangeSquaredTo(to))
+end
+
+/*************** CLuaLocomotion Metatable *****************/
+
+CLuaLocomotionMT.InfMap_Approach = CLuaLocomotionMT.InfMap_Approach or CLuaLocomotionMT.Approach
+function CLuaLocomotionMT:Approach(goal, goalweight)
+	local nb = self:GetNextBot()
+	local dir = (goal - nb:GetPos()):GetNormalized()
+	local pos = InfMap.localize_vector(nb:GetPos() + dir)
+	return CLuaLocomotionMT.InfMap_Approach(self, pos, goalweight)
+end
+
+CLuaLocomotionMT.InfMap_FaceTowards = CLuaLocomotionMT.InfMap_FaceTowards or CLuaLocomotionMT.FaceTowards
+function CLuaLocomotionMT:FaceTowards(goal)
+	local nb = self:GetNextBot()
+	local dir = (goal - nb:GetPos()):GetNormalized()
+	local pos = InfMap.localize_vector(nb:GetPos() + dir)
+	return CLuaLocomotionMT.InfMap_FaceTowards(self, pos)
 end
 
 /**************** Other Functions ********************/
