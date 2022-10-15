@@ -82,11 +82,11 @@ hook.Add("PostDrawOpaqueRenderables", "infinite_player_render", function()
 	// debug lines
 	local cs = Vector(1, 1, 1) * InfMap.chunk_size
 
-	//debugoverlay.Sphere(Vector(), 100, 0, Color(255, 0, 0, 0))
-	//debugoverlay.Box(Vector(), -cs, cs, 0, Color(0, 0, 0, 0))
+	debugoverlay.Sphere(Vector(), 100, 0, Color(255, 0, 0, 0))
+	debugoverlay.Box(Vector(), -cs, cs, 0, Color(0, 0, 0, 0))
 	
 	local co =  (LocalPlayer().CHUNK_OFFSET or Vector()) * InfMap.chunk_size * 2
-	//debugoverlay.Box(Vector(), -cs - co, cs - co, 0, Color(0, 0, 0, 0))
+	debugoverlay.Box(Vector(), -cs - co, cs - co, 0, Color(0, 0, 0, 0))
 	debugoverlay.Box(Vector(), -cs * 3 - co, cs * 3 - co, 0, Color(0, 0, 255, 0))
 	
 end)
@@ -144,6 +144,7 @@ hook.Add("PropUpdateChunk", "infinite_clientrecev", function(ent, chunk)
 
 		local mat_str = ent:GetMaterial()
 		if mat_str == "" then mat_str = ent:GetMaterials()[1] end
+		if !mat_str then mat_str = "models/wireframe" end
 		local mat = Material(mat_str)
 		ent.RenderOverride = function(self)	// high lod
 			render_ResetModelLighting(1, 1, 1)

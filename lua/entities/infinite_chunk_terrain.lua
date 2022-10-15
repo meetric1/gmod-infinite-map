@@ -76,18 +76,18 @@ else
         e:InfMap_SetPos(Vector(0, 0, -15))
         e:Spawn()
         hook.Run("PropUpdateChunk", e, Vector(0, 0, 0))
-        
+        physenv.SetPerformanceSettings({MaxVelocity = 2^31})
     end)
-    physenv.SetPerformanceSettings({MaxVelocity = 6000})
+    
 end
 
-//function ENT:CanProperty()
-	//return false
-//end
+function ENT:CanProperty()
+	return false
+end
 
-//function ENT:CanTool()
-    //return true
-//end
+function ENT:CanTool()
+    return true
+end
 
 hook.Add("PhysgunPickup", "infinite_chunkterrain_pickup", function(ply, ent)
     if ent:IsValid() and ent:GetClass() == "infinite_chunk_terrain" then 
