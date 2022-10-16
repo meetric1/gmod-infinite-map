@@ -18,7 +18,7 @@ hook.Add("OnPlayerPhysicsDrop", "infinte_detour", drop)
 local class_filter = {
 	prop_vehicle_jeep = true,
 	player = true,
-	prop_physics = true,
+	//prop_physics = true,
 }
 
 // setting position kills all velocity for some reason

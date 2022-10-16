@@ -4,8 +4,6 @@ AddCSLuaFile()
 
 InfMap = InfMap or {chunk_size = math.pow(2, 15) / 3}
 
-if CLIENT then return end
-
 // metatable fuckery
 local EntityMT = FindMetaTable("Entity")
 local VehicleMT = FindMetaTable("Vehicle")
@@ -15,6 +13,28 @@ local NextBotMT = FindMetaTable("NextBot")
 local CLuaLocomotionMT = FindMetaTable("CLuaLocomotion")
 local CTakeDamageInfoMT = FindMetaTable("CTakeDamageInfo")
 
+if CLIENT then
+	InfMap.CreateClientside = InfMap.CreateClientside or ents.CreateClientside
+	function ents.CreateClientside(str) 
+		local ent = InfMap.CreateClientside(str)
+		ent.Think = function(self)
+			local parent = self:GetParent()
+			if parent:IsValid() then
+				local parent_offset = parent.CHUNK_OFFSET
+				if parent_offset != self.CHUNK_OFFSET then
+					self.CHUNK_OFFSET = parent_offset
+					hook.Run("PropUpdateChunk", self, parent_offset)
+					table.insert(InfMap.all_ents, self)
+				end
+			end
+			//self:SetNextClientThink(CurTime() + 0.1)
+			//return true
+		end
+		return ent
+	end
+	return
+end
+
 /*********** Entity Metatable *************/
 
 EntityMT.InfMap_GetPos = EntityMT.InfMap_GetPos or EntityMT.GetPos
@@ -22,7 +42,6 @@ function EntityMT:GetPos()
 	return InfMap.unlocalize_vector(self:InfMap_GetPos(), self.CHUNK_OFFSET)
 end
 
-local i = 0
 EntityMT.InfMap_SetPos = EntityMT.InfMap_SetPos or EntityMT.SetPos
 function EntityMT:SetPos(pos)
 	local chunk_pos, chunk_offset = InfMap.localize_vector(pos)
@@ -129,22 +148,21 @@ function NextBotMT:GetRangeTo(to)
 end
 
 /*************** CLuaLocomotion Metatable *****************/
-if SERVER then
-	CLuaLocomotionMT.InfMap_Approach = CLuaLocomotionMT.InfMap_Approach or CLuaLocomotionMT.Approach
-	function CLuaLocomotionMT:Approach(goal, goalweight)
-		local nb = self:GetNextBot()
-		local dir = (goal - nb:GetPos()):GetNormalized()
-		local pos = InfMap.localize_vector(nb:GetPos() + dir)
-		return CLuaLocomotionMT.InfMap_Approach(self, pos, goalweight)
-	end
 
-	CLuaLocomotionMT.InfMap_FaceTowards = CLuaLocomotionMT.InfMap_FaceTowards or CLuaLocomotionMT.FaceTowards
-	function CLuaLocomotionMT:FaceTowards(goal)
-		local nb = self:GetNextBot()
-		local dir = (goal - nb:GetPos()):GetNormalized()
-		local pos = InfMap.localize_vector(nb:GetPos() + dir)
-		return CLuaLocomotionMT.InfMap_FaceTowards(self, pos)
-	end
+CLuaLocomotionMT.InfMap_Approach = CLuaLocomotionMT.InfMap_Approach or CLuaLocomotionMT.Approach
+function CLuaLocomotionMT:Approach(goal, goalweight)
+	local nb = self:GetNextBot()
+	local dir = (goal - nb:GetPos()):GetNormalized()
+	local pos = InfMap.localize_vector(nb:GetPos() + dir)
+	return CLuaLocomotionMT.InfMap_Approach(self, pos, goalweight)
+end
+
+CLuaLocomotionMT.InfMap_FaceTowards = CLuaLocomotionMT.InfMap_FaceTowards or CLuaLocomotionMT.FaceTowards
+function CLuaLocomotionMT:FaceTowards(goal)
+	local nb = self:GetNextBot()
+	local dir = (goal - nb:GetPos()):GetNormalized()
+	local pos = InfMap.localize_vector(nb:GetPos() + dir)
+	return CLuaLocomotionMT.InfMap_FaceTowards(self, pos)
 end
 
 /**************** Other Functions ********************/

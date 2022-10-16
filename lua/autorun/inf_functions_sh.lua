@@ -13,11 +13,10 @@ function InfMap.localize_vector(pos)
 	local cs = InfMap.chunk_size
 	local cs_double = cs * 2
 
-	local trunc = math.Truncate	// we want 0.5=0 and -0.5=0, not 0.5=0 and -0.5=-1
-	local abs = math.abs
-	local cox = math.floor((pos[1] + cs) / cs_double)
-	local coy = math.floor((pos[2] + cs) / cs_double)
-	local coz = math.floor((pos[3] + cs) / cs_double)
+	local floor = math.floor
+	local cox = floor((pos[1] + cs) / cs_double)
+	local coy = floor((pos[2] + cs) / cs_double)
+	local coz = floor((pos[3] + cs) / cs_double)
 	local chunk_offset = Vector(cox, coy, coz)
 
 	local chunk_size_vec = Vector(1, 1, 1) * cs

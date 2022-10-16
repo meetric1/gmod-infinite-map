@@ -15,20 +15,20 @@ end)
 // detour render bounds of entities in other chunks
 // needs to be updated every tick since the offset is not local to the prop
 // which entities should be checked per frame
-local all_ents = {}
+InfMap.all_ents = {}
 local function update_ents(all)
-	all_ents = ents.GetAll()
+	InfMap.all_ents = ents.GetAll()
 	if all then return end
-	for i = #all_ents, 1, -1 do	// iterate downward
+	for i = #InfMap.all_ents, 1, -1 do	// iterate downward
 		// if invalid is true, then the entity should be removed from the table calculated per frame
-		local ent = all_ents[i]
+		local ent = InfMap.all_ents[i]
 		local invalid = !ent.CHUNK_OFFSET
 		invalid = invalid or InfMap.filter_entities(ent)
 		//invalid = invalid or ent:GetVelocity() + LocalPlayer():GetVelocity() == Vector()
 		invalid = invalid or !ent.RenderOverride
 		
 		if invalid then
-			table.remove(all_ents, i)	// remove invalid entity
+			table.remove(InfMap.all_ents, i)	// remove invalid entity
 		end
 	end
 end
@@ -39,9 +39,8 @@ timer.Create("infinite_chunkmove_update", 1, 0, function()
 	update_all = true
 end)
 hook.Add("RenderScene", "infinite_update_visbounds", function(eyePos, eyeAngles)
-	local chunk_size = Vector(1, 1, 1) * InfMap.chunk_size
 	local lp_chunk_offset = LocalPlayer().CHUNK_OFFSET
-	for _, ent in ipairs(all_ents) do	// I feel bad for doing this
+	for _, ent in ipairs(InfMap.all_ents) do	// I feel bad for doing this
 		if !ent or !ent:IsValid() then continue end
 		if !ent.RenderOverride then continue end
 
@@ -80,7 +79,7 @@ end)
 hook.Add("PostDrawOpaqueRenderables", "infinite_player_render", function()
 	local chunk_offset = (LocalPlayer().CHUNK_OFFSET or Vector())
 	for k, v in ipairs(player.GetAll()) do
-		if v.CHUNK_OFFSET != chunk_offset then
+		if v.CHUNK_OFFSET != chunk_offset and v:Alive() then
 			v:DrawModel()
 		end
 	end
@@ -136,7 +135,7 @@ hook.Add("PropUpdateChunk", "infinite_clientrecev", function(ent, chunk)
 	print("Detouring rendering of entity:", ent)
 
 	// put ent in table to update renderbounds
-	table.insert(all_ents, ent)
+	table.insert(InfMap.all_ents, ent)
 
 	// physgun glow and beam can be seen from any chunk
 	// turn physgun off by setting its color to negative infinity if its not in our chunk
@@ -175,17 +174,5 @@ hook.Add("PropUpdateChunk", "infinite_clientrecev", function(ent, chunk)
 			end
 			cam_End3D()
 		end
-		
-		// THIS IS FOR YOU PROP2MESH
-		//if ent.Draw then
-			//ent.InfMap_GetWorldTransformMatrix = ent.InfMap_GetWorldTransformMatrix or ent.GetWorldTransformMatrix
-			
-			//function ent:GetWorldTransformMatrix()
-			//	local mat = ent:InfMap_GetWorldTransformMatrix()
-			//	mat:SetTranslation(InfMap.unlocalize_vector(mat:GetTranslation(), self.CHUNK_OFFSET))
-			//	print("maon gus")
-			//	return mat
-			//end
-		//end
 	end
 end)

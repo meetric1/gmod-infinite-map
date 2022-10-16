@@ -78,6 +78,13 @@ else
         hook.Run("PropUpdateChunk", e, Vector(0, 0, 0))
         physenv.SetPerformanceSettings({MaxVelocity = 2^31})
     end)
+    
+    hook.Add("PostCleanupMap", "infmap_cleanup", function()
+        local e = ents.Create("infinite_chunk_terrain")
+        e:InfMap_SetPos(Vector(0, 0, -15))
+        e:Spawn()
+        hook.Run("PropUpdateChunk", e, Vector(0, 0, 0))
+    end)
 end
 
 function ENT:CanProperty()
