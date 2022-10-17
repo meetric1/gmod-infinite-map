@@ -19,7 +19,7 @@ local class_filter = {
 	prop_vehicle_jeep = true,
 	player = true,
 	prop_vehicle_prisoner_pod = true,
-	gmod_sent_vehicle_fphysics_base = true,
+	//gmod_sent_vehicle_fphysics_base = true,
 	prop_physics = true,
 }
 
