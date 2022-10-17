@@ -178,9 +178,13 @@ end
 local istable = istable
 local IsEntity = IsEntity
 local function modify_trace_data(orig_data, trace_func, extra)
-	local data = table.Copy(orig_data)
-	// #1 localize start and end position of trace
+	local data = {}
 
+	for k, v in pairs(orig_data) do
+		data[k] = v
+	end
+
+	// #1 localize start and end position of trace
 	local start_pos, start_offset = InfMap.localize_vector(data.start)
 
 	data.start = start_pos
