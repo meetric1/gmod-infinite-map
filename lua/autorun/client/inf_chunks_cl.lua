@@ -92,7 +92,7 @@ hook.Add("PostDrawOpaqueRenderables", "infinite_player_render", function()
 	
 	local co =  (LocalPlayer().CHUNK_OFFSET or Vector()) * InfMap.chunk_size * 2
 	debugoverlay.Box(Vector(), -cs - co, cs - co, 0, Color(0, 0, 0, 0))
-	debugoverlay.Box(Vector(), -cs * 3 - co, cs * 3 - co, 0, Color(0, 0, 255, 0))
+	debugoverlay.Box(Vector(), -Vector(2^14, 2^14, 2^14) - co, Vector(2^14, 2^14, 2^14) - co, 0, Color(0, 0, 255, 0))
 	
 end)
 

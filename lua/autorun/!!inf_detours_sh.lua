@@ -2,7 +2,7 @@ if game.GetMap() != "gm_infinite" then return end
 
 AddCSLuaFile()
 
-InfMap = InfMap or {chunk_size = math.pow(2, 15) / 3}
+InfMap = InfMap or {chunk_size = 10000}
 
 // metatable fuckery
 local EntityMT = FindMetaTable("Entity")
@@ -102,6 +102,9 @@ function VehicleMT:SetPos(pos)
 	local chunk_pos, chunk_offset = InfMap.localize_vector(pos)
 	if chunk_offset != self.CHUNK_OFFSET then
 		hook.Run("PropUpdateChunk", self, chunk_offset)
+		if self:GetDriver():IsValid() then
+			hook.Run("PropUpdateChunk", self:GetDriver(), chunk_offset)
+		end
 	end
 	self:InfMap_SetPos(chunk_pos)
 end
