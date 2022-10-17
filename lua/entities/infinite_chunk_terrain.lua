@@ -71,20 +71,23 @@ if CLIENT then
         return true
     end
 else
-    hook.Add("InitPostEntity", "infinite_terrain_init", function()
+    local function resetAll()
         local e = ents.Create("infinite_chunk_terrain")
-        e:InfMap_SetPos(Vector(0, 0, -15))
+        e:InfMap_SetPos(Vector(0, 0, -25))
         e:Spawn()
-        hook.Run("PropUpdateChunk", e, Vector(0, 0, 0))
+
+        local e2 = ents.Create("prop_physics")
+        e2:InfMap_SetPos(Vector(0, 0, -10))
+        e2:SetModel("models/hunter/blocks/cube8x8x025.mdl")
+        e2:SetMaterial("models/gibs/metalgibs/metal_gibs")
+        e2:Spawn()
+        e2:GetPhysicsObject():EnableMotion(false)
+
         physenv.SetPerformanceSettings({MaxVelocity = 2^31})
-    end)
-    
-    hook.Add("PostCleanupMap", "infmap_cleanup", function()
-        local e = ents.Create("infinite_chunk_terrain")
-        e:InfMap_SetPos(Vector(0, 0, -15))
-        e:Spawn()
-        hook.Run("PropUpdateChunk", e, Vector(0, 0, 0))
-    end)
+    end
+
+    hook.Add("InitPostEntity", "infinite_terrain_init", resetAll)
+    hook.Add("PostCleanupMap", "infmap_cleanup", resetAll)
 end
 
 function ENT:CanProperty()

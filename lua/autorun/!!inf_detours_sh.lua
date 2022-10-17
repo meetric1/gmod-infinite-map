@@ -193,7 +193,9 @@ local function modify_trace_data(orig_data, trace_func, extra)
 	// #2 create filter and only hit entities in your chunk
 	local old_filter = data.filter
 	if !old_filter then 
-		data.filter = function(e) return e.CHUNK_OFFSET == chunk_offset or (e:GetClass() == "infinite_chunk_terrain" and start_offset[3] == 0) end
+		data.filter = function(e) 
+			return e.CHUNK_OFFSET == chunk_offset or (e:GetClass() == "infinite_chunk_terrain" and start_offset[3] == 0) 
+		end
 	elseif IsEntity(old_filter) then // rip efficiency
 		data.filter = function(e)
 			return (e.CHUNK_OFFSET == start_offset or (e:GetClass() == "infinite_chunk_terrain" and start_offset[3] == 0)) and e != old_filter
@@ -246,7 +248,7 @@ hook.Add("PlayerSpawn", "infinite_plyreset", function(ply, trans)
 	timer.Simple(0, function()	// players weapons are invalid for first tick
 		hook.Run("PropUpdateChunk", ply, Vector())	// still required because weapon entities are changed
 		print("Resetting " .. ply:Nick() .." to chunk 0,0,0")
-		ply:SetPos(Vector(math.random() * 100, math.random() * 100))
+		ply:SetPos(Vector(math.Rand(-1, 1) * 200, math.Rand(-1, 1) * 200))
 	end)
 end)
 

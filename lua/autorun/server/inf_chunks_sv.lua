@@ -18,12 +18,14 @@ hook.Add("OnPlayerPhysicsDrop", "infinte_detour", drop)
 local class_filter = {
 	prop_vehicle_jeep = true,
 	player = true,
-	//prop_physics = true,
+	prop_vehicle_prisoner_pod = true,
+	gmod_sent_vehicle_fphysics_base = true,
+	prop_physics = true,
 }
 
 // setting position kills all velocity for some reason
 local source_bounds = 2^14 - 64
-local function unfucked_SetPos(ent, pos)
+local function unfucked_SetPos(ent, pos, filter)
 	if ent:GetParent():IsValid() then return end	// parents are local, dont setpos.. lets hope the parent entity itself was also teleported
 	
 	// clamp position inside source bounds incase contraption is massive

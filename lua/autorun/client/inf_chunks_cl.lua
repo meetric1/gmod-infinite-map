@@ -170,7 +170,7 @@ hook.Add("PropUpdateChunk", "infinite_clientrecev", function(ent, chunk)
 			if !ent.OldRenderOverride then
 				self:DrawModel()
 			else
-				ent.OldRenderOverride()
+				ent:OldRenderOverride()
 			end
 			cam_End3D()
 		end
