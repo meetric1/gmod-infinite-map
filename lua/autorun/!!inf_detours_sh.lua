@@ -47,6 +47,9 @@ function EntityMT:SetPos(pos)
 	local chunk_pos, chunk_offset = InfMap.localize_vector(pos)
 	if chunk_offset != self.CHUNK_OFFSET then
 		hook.Run("PropUpdateChunk", self, chunk_offset)
+		if self.GetDriver and self:GetDriver():IsValid() then
+			hook.Run("PropUpdateChunk", self:GetDriver(), chunk_offset)
+		end
 	end
 	self:InfMap_SetPos(chunk_pos)
 end
@@ -102,9 +105,6 @@ function VehicleMT:SetPos(pos)
 	local chunk_pos, chunk_offset = InfMap.localize_vector(pos)
 	if chunk_offset != self.CHUNK_OFFSET then
 		hook.Run("PropUpdateChunk", self, chunk_offset)
-		if self:GetDriver():IsValid() then
-			hook.Run("PropUpdateChunk", self:GetDriver(), chunk_offset)
-		end
 	end
 	self:InfMap_SetPos(chunk_pos)
 end
@@ -300,8 +300,10 @@ end)*/
 
 // disable picking up weapons/items in other chunks
 local function can_pickup(ply, ent)
-	if !ply.CHUNK_OFFSET or !ent.CHUNK_OFFSET then return true end	// when spawning, player weapons will be nil for 1 tick
-	return ply.CHUNK_OFFSET == ent.CHUNK_OFFSET
+	if !ply.CHUNK_OFFSET or !ent.CHUNK_OFFSET then return end	// when spawning, player weapons will be nil for 1 tick
+	if ply.CHUNK_OFFSET != ent.CHUNK_OFFSET then
+		return false
+	end
 end
 
 hook.Add("PlayerCanPickupWeapon", "infinite_entdetour", can_pickup)

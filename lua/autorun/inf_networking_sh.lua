@@ -53,7 +53,7 @@ if SERVER then
 	hook.Add("PlayerSwitchFlashlight", "infinite_flashlight_detour", function(ply, enabled)
 		if !enabled then return end
 		for _, v in ipairs(player.GetAll()) do
-			if (ply.CHUNK_OFFSET or Vector()) != (v.CHUNK_OFFSET or Vector()) then
+			if ply.CHUNK_OFFSET != v.CHUNK_OFFSET then
 				net.Start("INF_FLASHLIGHT_OFF")
 				net.WriteInt(ply:EntIndex(), 16)
 				net.Send(v)

@@ -83,6 +83,8 @@ else
         e2:Spawn()
         e2:GetPhysicsObject():EnableMotion(false)
 
+        //hook.Run("PropUpdateChunk", e, Vector())
+        //hook.Run("PropUpdateChunk", e2, Vector())
         physenv.SetPerformanceSettings({MaxVelocity = 2^31})
     end
 

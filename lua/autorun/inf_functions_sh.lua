@@ -40,20 +40,21 @@ function InfMap.unlocalize_vector(pos, chunk)
 end
 
 function InfMap.should_collide(ent1, ent2)
-	if ent1.CHUNK_OFFSET == ent2.CHUNK_OFFSET then return true end
 
 	local ent1_class = ent1:GetClass()
 	local ent2_class = ent2:GetClass()
 
 	if ent1_class == "infinite_chunk_terrain" then 
-		if !ent2.CHUNK_OFFSET then return true end
-		return math.abs(ent2.CHUNK_OFFSET[1]) <= 25 and math.abs(ent2.CHUNK_OFFSET[2]) <= 25 and ent2.CHUNK_OFFSET[3] == 0
+		if !ent2.CHUNK_OFFSET then return end
+		if math.abs(ent2.CHUNK_OFFSET[1]) > 25 or math.abs(ent2.CHUNK_OFFSET[2]) > 25 or ent2.CHUNK_OFFSET[3] != 0 then
+			return false
+		end
 	elseif ent2_class == "infinite_chunk_terrain" then
-		if !ent1.CHUNK_OFFSET then return true end
-		return math.abs(ent1.CHUNK_OFFSET[1]) <= 25 and math.abs(ent1.CHUNK_OFFSET[2]) <= 25 and ent1.CHUNK_OFFSET[3] == 0
-	end
-
-	return false
+		if !ent1.CHUNK_OFFSET then return end
+		if math.abs(ent1.CHUNK_OFFSET[1]) > 25 or math.abs(ent1.CHUNK_OFFSET[2]) > 25 or ent1.CHUNK_OFFSET[3] != 0 then
+			return false
+		end
+	elseif ent1.CHUNK_OFFSET != ent2.CHUNK_OFFSET then return false end
 end
 
 local filter = {
@@ -127,6 +128,15 @@ function InfMap.get_all_constrained(main_ent)
 	return entity_table
 end
 
+local function constrained_invalid_filter(ent) 
+	local phys_filter = false
+	local phys = ent:GetPhysicsObject()
+	if phys:IsValid() then
+		phys_filter = !phys:IsMoveable()	// filter frozen props & 1 mass props
+	end
+	return InfMap.filter_entities(ent) or (!ent:IsSolid() and ent:GetNoDraw()) or ent:GetParent():IsValid() or phys_filter
+end
+
 function InfMap.constrained_status(ent) 
 	if ent.CONSTRAINED_DATA then
 		return ent.CONSTRAINED_MAIN
@@ -134,7 +144,7 @@ function InfMap.constrained_status(ent)
 
 	ent.CONSTRAINED_DATA = InfMap.get_all_constrained(ent)
 	// first pass, these entities arent valid
-	if InfMap.filter_entities(ent) or (!ent:IsSolid() and ent:GetNoDraw()) or ent:GetParent():IsValid() then 
+	if constrained_invalid_filter(ent) then 
 		ent.CONSTRAINED_MAIN = false
 		return ent.CONSTRAINED_MAIN
 	end
@@ -145,7 +155,7 @@ function InfMap.constrained_status(ent)
 			return ent.CONSTRAINED_MAIN
 		end
 
-		if constrained_ent:EntIndex() < ent_index and !InfMap.filter_entities(constrained_ent) and (constrained_ent:IsSolid() or !constrained_ent:GetNoDraw()) and !constrained_ent:GetParent():IsValid() then 
+		if constrained_ent:EntIndex() < ent_index and !constrained_invalid_filter(constrained_ent) then 
 			ent.CONSTRAINED_MAIN = false
 			return ent.CONSTRAINED_MAIN
 		end

@@ -117,10 +117,12 @@ hook.Add("PropUpdateChunk", "infinite_clientrecev", function(ent, chunk)
 
 	// if in same chunk, ignore
 	// set render bounds back to the value it was at when first stored, if it doesnt exist set it to the model renderbounds
-	ent.RenderOverride = ent.OldRenderOverride
 	if chunk_offset == Vector() or ent:GetOwner() == LocalPlayer() then 
-		//ent.RenderOverride = ent.OldRenderOverride
+		if ent.ValidRenderOverride != nil then
+			ent.RenderOverride = ent.OldRenderOverride
+		end
 		ent.OldRenderOverride = nil
+		ent.ValidRenderOverride = nil
 		
 		local min, max
 		if ent.RENDER_BOUNDS then min, max = ent.RENDER_BOUNDS[1], ent.RENDER_BOUNDS[2] end
@@ -145,6 +147,10 @@ hook.Add("PropUpdateChunk", "infinite_clientrecev", function(ent, chunk)
 	end
 
 	local visual_offset = Vector(1, 1, 1) * (chunk_offset * InfMap.chunk_size * 2)
+	if ent.ValidRenderOverride == nil then
+		ent.OldRenderOverride = ent.RenderOverride
+		ent.ValidRenderOverride = ent.RenderOverride and true or false
+	end
 	if chunk_offset:LengthSqr() > 100 and ent:GetClass() != "infinite_chunk_terrain" then	// lod test
 		local render_DrawBox = render.DrawBox
 		local render_SetMaterial = render.SetMaterial
@@ -154,7 +160,6 @@ hook.Add("PropUpdateChunk", "infinite_clientrecev", function(ent, chunk)
 		if mat_str == "" then mat_str = ent:GetMaterials()[1] end
 		if !mat_str then mat_str = "models/wireframe" end
 		local mat = Material(mat_str)
-		ent.OldRenderOverride = ent.OldRenderOverride or ent.RenderOverride
 		ent.RenderOverride = function(self)	// high lod
 			render_ResetModelLighting(1, 1, 1)
 			render_SetMaterial(mat)
@@ -164,10 +169,9 @@ hook.Add("PropUpdateChunk", "infinite_clientrecev", function(ent, chunk)
 		local cam_Start3D = cam.Start3D
 		local cam_End3D = cam.End3D
 		local eyePos = EyePos
-		ent.OldRenderOverride = ent.OldRenderOverride or ent.RenderOverride
 		ent.RenderOverride = function(self)	// low lod
 			cam_Start3D(eyePos() - visual_offset)
-			if !ent.OldRenderOverride then
+			if !ent.ValidRenderOverride then
 				self:DrawModel()
 			else
 				ent:OldRenderOverride()
