@@ -136,6 +136,16 @@ hook.Add("PropUpdateChunk", "infinite_clientrecev", function(ent, chunk)
 	
 	print("Detouring rendering of entity:", ent)
 
+	// prop2mesh support
+	if ent.prop2mesh_controllers then
+		local parent_offset = ent.CHUNK_OFFSET
+		for _, controller in ipairs(ent.prop2mesh_controllers) do
+			controller.ent.CHUNK_OFFSET = parent_offset
+			hook.Run("PropUpdateChunk", controller.ent, parent_offset)	// update renderoverride
+			table.insert(InfMap.all_ents, controller.ent)
+		end
+	end
+
 	// put ent in table to update renderbounds
 	table.insert(InfMap.all_ents, ent)
 

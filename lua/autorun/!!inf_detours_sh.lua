@@ -14,24 +14,6 @@ local CLuaLocomotionMT = FindMetaTable("CLuaLocomotion")
 local CTakeDamageInfoMT = FindMetaTable("CTakeDamageInfo")
 
 if CLIENT then
-	InfMap.CreateClientside = InfMap.CreateClientside or ents.CreateClientside
-	function ents.CreateClientside(str) 
-		local ent = InfMap.CreateClientside(str)
-		ent.Think = function(self)
-			local parent = self:GetParent()
-			if parent:IsValid() then
-				local parent_offset = parent.CHUNK_OFFSET
-				if parent_offset != self.CHUNK_OFFSET then
-					self.CHUNK_OFFSET = parent_offset
-					hook.Run("PropUpdateChunk", self, parent_offset)
-					table.insert(InfMap.all_ents, self)
-				end
-			end
-			//self:SetNextClientThink(CurTime() + 0.1)
-			//return true
-		end
-		return ent
-	end
 	return
 end
 
@@ -249,9 +231,9 @@ end
 // when entities are spawned, reset them
 hook.Add("PlayerSpawn", "infinite_plyreset", function(ply, trans)
 	timer.Simple(0, function()	// players weapons are invalid for first tick
-		hook.Run("PropUpdateChunk", ply, Vector())	// still required because weapon entities are changed
 		print("Resetting " .. ply:Nick() .." to chunk 0,0,0")
-		ply:SetPos(Vector(math.Rand(-1, 1) * 200, math.Rand(-1, 1) * 200))
+		ply:InfMap_SetPos(Vector(math.Rand(-1, 1) * 200, math.Rand(-1, 1) * 200))
+		hook.Run("PropUpdateChunk", ply, Vector())	// still required because weapon entities are changed
 	end)
 end)
 
