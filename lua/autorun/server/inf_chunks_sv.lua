@@ -106,6 +106,28 @@ timer.Create("infinite_chunkmove_update", 0.1, 0, function()
 		if invalid then
 			table.remove(all_ents, i)	// remove invalid entity
 		end
+
+		// gravhull support
+		local ship = ent.MyShip or ent.InShip
+		if ship and ship:IsValid() then
+			InfMap.gravhull_ents[ent] = ship
+		else
+			InfMap.gravhull_ents[ent] = nil
+		end
+	end
+end)
+
+// gravhull prop chunk updater
+InfMap.gravhull_ents = {}
+hook.Add("Think", "infinite_gravhull_update", function()
+	for ent, ship in pairs(InfMap.gravhull_ents) do
+		if !ent or !ent:IsValid() or !ship or !ship:IsValid() then
+			InfMap.gravhull_ents[ent] = nil
+			continue
+		end
+		if ship.CHUNK_OFFSET != ent.CHUNK_OFFSET and !ent.SLHull then
+			hook.Run("PropUpdateChunk", ent, ship.CHUNK_OFFSET)
+		end
 	end
 end)
 

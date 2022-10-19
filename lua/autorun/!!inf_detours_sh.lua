@@ -14,6 +14,13 @@ local CLuaLocomotionMT = FindMetaTable("CLuaLocomotion")
 local CTakeDamageInfoMT = FindMetaTable("CTakeDamageInfo")
 
 if CLIENT then
+	// traces shouldn't appear when shot from other chunks
+	hook.Add("EntityFireBullets", "infmap_detour", function(ent, data)
+		if ent.CHUNK_OFFSET != LocalPlayer().CHUNK_OFFSET then
+			data.Tracer = 0
+			return true
+		end
+	end)
 	return
 end
 
@@ -74,6 +81,17 @@ function PhysObjMT:SetPos(pos, teleport)
 	end
 	self:InfMap_SetPos(chunk_pos, teleport)
 end
+
+PhysObjMT.InfMap_LocalToWorld = PhysObjMT.InfMap_LocalToWorld or PhysObjMT.LocalToWorld
+function PhysObjMT:LocalToWorld(pos)
+	return InfMap.unlocalize_vector(self:InfMap_LocalToWorld(pos), self:GetEntity().CHUNK_OFFSET)
+end
+
+PhysObjMT.InfMap_WorldToLocal = PhysObjMT.InfMap_WorldToLocal or PhysObjMT.WorldToLocal
+function PhysObjMT:WorldToLocal(pos)
+	return self:InfMap_WorldToLocal(pos - InfMap.unlocalize_vector(Vector(), self:GetEntity().CHUNK_OFFSET))
+end
+
 
 /*************** Vehicle Metatable *****************/
 
@@ -157,8 +175,6 @@ function util.IsInWorld(pos)
 	return false 
 end
 
-
-
 // faster lookup
 local istable = istable
 local IsEntity = IsEntity
@@ -224,9 +240,20 @@ InfMap.TraceEntity = InfMap.TraceEntity or util.TraceEntity
 function util.TraceEntity(data, ent)
 	return modify_trace_data(data, InfMap.TraceEntity, ent)
 end
-
 // no need to detour GetEyeTrace or util.GetPlayerTrace as it uses already detoured functions
 
+// findinsphere
+InfMap.FindInSphere = InfMap.FindInSphere or ents.FindInSphere
+function ents.FindInSphere(pos, rad)
+	local local_pos, local_chunk = InfMap.localize_vector(pos)
+	local data = InfMap.FindInSphere(local_pos, rad)
+	for i = #data, 1, -1 do
+		if data[i].CHUNK_OFFSET != local_chunk then
+			table.remove(data, i)
+		end
+	end
+	return data
+end
 
 // when entities are spawned, reset them
 hook.Add("PlayerSpawn", "infinite_plyreset", function(ply, trans)
