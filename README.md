@@ -25,9 +25,12 @@ The map isnt actually infinite, its impossible to go past the source bounds, so 
 * Entity:WorldToLocal
 * Entity:EyePos
 * Entity:NearestPoint
+* Entity:GetAttachment
 
 * PhysObj:GetPos
 * PhysObj:SetPos
+* PhysObj:LocalToWorld
+* PhysObj:WorldToLocal
 
 * Vehicle:GetPos
 * Vehicle:SetPos
@@ -48,3 +51,5 @@ The map isnt actually infinite, its impossible to go past the source bounds, so 
 * util.TraceHull
 * util.TraceEntity
 * util.IsInWorld
+* ents.FindInSphere
+* WireLib:SetPos (unclamps wiremods setpos function since it wont let objects position be set outside of the source bounderies)
