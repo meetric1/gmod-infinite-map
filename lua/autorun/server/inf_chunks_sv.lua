@@ -125,7 +125,7 @@ hook.Add("Think", "infinite_gravhull_update", function()
 			InfMap.gravhull_ents[ent] = nil
 			continue
 		end
-		if ship.CHUNK_OFFSET != ent.CHUNK_OFFSET and !ent.SLHull then
+		if ship.CHUNK_OFFSET != ent.CHUNK_OFFSET then
 			hook.Run("PropUpdateChunk", ent, ship.CHUNK_OFFSET)
 		end
 	end
@@ -182,6 +182,7 @@ local co = coroutine.create(function()
 
 			if !ent.CHUNK_OFFSET then continue end
 			if !ent:IsSolid() then continue end
+			if ent:GetParent():IsValid() then continue end
 
 			//if ent:GetVelocity() == Vector() then continue end
 			// player support
