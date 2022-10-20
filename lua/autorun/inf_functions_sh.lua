@@ -42,9 +42,11 @@ end
 // A table with some collision functions.
 local collission_groups = {
 	[0] = function(ent1, ent2) // Normal
+		if ent1.CHUNK_OFFSET != ent2.CHUNK_OFFSET then return false end
 		return true
 	end,
 	[7] = function(ent1, ent2) // Vehicle
+		if ent1.CHUNK_OFFSET != ent2.CHUNK_OFFSET then return false end
 		return true
 	end,
 	[10] = function(ent1, ent2) // In Vehicle
@@ -53,14 +55,17 @@ local collission_groups = {
 	[11] = function(ent1, ent2) // Weapon (Doesn't collide with players and vehicles)
 		if ent1:IsPlayer() or ent2:IsPlayer() then return false end
 		if ent1:IsVehicle() or ent2:IsVehicle() then return false end
+		if ent1.CHUNK_OFFSET != ent2.CHUNK_OFFSET then return false end
 		return true
 	end,
 	[13] = function(ent1, ent2) // Projectile
+		if ent1.CHUNK_OFFSET != ent2.CHUNK_OFFSET then return false end
 		return true
 	end,
 	[20] = function(ent1, ent2) // World (Doesn't collide with players/props)
 		if ent1:IsPlayer() or ent2:IsPlayer() then return false end
 		if ent1:GetClass():StartWith("prop_") or ent2:GetClass():StartWith("prop_") then return false end
+		if ent1.CHUNK_OFFSET != ent2.CHUNK_OFFSET then return false end
 		return true
 	end
 }
