@@ -177,9 +177,9 @@ end
 
 /**************** Other Functions ********************/
 
-// infinite map.. nothing can be inside the world!
+// infinite map.. nothing can be outside the world!
 function util.IsInWorld(pos)
-	return false 
+	return true
 end
 
 // faster lookup
