@@ -36,9 +36,6 @@ function EntityMT:SetPos(pos)
 	local chunk_pos, chunk_offset = InfMap.localize_vector(pos)
 	if chunk_offset != self.CHUNK_OFFSET then
 		hook.Run("PropUpdateChunk", self, chunk_offset)
-		if self.GetDriver and self:GetDriver():IsValid() then
-			hook.Run("PropUpdateChunk", self:GetDriver(), chunk_offset)
-		end
 	end
 	self:InfMap_SetPos(chunk_pos)
 end
@@ -65,6 +62,14 @@ function EntityMT:NearestPoint(pos)
 	return InfMap.unlocalize_vector(self:InfMap_NearestPoint(chunk_pos), chunk_offset)
 end
 
+EntityMT.InfMap_GetAttachment = EntityMT.InfMap_GetAttachment or EntityMT.GetAttachment
+function EntityMT:GetAttachment(num)
+	local data = self:InfMap_GetAttachment(num)
+	if !data or !data.Pos then return data end
+	data.Pos = InfMap.unlocalize_vector(data.Pos, self.CHUNK_OFFSET)
+	return data
+end
+
 /************ Physics Object Metatable **************/
 
 PhysObjMT.InfMap_GetPos = PhysObjMT.InfMap_GetPos or PhysObjMT.GetPos
@@ -82,6 +87,8 @@ function PhysObjMT:SetPos(pos, teleport)
 	self:InfMap_SetPos(chunk_pos, teleport)
 end
 
+// Internally these functions are used for constraints, unfortunately they are created in world space at the LocalToWorld positions causing huge problems
+/*
 PhysObjMT.InfMap_LocalToWorld = PhysObjMT.InfMap_LocalToWorld or PhysObjMT.LocalToWorld
 function PhysObjMT:LocalToWorld(pos)
 	return InfMap.unlocalize_vector(self:InfMap_LocalToWorld(pos), self:GetEntity().CHUNK_OFFSET)
@@ -91,14 +98,14 @@ PhysObjMT.InfMap_WorldToLocal = PhysObjMT.InfMap_WorldToLocal or PhysObjMT.World
 function PhysObjMT:WorldToLocal(pos)
 	return self:InfMap_WorldToLocal(pos - InfMap.unlocalize_vector(Vector(), self:GetEntity().CHUNK_OFFSET))
 end
-
+*/
 
 /*************** Vehicle Metatable *****************/
 
-VehicleMT.InfMap_GetPos = VehicleMT.InfMap_GetPos or VehicleMT.GetPos
-function VehicleMT:GetPos()
-	return InfMap.unlocalize_vector(self:InfMap_GetPos(), self.CHUNK_OFFSET)
-end
+//VehicleMT.InfMap_GetPos = VehicleMT.InfMap_GetPos or VehicleMT.GetPos
+//function VehicleMT:GetPos()
+//	return InfMap.unlocalize_vector(self:InfMap_GetPos(), self.CHUNK_OFFSET)
+//end
 
 VehicleMT.InfMap_SetPos = VehicleMT.InfMap_SetPos or VehicleMT.SetPos
 function VehicleMT:SetPos(pos)
@@ -254,6 +261,17 @@ function ents.FindInSphere(pos, rad)
 	end
 	return data
 end
+
+// wiremod internally clamps setpos, lets unclamp it...
+hook.Add("Initialize", "infmap_wire_detour", function()
+	if WireLib then
+		local isnan = WireLib.isnan
+		function WireLib.setPos(ent, pos)
+			if isnan(pos.x) or isnan(pos.y) or isnan(pos.z) then return end
+			return ent:SetPos(pos)
+		end
+	end
+end)
 
 // when entities are spawned, reset them
 hook.Add("PlayerSpawn", "infinite_plyreset", function(ply, trans)

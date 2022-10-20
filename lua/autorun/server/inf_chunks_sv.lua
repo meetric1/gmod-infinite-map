@@ -70,20 +70,10 @@ local function update_entity(ent, pos, chunk)
 					constrained_ent:ForcePlayerDrop()
 				end
 
-				if constrained_ent:IsVehicle() then
-					if constrained_ent:GetDriver():IsValid() then
-						hook.Run("PropUpdateChunk", constrained_ent:GetDriver(), chunk)
-					end
-				end
-
 				unfucked_SetPos(constrained_ent, pos + (constrained_ent:InfMap_GetPos() - ent:InfMap_GetPos()))
 				hook.Run("PropUpdateChunk", constrained_ent, chunk)
 			end
 			InfMap.reset_constrained_data(carry)
-		end
-	elseif ent:IsVehicle() then
-		if ent:GetDriver():IsValid() then
-			hook.Run("PropUpdateChunk", ent:GetDriver(), chunk)
 		end
 	end
 

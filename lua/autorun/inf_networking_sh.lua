@@ -20,9 +20,15 @@ if SERVER then
 
 		print(ent, "passed in chunk", chunk)
 		ent.CHUNK_OFFSET = chunk
-		ent:SetCustomCollisionCheck(true)
+		ent:SetCustomCollisionCheck(true)	// required for ShouldCollide hook
 
-		if (InfMap.filter_entities(ent) or ent:GetNoDraw()) and ent:GetClass() != "infinite_chunk_clone" then return end	// dont network bad ents to client, they may not even be able to see them
+		// make sure to teleport things in chairs too
+		if ent.GetDriver and ent:GetDriver():IsValid() then
+			hook.Run("PropUpdateChunk", ent:GetDriver(), chunk)
+		end
+
+		// dont network bad ents to client, they may not even be able to see them
+		if (InfMap.filter_entities(ent) or ent:GetNoDraw()) and ent:GetClass() != "infinite_chunk_clone" then return end	
 
 		send_data(ent, chunk)
 

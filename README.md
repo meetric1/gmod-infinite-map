@@ -29,8 +29,6 @@ The map isnt actually infinite, its impossible to go past the source bounds, so 
 
 * PhysObj:GetPos
 * PhysObj:SetPos
-* PhysObj:LocalToWorld
-* PhysObj:WorldToLocal
 
 * Vehicle:GetPos
 * Vehicle:SetPos
