@@ -39,8 +39,33 @@ function InfMap.unlocalize_vector(pos, chunk)
 	return (chunk or Vector()) * InfMap.chunk_size * 2 + pos
 end
 
-function InfMap.should_collide(ent1, ent2)
+// A table with some collision functions.
+local collission_groups = {
+	[0] = function(ent1, ent2) // Normal
+		return true
+	end,
+	[7] = function(ent1, ent2) // Vehicle
+		return true
+	end,
+	[10] = function(ent1, ent2) // In Vehicle
+		return false
+	end,
+	[11] = function(ent1, ent2) // Weapon (Doesn't collide with players and vehicles)
+		if ent1:IsPlayer() or ent2:IsPlayer() then return false end
+		if ent1:IsVehicle() or ent2:IsVehicle() then return false end
+		return true
+	end,
+	[13] = function(ent1, ent2) // Projectile
+		return true
+	end,
+	[20] = function(ent1, ent2) // World (Doesn't collide with players/props)
+		if ent1:IsPlayer() or ent2:IsPlayer() then return false end
+		if ent1:GetClass():StartWith("prop_") or ent2:GetClass():StartWith("prop_") then return false end
+		return true
+	end
+}
 
+function InfMap.should_collide(ent1, ent2)
 	local ent1_class = ent1:GetClass()
 	local ent2_class = ent2:GetClass()
 
@@ -55,6 +80,9 @@ function InfMap.should_collide(ent1, ent2)
 			return false
 		end
 	elseif ent1.CHUNK_OFFSET != ent2.CHUNK_OFFSET then return false end
+
+	local collision_func = collission_groups[ent1:GetCollisionGroup()] or collission_groups[ent2:GetCollisionGroup()] or false
+	return collision_func and collision_func(ent1, ent2) or false
 end
 
 local filter = {
