@@ -197,12 +197,11 @@ local function modify_trace_data(orig_data, trace_func, extra)
 
 	data.start = start_pos
 	data.endpos = data.endpos - InfMap.unlocalize_vector(Vector(), start_offset)
-
 	// #2 create filter and only hit entities in your chunk
 	local old_filter = data.filter
 	if !old_filter then 
 		data.filter = function(e) 
-			return e.CHUNK_OFFSET == chunk_offset or (e:GetClass() == "infinite_chunk_terrain" and start_offset[3] == 0) 
+			return e.CHUNK_OFFSET == start_offset or (e:GetClass() == "infinite_chunk_terrain" and start_offset[3] == 0) 
 		end
 	elseif IsEntity(old_filter) then // rip efficiency
 		data.filter = function(e)
@@ -233,6 +232,7 @@ end
 // traceline
 InfMap.TraceLine = InfMap.TraceLine or util.TraceLine
 function util.TraceLine(data)
+	//print(data.start)
 	return modify_trace_data(data, InfMap.TraceLine)
 end
 
@@ -288,9 +288,14 @@ hook.Add("OnEntityCreated", "infinite_propreset", function(ent)
 	timer.Simple(0.02, function()
 		if ent:IsValid() and !ent:IsWeapon() then 
 			if ent.CHUNK_OFFSET then return end
-			if InfMap.filter_entities(ent) then return end
+			if InfMap.filter_entities(ent) and ent:GetClass() != "rpg_missile" then return end
 			
-			hook.Run("PropUpdateChunk", ent, Vector())
+			local pos = Vector()
+			local owner = ent:GetOwner()
+			if owner and owner:IsValid() then
+				pos = owner.CHUNK_OFFSET or Vector()
+			end
+			hook.Run("PropUpdateChunk", ent, pos)
 		end
 	end)
 end)

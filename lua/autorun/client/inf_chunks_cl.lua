@@ -98,6 +98,7 @@ end)
 
 // server tells clients when a prop has entered another chunk
 // detour rendering of entities in other chunks
+local empty_function = function() end
 hook.Add("PropUpdateChunk", "infinite_clientrecev", function(ent, chunk)
 	// loop through all ents, offset them relative to player since player has moved
 	if ent == LocalPlayer() then 
@@ -161,7 +162,13 @@ hook.Add("PropUpdateChunk", "infinite_clientrecev", function(ent, chunk)
 		ent.OldRenderOverride = ent.RenderOverride
 		ent.ValidRenderOverride = ent.RenderOverride and true or false
 	end
+	
 	if chunk_offset:LengthSqr() > 100 and ent:GetClass() != "infinite_chunk_terrain" then	// lod test
+		// object is so small and so far away why even bother rendering it
+		if ent:BoundingRadius() < 10 then 
+			ent.RenderOverride = empty_function
+			return 
+		end
 		local render_DrawBox = render.DrawBox
 		local render_SetMaterial = render.SetMaterial
 		local render_ResetModelLighting = render.ResetModelLighting
@@ -171,7 +178,6 @@ hook.Add("PropUpdateChunk", "infinite_clientrecev", function(ent, chunk)
 		if !mat_str then mat_str = "models/wireframe" end
 		local mat = Material(mat_str)
 		ent.RenderOverride = function(self)	// high lod
-			render_ResetModelLighting(1, 1, 1)
 			render_SetMaterial(mat)
 			render_DrawBox(self:GetPos() + visual_offset, self:GetAngles(), self:OBBMins(), self:OBBMaxs())
 		end
@@ -179,14 +185,18 @@ hook.Add("PropUpdateChunk", "infinite_clientrecev", function(ent, chunk)
 		local cam_Start3D = cam.Start3D
 		local cam_End3D = cam.End3D
 		local eyePos = EyePos
-		ent.RenderOverride = function(self)	// low lod
-			cam_Start3D(eyePos() - visual_offset)
-			if !ent.ValidRenderOverride then
+		if !ent.ValidRenderOverride then
+			ent.RenderOverride = function(self)	// low lod
+				cam_Start3D(eyePos() - visual_offset)
 				self:DrawModel()
-			else
-				ent:OldRenderOverride()
+				cam_End3D()
 			end
-			cam_End3D()
+		else
+			ent.RenderOverride = function(self)	// low lod
+				cam_Start3D(eyePos() - visual_offset)
+				self:OldRenderOverride()
+				cam_End3D()
+			end
 		end
 	end
 end)

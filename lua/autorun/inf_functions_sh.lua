@@ -40,7 +40,6 @@ function InfMap.unlocalize_vector(pos, chunk)
 end
 
 function InfMap.should_collide(ent1, ent2)
-
 	local ent1_class = ent1:GetClass()
 	local ent2_class = ent2:GetClass()
 
@@ -88,7 +87,8 @@ local filter = {
 	env_smokestack = true,
 	env_rockettrail = true,
 	rpg_missile = true,
-	gmod_safespace_interior = true,
+	//gmod_safespace_interior = true,
+	sizehandler = true,
 }
 
 function InfMap.filter_entities(e)
