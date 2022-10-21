@@ -23,7 +23,7 @@ if SERVER then
 		ent:SetCustomCollisionCheck(true)	// required for ShouldCollide hook
 
 		// make sure to teleport things in chairs too
-		if ent.GetDriver and ent:GetDriver():IsValid() then
+		if ent.dt and ent.GetDriver and ent:GetDriver():IsValid() then
 			hook.Run("PropUpdateChunk", ent:GetDriver(), chunk)
 		end
 
