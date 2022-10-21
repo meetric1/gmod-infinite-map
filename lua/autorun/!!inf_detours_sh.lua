@@ -21,6 +21,16 @@ if CLIENT then
 			return true
 		end
 	end)
+
+	
+	EntityMT.InfMap_SetRenderBounds = EntityMT.InfMap_SetRenderBounds or EntityMT.SetRenderBounds
+	function EntityMT:SetRenderBounds(min, max, add)
+		if self.RENDER_BOUNDS then
+			self.RENDER_BOUNDS = {min, max}
+		end
+		return self:InfMap_SetRenderBounds(min, max, add)
+	end
+
 	return
 end
 
@@ -37,7 +47,7 @@ function EntityMT:SetPos(pos)
 	if chunk_offset != self.CHUNK_OFFSET then
 		hook.Run("PropUpdateChunk", self, chunk_offset)
 	end
-	self:InfMap_SetPos(chunk_pos)
+	return self:InfMap_SetPos(chunk_pos)
 end
 
 EntityMT.InfMap_LocalToWorld = EntityMT.InfMap_LocalToWorld or EntityMT.LocalToWorld
@@ -84,7 +94,7 @@ function PhysObjMT:SetPos(pos, teleport)
 	if chunk_offset != ent.CHUNK_OFFSET then
 		hook.Run("PropUpdateChunk", ent, chunk_offset)
 	end
-	self:InfMap_SetPos(chunk_pos, teleport)
+	return self:InfMap_SetPos(chunk_pos, teleport)
 end
 
 // Internally these functions are used for constraints, unfortunately they are created in world space at the LocalToWorld positions causing huge problems
@@ -113,7 +123,7 @@ function VehicleMT:SetPos(pos)
 	if chunk_offset != self.CHUNK_OFFSET then
 		hook.Run("PropUpdateChunk", self, chunk_offset)
 	end
-	self:InfMap_SetPos(chunk_pos)
+	return self:InfMap_SetPos(chunk_pos)
 end
 
 VehicleMT.InfMap_LocalToWorld = VehicleMT.InfMap_LocalToWorld or VehicleMT.LocalToWorld

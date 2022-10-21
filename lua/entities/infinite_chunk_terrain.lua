@@ -88,7 +88,7 @@ else
         physenv.SetPerformanceSettings({MaxVelocity = 2^31})
     end
 
-    hook.Add("InitPostEntity", "infinite_terrain_init", resetAll)
+    hook.Add("InitPostEntity", "infinite_terrain_init", function() timer.Simple(0, function() resetAll() end) end)
     hook.Add("PostCleanupMap", "infmap_cleanup", resetAll)
 end
 
