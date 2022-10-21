@@ -275,25 +275,21 @@ end)
 
 // when entities are spawned, reset them
 hook.Add("PlayerSpawn", "infinite_plyreset", function(ply, trans)
-	timer.Simple(0, function()	// players weapons are invalid for first tick
-		print("Resetting " .. ply:Nick() .." to chunk 0,0,0")
-		ply:InfMap_SetPos(Vector(math.Rand(-1, 1) * 200, math.Rand(-1, 1) * 200))
-		hook.Run("PropUpdateChunk", ply, Vector())	// still required because weapon entities are changed
-	end)
+	print("Resetting " .. ply:Nick() .." to chunk 0,0,0")
+	ply:SetPos(Vector(math.Rand(-1, 1) * 200, math.Rand(-1, 1) * 200))
 end)
-
 
 // ^^
 hook.Add("OnEntityCreated", "infinite_propreset", function(ent)
-	timer.Simple(0.02, function()
-		if ent:IsValid() and !ent:IsWeapon() then 
+	timer.Simple(0, function()	// let entity data table update
+		if ent and ent:IsValid() then 
 			if ent.CHUNK_OFFSET then return end
 			if InfMap.filter_entities(ent) and ent:GetClass() != "rpg_missile" then return end
-			
+
 			local pos = Vector()
 			local owner = ent:GetOwner()
-			if owner and owner:IsValid() then
-				pos = owner.CHUNK_OFFSET or Vector()
+			if owner and owner:IsValid() and owner.CHUNK_OFFSET then
+				pos = owner.CHUNK_OFFSET
 			end
 			hook.Run("PropUpdateChunk", ent, pos)
 		end

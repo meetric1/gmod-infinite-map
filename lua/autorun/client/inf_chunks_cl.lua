@@ -44,7 +44,7 @@ hook.Add("RenderScene", "infinite_update_visbounds", function(eyePos, eyeAngles)
 		if !ent or !ent:IsValid() then continue end
 		if !ent.RenderOverride then continue end
 
-		// when bounding box is outside of world bounds the object isn't rendered even though IT SHOULD BE
+		// when bounding box is outside of world bounds the object isn't rendered
 		// just throw the bounding box right infront of the players eyes, whats the worst that could happen?
 		local world_chunk_offset = (ent.CHUNK_OFFSET or Vector()) - lp_chunk_offset
 		if world_chunk_offset == Vector() then continue end

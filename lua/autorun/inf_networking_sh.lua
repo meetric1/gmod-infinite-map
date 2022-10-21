@@ -16,14 +16,14 @@ if SERVER then
 	end
 
 	hook.Add("PropUpdateChunk", "server", function(ent, chunk)
-		if ent:IsWeapon() and ent:GetOwner():IsValid() then return end
+		//if ent:IsWeapon() and ent:GetOwner():IsValid() then return end
 
 		print(ent, "passed in chunk", chunk)
 		ent.CHUNK_OFFSET = chunk
 		ent:SetCustomCollisionCheck(true)	// required for ShouldCollide hook
 
 		// make sure to teleport things in chairs too
-		if ent.dt and ent.GetDriver and ent:GetDriver():IsValid() then
+		if ent.VehicleTable and ent.GetDriver and ent:GetDriver():IsValid() then
 			hook.Run("PropUpdateChunk", ent:GetDriver(), chunk)
 		end
 
@@ -88,10 +88,11 @@ else
 	net.Receive("INF_PROP_UPDATE", function()
 		local ent_index = net.ReadUInt(16)
 		local chunk = Vector(net.ReadInt(16), net.ReadInt(16), net.ReadInt(16))
+
 		if Entity(ent_index):IsValid() then
 			update_prop(ent_index, chunk)
 		else
-			timer.Create("TryPropUpdateChunk" .. ent_index, 0, 100, function()
+			timer.Create("TryPropUpdateChunk" .. ent_index, 0.01, 100, function()
 				if Entity(ent_index):IsValid() then
 					update_prop(ent_index, chunk)
 					timer.Remove("TryPropUpdateChunk" .. ent_index)
@@ -103,8 +104,10 @@ else
 	end)
 
 	// I exist!
-	hook.Add("InitPostEntity", "infinitemap_request", function()
+	local function resetAll()
 		net.Start("INF_PROP_UPDATE")
 		net.SendToServer()
-	end)
+	end
+	hook.Add("InitPostEntity", "infinitemap_request", resetAll)
+	hook.Add("PostCleanupMap", "infmap_cleanup", resetAll)
 end

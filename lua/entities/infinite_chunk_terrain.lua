@@ -73,11 +73,11 @@ if CLIENT then
 else
     local function resetAll()
         local e = ents.Create("infinite_chunk_terrain")
-        e:InfMap_SetPos(Vector(0, 0, -25))
+        e:SetPos(Vector(0, 0, -25))
         e:Spawn()
 
         local e2 = ents.Create("prop_physics")
-        e2:InfMap_SetPos(Vector(0, 0, -10))
+        e2:SetPos(Vector(0, 0, -10))
         e2:SetModel("models/hunter/blocks/cube8x8x025.mdl")
         e2:SetMaterial("models/gibs/metalgibs/metal_gibs")
         e2:Spawn()

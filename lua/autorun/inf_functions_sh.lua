@@ -134,7 +134,7 @@ local function constrained_invalid_filter(ent)
 	if phys:IsValid() then
 		phys_filter = !phys:IsMoveable()	// filter frozen props & 1 mass props
 	end
-	return InfMap.filter_entities(ent) or (!ent:IsSolid() and ent:GetNoDraw()) or ent:GetParent():IsValid() or phys_filter
+	return InfMap.filter_entities(ent) or (!ent:IsSolid() and ent:GetNoDraw()) or ent:GetParent():IsValid() or phys_filter or (ent:IsWeapon() and ent:GetOwner():IsValid())
 end
 
 function InfMap.constrained_status(ent) 
