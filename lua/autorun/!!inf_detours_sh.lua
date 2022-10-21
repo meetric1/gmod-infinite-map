@@ -110,7 +110,7 @@ end
 VehicleMT.InfMap_SetPos = VehicleMT.InfMap_SetPos or VehicleMT.SetPos
 function VehicleMT:SetPos(pos)
 	local chunk_pos, chunk_offset = InfMap.localize_vector(pos)
-	if chunk_offset != self.CHUNK_OFFSET then
+	if self.dt and chunk_offset != self.CHUNK_OFFSET then
 		hook.Run("PropUpdateChunk", self, chunk_offset)
 	end
 	self:InfMap_SetPos(chunk_pos)
