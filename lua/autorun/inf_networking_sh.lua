@@ -23,9 +23,11 @@ if SERVER then
 		ent:SetCustomCollisionCheck(true)	// required for ShouldCollide hook
 
 		// make sure to teleport things in chairs too
-		if ent.VehicleTable and ent.GetDriver and ent:GetDriver():IsValid() then
-			hook.Run("PropUpdateChunk", ent:GetDriver(), chunk)
-		end
+		pcall(function()	// vehicles when initialized arent actually initialized and dont actually have their datatables set up
+			if ent.GetDriver and ent:GetDriver():IsValid() then
+				hook.Run("PropUpdateChunk", ent:GetDriver(), chunk)
+			end
+		end)
 
 		// dont network bad ents to client, they may not even be able to see them
 		if (InfMap.filter_entities(ent) or ent:GetNoDraw()) and ent:GetClass() != "infinite_chunk_clone" then return end	
