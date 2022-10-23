@@ -100,6 +100,7 @@ end)
 // detour rendering of entities in other chunks
 local empty_function = function() end
 hook.Add("PropUpdateChunk", "infinite_clientrecev", function(ent, chunk)
+	if !ent then return end
 	// loop through all ents, offset them relative to player since player has moved
 	if ent == LocalPlayer() then 
 		for k, v in ipairs(ents.GetAll()) do 
@@ -116,6 +117,7 @@ hook.Add("PropUpdateChunk", "infinite_clientrecev", function(ent, chunk)
 	// prop2mesh support
 	if ent.prop2mesh_controllers then
 		for _, controller in ipairs(ent.prop2mesh_controllers) do
+			if !controller.ent then continue end
 			controller.ent.CHUNK_OFFSET = chunk
 			hook.Run("PropUpdateChunk", controller.ent, chunk)	// update renderoverride
 			table.insert(InfMap.all_ents, controller.ent)
@@ -144,7 +146,7 @@ hook.Add("PropUpdateChunk", "infinite_clientrecev", function(ent, chunk)
 		return 
 	end
 	
-	print("Detouring rendering of entity:", ent)
+	//print("Detouring rendering of entity:", ent)
 
 	// put ent in table to update renderbounds
 	table.insert(InfMap.all_ents, ent)

@@ -136,8 +136,8 @@ hook.Add("Think", "infinite_chunkmove", function()
 			local pos, offset = InfMap.localize_vector(main_ent:InfMap_GetPos())
 			local final_chunk_offset = main_ent.CHUNK_OFFSET + offset
 			local main_ent_pos = main_ent:InfMap_GetPos()
-			local main_ents = table.Copy(main_ent.CONSTRAINED_DATA)
-			for _, constrained_ent in ipairs(main_ents) do	// includes itself
+			for _, constrained_ent in ipairs(main_ent.CONSTRAINED_DATA) do	// includes itself
+				if main_ent == constrained_ent then continue end
 				if !constrained_ent:IsValid() or InfMap.filter_entities(constrained_ent) then continue end
 				if constrained_ent != main_ent then
 					constrained_ent:ForcePlayerDrop()
@@ -146,6 +146,9 @@ hook.Add("Think", "infinite_chunkmove", function()
 				local delta_pos = pos + (constrained_ent:InfMap_GetPos() - main_ent_pos)
 				update_entity(constrained_ent, delta_pos, final_chunk_offset)
 			end
+
+			// update main ent
+			update_entity(main_ent, pos, final_chunk_offset)
 		else 
 			InfMap.reset_constrained_data(main_ent)
 		end

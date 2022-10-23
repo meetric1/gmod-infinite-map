@@ -39,20 +39,21 @@ function ENT:Initialize()
 end
 
 if CLIENT then
-    local size = InfMap.chunk_size * 51
+    local scale = 1
+    local size = InfMap.chunk_size * 51 * scale
     local data = {
-        {pos = Vector(size, size, 10), normal = Vector(0, 0, 1), u = 10000, v = 0, tangent = Vector(1, 0, 0), userdata = {1, 0, 0, -1}},
-        {pos = Vector(size, -size, 10), normal = Vector(0, 0, 1), u = 10000, v = 10000, tangent = Vector(1, 0, 0), userdata = {1, 0, 0, -1}},
-        {pos = Vector(-size, -size, 10), normal = Vector(0, 0, 1), u = 0, v = 10000, tangent = Vector(1, 0, 0), userdata = {1, 0, 0, -1}},
-        {pos = Vector(size, size, 10), normal = Vector(0, 0, 1), u = 10000, v = 0, tangent = Vector(1, 0, 0), userdata = {1, 0, 0, -1}},
-        {pos = Vector(-size, -size, 10), normal = Vector(0, 0, 1), u = 0, v = 10000, tangent = Vector(1, 0, 0), userdata = {1, 0, 0, -1}},
+        {pos = Vector(size, size, 10), normal = Vector(0, 0, 1), u = 10000 * scale, v = 0, tangent = Vector(1, 0, 0), userdata = {1, 0, 0, -1}},
+        {pos = Vector(size, -size, 10), normal = Vector(0, 0, 1), u = 10000 * scale, v = 10000 * scale, tangent = Vector(1, 0, 0), userdata = {1, 0, 0, -1}},
+        {pos = Vector(-size, -size, 10), normal = Vector(0, 0, 1), u = 0, v = 10000 * scale, tangent = Vector(1, 0, 0), userdata = {1, 0, 0, -1}},
+        {pos = Vector(size, size, 10), normal = Vector(0, 0, 1), u = 10000 * scale, v = 0, tangent = Vector(1, 0, 0), userdata = {1, 0, 0, -1}},
+        {pos = Vector(-size, -size, 10), normal = Vector(0, 0, 1), u = 0, v = 10000 * scale, tangent = Vector(1, 0, 0), userdata = {1, 0, 0, -1}},
         {pos = Vector(-size, size, 10), normal = Vector(0, 0, 1), u = 0, v = 0, tangent = Vector(1, 0, 0), userdata = {1, 0, 0, -1}},
 
-        {pos = Vector(-size, -size, -10), normal = Vector(0, 0, -1), u = 10000, v = 0, tangent = Vector(-1, 0, 0), userdata = {1, 0, 0, -1}},
-        {pos = Vector(size, -size, -10), normal = Vector(0, 0, -1), u = 10000, v = 10000, tangent = Vector(-1, 0, 0), userdata = {1, 0, 0, -1}},
-        {pos = Vector(size, size, -10), normal = Vector(0, 0, -1), u = 0, v = 10000, tangent = Vector(-1, 0, 0), userdata = {1, 0, 0, -1}},
-        {pos = Vector(-size, -size, -10), normal = Vector(0, 0, -1), u = 10000, v = 0, tangent = Vector(-1, 0, 0), userdata = {1, 0, 0, -1}},
-        {pos = Vector(size, size, -10), normal = Vector(0, 0, -1), u = 0, v = 10000, tangent = Vector(-1, 0, 0), userdata = {1, 0, 0, -1}},
+        {pos = Vector(-size, -size, -10), normal = Vector(0, 0, -1), u = 10000 * scale, v = 0, tangent = Vector(-1, 0, 0), userdata = {1, 0, 0, -1}},
+        {pos = Vector(size, -size, -10), normal = Vector(0, 0, -1), u = 10000 * scale, v = 10000 * scale, tangent = Vector(-1, 0, 0), userdata = {1, 0, 0, -1}},
+        {pos = Vector(size, size, -10), normal = Vector(0, 0, -1), u = 0, v = 10000 * scale, tangent = Vector(-1, 0, 0), userdata = {1, 0, 0, -1}},
+        {pos = Vector(-size, -size, -10), normal = Vector(0, 0, -1), u = 10000 * scale, v = 0, tangent = Vector(-1, 0, 0), userdata = {1, 0, 0, -1}},
+        {pos = Vector(size, size, -10), normal = Vector(0, 0, -1), u = 0, v = 10000 * scale, tangent = Vector(-1, 0, 0), userdata = {1, 0, 0, -1}},
         {pos = Vector(-size, size, -10), normal = Vector(0, 0, -1), u = 0, v = 0, tangent = Vector(-1, 0, 0), userdata = {1, 0, 0, -1}},
     }
     local m = Mesh()
@@ -85,11 +86,20 @@ else
 
         //hook.Run("PropUpdateChunk", e, Vector())
         //hook.Run("PropUpdateChunk", e2, Vector())
-        physenv.SetPerformanceSettings({MaxVelocity = 2^31})
+        physenv.SetPerformanceSettings({MaxVelocity = 2^31, MaxAngularVelocity = 2^31})
     end
 
     hook.Add("InitPostEntity", "infinite_terrain_init", function() timer.Simple(0, function() resetAll() end) end)
     hook.Add("PostCleanupMap", "infmap_cleanup", resetAll)
+end
+
+function ENT:Think()
+    local phys = self:GetPhysicsObject()
+    if phys:IsValid() then
+        phys:EnableMotion(false)
+    end
+    self:SetPos(Vector(0, 0, -25))
+    self:SetAngles(Angle())
 end
 
 function ENT:CanProperty()

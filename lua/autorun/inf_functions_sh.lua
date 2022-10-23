@@ -89,6 +89,7 @@ local filter = {
 	rpg_missile = true,
 	//gmod_safespace_interior = true,
 	sizehandler = true,
+	player_pickup = true,
 }
 
 function InfMap.filter_entities(e)
