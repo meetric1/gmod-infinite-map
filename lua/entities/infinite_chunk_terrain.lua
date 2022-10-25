@@ -40,7 +40,7 @@ end
 
 if CLIENT then
     local scale = 1
-    local size = InfMap.chunk_size * 51 * scale
+    local size = InfMap.chunk_size * 100 * scale
     local data = {
         {pos = Vector(size, size, 10), normal = Vector(0, 0, 1), u = 10000 * scale, v = 0, tangent = Vector(1, 0, 0), userdata = {1, 0, 0, -1}},
         {pos = Vector(size, -size, 10), normal = Vector(0, 0, 1), u = 10000 * scale, v = 10000 * scale, tangent = Vector(1, 0, 0), userdata = {1, 0, 0, -1}},
