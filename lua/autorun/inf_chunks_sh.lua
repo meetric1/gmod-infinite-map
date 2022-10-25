@@ -4,7 +4,7 @@ AddCSLuaFile()
 
 InfMap = InfMap or {}
 
--- garry bad
+// garry bad
 hook.Add("ShouldCollide", "inf_chunk", function(ent1, ent2)
 	return InfMap.should_collide(ent1, ent2)
 end)
