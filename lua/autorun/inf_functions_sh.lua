@@ -3,6 +3,11 @@ if game.GetMap() != "gm_infinite" then return end
 AddCSLuaFile()
 
 InfMap = InfMap or {}
+InfMap.simplex = include("simplex.lua")
+
+function InfMap.height_function(x, y) 
+    return InfMap.simplex.Noise2D(x / 3, y / 3) * 0 - 15
+end
 
 function InfMap.in_chunk(pos, size) 
 	local cs = size or InfMap.chunk_size
@@ -39,25 +44,8 @@ function InfMap.unlocalize_vector(pos, chunk)
 	return (chunk or Vector()) * InfMap.chunk_size * 2 + pos
 end
 
-function InfMap.should_collide(ent1, ent2)
-	local ent1_class = ent1:GetClass()
-	local ent2_class = ent2:GetClass()
-
-	if ent1_class == "infinite_chunk_terrain" then 
-		if !ent2.CHUNK_OFFSET then return end
-		if math.abs(ent2.CHUNK_OFFSET[1]) > 25 or math.abs(ent2.CHUNK_OFFSET[2]) > 25 or ent2.CHUNK_OFFSET[3] != 0 then
-			return false
-		end
-	elseif ent2_class == "infinite_chunk_terrain" then
-		if !ent1.CHUNK_OFFSET then return end
-		if math.abs(ent1.CHUNK_OFFSET[1]) > 25 or math.abs(ent1.CHUNK_OFFSET[2]) > 25 or ent1.CHUNK_OFFSET[3] != 0 then
-			return false
-		end
-	elseif ent1.CHUNK_OFFSET != ent2.CHUNK_OFFSET then return false end
-end
-
 local filter = {
-	infinite_chunk_clone = true,
+	infmap_clone = true,
 	physgun_beam = true,
 	worldspawn = true,
 	gmod_hands = true,
@@ -144,6 +132,7 @@ function InfMap.constrained_status(ent)
 	end
 
 	ent.CONSTRAINED_DATA = InfMap.get_all_constrained(ent)
+
 	// first pass, these entities arent valid
 	if constrained_invalid_filter(ent) then 
 		ent.CONSTRAINED_MAIN = false

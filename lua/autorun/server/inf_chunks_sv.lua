@@ -124,7 +124,6 @@ end)
 
 // object wrapping, if in next chunk, put in next chunk and do localization math
 hook.Add("Think", "infinite_chunkmove", function()
-	//if true then return end
 	for _, main_ent in ipairs(all_ents) do
 		if !main_ent or !main_ent:IsValid() then continue end
 		if !main_ent.CHUNK_OFFSET then continue end
@@ -170,7 +169,7 @@ local co = coroutine.create(function()
 		for _, ent in ipairs(ents.GetAll()) do
 			if !ent or !ent:IsValid() then continue end
 			if InfMap.filter_entities(ent) then continue end
-			if ent:GetClass() == "infinite_chunk_terrain" then continue end
+			if ent:GetClass() == "infmap_terrain" then continue end
 
 			/////////////////////////////////
 
@@ -207,7 +206,7 @@ local co = coroutine.create(function()
 								if ent.CHUNK_CLONES[i] then continue end
 
 								// clone object
-								local e = ents.Create("infinite_chunk_clone")
+								local e = ents.Create("infmap_clone")
 								e:SetReferenceData(ent, ent.CHUNK_OFFSET + Vector(x, y, z))
 								e:Spawn()
 								ent.CHUNK_CLONES[i] = e

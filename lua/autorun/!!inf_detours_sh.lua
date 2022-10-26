@@ -22,6 +22,7 @@ if CLIENT then
 		end
 	end)
 
+	/*********** Client Entity Metatable *************/
 	
 	EntityMT.InfMap_SetRenderBounds = EntityMT.InfMap_SetRenderBounds or EntityMT.SetRenderBounds
 	function EntityMT:SetRenderBounds(min, max, add)
@@ -30,6 +31,64 @@ if CLIENT then
 		end
 		return self:InfMap_SetRenderBounds(min, max, add)
 	end
+
+	/*********** Client Other *************/
+
+	// faster lookup
+	local istable = istable
+	local IsEntity = IsEntity
+	local function modify_trace_data(orig_data, trace_func, extra)
+		local data = {}
+
+		for k, v in pairs(orig_data) do
+			data[k] = v
+		end
+
+		local start_offset = LocalPlayer().CHUNK_OFFSET// or Vector()
+		// #2 create filter and only hit entities in your chunk
+		local old_filter = data.filter
+		if !old_filter then 
+			data.filter = function(e) 
+				return e.CHUNK_OFFSET == start_offset
+			end
+		elseif IsEntity(old_filter) then // rip efficiency
+			data.filter = function(e)
+				return e.CHUNK_OFFSET == start_offset and e != old_filter
+			end 
+		elseif istable(old_filter) then	
+			data.filter = function(e)
+				for i = 1, #old_filter do 
+					if e == old_filter[i] then 
+						return false
+					end 
+				end
+				return e.CHUNK_OFFSET == start_offset
+			end
+		else // must be function
+			data.filter = function(e)
+				return old_filter(e) and e.CHUNK_OFFSET == start_offset
+			end
+		end
+
+		local hit_data = trace_func(data, extra)
+		local hit_ent = hit_data.Entity
+		if hit_ent and hit_ent:IsValid() and hit_ent:GetClass() == "infinite_terrain" then
+			hit_ent = game.GetWorld()
+		end
+		return hit_data
+	end
+
+	// traceline
+	InfMap.TraceLine = InfMap.TraceLine or util.TraceLine
+	function util.TraceLine(data)
+		return modify_trace_data(data, InfMap.TraceLine)
+	end
+
+	//print("fuckoff traceline")
+	//hook.Add("InitPostEntity", "infmap_thefuck?", function()
+	//	print("FUCKING U P TRACELINE\n\n")
+	//	util.TraceLine = InfMap.TraceLine
+	//end)
 
 	return
 end
@@ -112,6 +171,7 @@ end
 
 /*************** Vehicle Metatable *****************/
 
+// causes stack overflow
 //VehicleMT.InfMap_GetPos = VehicleMT.InfMap_GetPos or VehicleMT.GetPos
 //function VehicleMT:GetPos()
 //	return InfMap.unlocalize_vector(self:InfMap_GetPos(), self.CHUNK_OFFSET)
@@ -211,11 +271,11 @@ local function modify_trace_data(orig_data, trace_func, extra)
 	local old_filter = data.filter
 	if !old_filter then 
 		data.filter = function(e) 
-			return e.CHUNK_OFFSET == start_offset or (e:GetClass() == "infinite_chunk_terrain" and start_offset[3] == 0) 
+			return e.CHUNK_OFFSET == start_offset
 		end
 	elseif IsEntity(old_filter) then // rip efficiency
 		data.filter = function(e)
-			return (e.CHUNK_OFFSET == start_offset or (e:GetClass() == "infinite_chunk_terrain" and start_offset[3] == 0)) and e != old_filter
+			return e.CHUNK_OFFSET == start_offset and e != old_filter
 		end 
 	elseif istable(old_filter) then	
 		data.filter = function(e)
@@ -224,11 +284,11 @@ local function modify_trace_data(orig_data, trace_func, extra)
 					return false
 				end 
 			end
-			return e.CHUNK_OFFSET == start_offset or (e:GetClass() == "infinite_chunk_terrain" and start_offset[3] == 0)
+			return e.CHUNK_OFFSET == start_offset
 		end
 	else // must be function
 		data.filter = function(e)
-			return old_filter(e) and (e.CHUNK_OFFSET == start_offset or (e:GetClass() == "infinite_chunk_terrain" and start_offset[3] == 0))
+			return old_filter(e) and e.CHUNK_OFFSET == start_offset
 		end
 	end
 
@@ -236,6 +296,10 @@ local function modify_trace_data(orig_data, trace_func, extra)
 	local hit_data = trace_func(data, extra)
 	hit_data.HitPos = InfMap.unlocalize_vector(hit_data.HitPos, start_offset)
 	hit_data.StartPos = InfMap.unlocalize_vector(hit_data.StartPos, start_offset)
+	local hit_ent = hit_data.Entity
+	if hit_ent and hit_ent:IsValid() and hit_ent:GetClass() == "infinite_terrain" then
+		hit_ent = game.GetWorld()
+	end
 	return hit_data
 end
 

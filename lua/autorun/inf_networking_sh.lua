@@ -9,15 +9,13 @@ if SERVER then
 	local function send_data(ent, chunk)
 		net.Start("INF_PROP_UPDATE")
 		net.WriteUInt(ent:EntIndex(), 16)
-		net.WriteInt(chunk[1], 16)
-		net.WriteInt(chunk[2], 16)
-		net.WriteInt(chunk[3], 16)
+		net.WriteInt(chunk[1], 32)
+		net.WriteInt(chunk[2], 32)
+		net.WriteInt(chunk[3], 32)
 		net.Broadcast()
 	end
 
 	hook.Add("PropUpdateChunk", "server", function(ent, chunk)
-		//if ent:IsWeapon() and ent:GetOwner():IsValid() then return end
-
 		print(ent, "passed in chunk", chunk)
 		ent.CHUNK_OFFSET = chunk
 		ent:SetCustomCollisionCheck(true)	// required for ShouldCollide hook
@@ -30,13 +28,13 @@ if SERVER then
 		end)
 
 		// dont network bad ents to client, they may not even be able to see them
-		if (InfMap.filter_entities(ent) or ent:GetNoDraw()) and ent:GetClass() != "infinite_chunk_clone" then return end	
+		if (InfMap.filter_entities(ent) or ent:GetNoDraw()) and ent:GetClass() != "infmap_clone" then return end	
 
 		send_data(ent, chunk)
 
 		// network weapons from players always
 		if ent:IsPlayer() or ent:IsNPC() then
-			print(ent, "weapons passed in chunk", chunk)
+			//print(ent, "weapons passed in chunk", chunk)
 			for _, weapon in ipairs(ent:GetWeapons()) do
 				ent.CHUNK_OFFSET = chunk
 				ent:SetCustomCollisionCheck(true)
@@ -49,7 +47,7 @@ if SERVER then
 	net.Receive("INF_PROP_UPDATE", function(len, ply)
 		print("Sending chunk/prop data to", ply)
 		for _, ent in ipairs(ents.GetAll()) do
-			if (InfMap.filter_entities(ent) or ent:GetNoDraw()) and ent:GetClass() != "infinite_chunk_clone" then continue end
+			if (InfMap.filter_entities(ent) or ent:GetNoDraw()) and ent:GetClass() != "infmap_clone" then continue end
 			if ent.CHUNK_OFFSET then
 				local chunk = ent.CHUNK_OFFSET
 				send_data(ent, ent.CHUNK_OFFSET)
@@ -71,8 +69,7 @@ if SERVER then
 else
 	local function update_prop(ent_index, chunk)
 		local ent = Entity(ent_index)
-		ent.CHUNK_OFFSET = chunk
-		hook.Run("PropUpdateChunk", ent, chunk)
+		hook.Run("PropUpdateChunk", Entity(ent_index), chunk)
 	end
 
 	// turn player flashlight off
@@ -89,7 +86,7 @@ else
 
 	net.Receive("INF_PROP_UPDATE", function()
 		local ent_index = net.ReadUInt(16)
-		local chunk = Vector(net.ReadInt(16), net.ReadInt(16), net.ReadInt(16))
+		local chunk = Vector(net.ReadInt(32), net.ReadInt(32), net.ReadInt(32))
 
 		if Entity(ent_index):IsValid() then
 			update_prop(ent_index, chunk)

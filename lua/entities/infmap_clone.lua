@@ -32,7 +32,6 @@ function ENT:Initialize()
         self:SetSolid(SOLID_VPHYSICS) // init physics object on client
         self:SetMoveType(MOVETYPE_VPHYSICS)
         self:PhysicsInit(SOLID_VPHYSICS)
-        self:SetNoDraw(true)
         return 
     end
 
@@ -48,6 +47,8 @@ function ENT:Initialize()
         SafeRemoveEntity(self)
         return
     end
+
+    print("Clone initialized w", parent)
 
     self:SetModel(parent:GetModel())
     local points = 0
@@ -71,6 +72,7 @@ end
 
 function ENT:Think()
     if CLIENT then 
+        self:SetNoDraw(true)
         local phys = self:GetPhysicsObject()
         if phys:IsValid() then
             phys:EnableMotion(false)
@@ -98,7 +100,7 @@ function ENT:Think()
 end
 
 hook.Add("PhysgunPickup", "infinite_chunkclone_pickup", function(ply, ent)
-    if ent:IsValid() and ent:GetClass() == "infinite_chunk_clone" then 
+    if ent:IsValid() and ent:GetClass() == "infmap_clone" then 
         return false 
     end
 end)
