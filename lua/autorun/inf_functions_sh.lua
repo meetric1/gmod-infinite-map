@@ -7,6 +7,7 @@ InfMap.simplex = include("simplex.lua")
 
 function InfMap.height_function(x, y) 
 	if (x > -1.01 and x < 1.01) and (y > -1.01 and y < 1.01) then return -15 end
+	//return math.tan(x^2 + y^2)
     return ((InfMap.simplex.Noise3D(x / 10, y / 10, 0) + 0.5) * 1000) * (InfMap.simplex.Noise3D(x / 100, y / 100, 50) * 1000) + (InfMap.simplex.Noise3D(x / 150, y / 150, 100) + 0.31) * 1000000
 end
 
@@ -53,8 +54,15 @@ function InfMap.intersect_box(min_a, max_a, min_b, max_b)
 	return !(x_check or y_check or z_check)
 end
 
+InfMap.terrain_filter = {
+	infmap_clone = true ,
+	infmap_terrain_collider = true,
+	infmap_terrain_render = true
+}
+
 local filter = {
 	infmap_clone = true,
+	infmap_terrain_render = true,
 	physgun_beam = true,
 	worldspawn = true,
 	gmod_hands = true,

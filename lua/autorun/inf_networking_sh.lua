@@ -2,6 +2,8 @@ if game.GetMap() != "gm_infinite" then return end
 
 AddCSLuaFile()
 
+InfMap = InfMap or {}
+
 if SERVER then
 	util.AddNetworkString("INF_PROP_UPDATE")
 	util.AddNetworkString("INF_FLASHLIGHT_OFF")
@@ -15,7 +17,8 @@ if SERVER then
 		net.Broadcast()
 	end
 
-	hook.Add("PropUpdateChunk", "server", function(ent, chunk)
+	function InfMap.prop_update_chunk(ent, chunk)
+		hook.Run("PropUpdateChunk", ent, chunk, ent.CHUNK_OFFSET)
 		print(ent, "passed in chunk", chunk)
 		ent.CHUNK_OFFSET = chunk
 		ent:SetCustomCollisionCheck(true)	// required for ShouldCollide hook
@@ -23,12 +26,12 @@ if SERVER then
 		// make sure to teleport things in chairs too
 		pcall(function()	// vehicles when initialized arent actually initialized and dont actually have their datatables set up
 			if ent.GetDriver and IsValid(ent:GetDriver()) then
-				hook.Run("PropUpdateChunk", ent:GetDriver(), chunk)
+				InfMap.prop_update_chunk(ent:GetDriver(), chunk)
 			end
 		end)
 
 		// dont network bad ents to client, they may not even be able to see them
-		if (InfMap.filter_entities(ent) or ent:GetNoDraw()) and ent:GetClass() != "infmap_clone" then return end	
+		if (InfMap.filter_entities(ent) or ent:GetNoDraw()) and !InfMap.terrain_filter[ent:GetClass()] then return end
 
 		send_data(ent, chunk)
 
@@ -41,7 +44,7 @@ if SERVER then
 				send_data(weapon, chunk)
 			end
 		end
-	end)
+	end
 
 	// it exists!
 	net.Receive("INF_PROP_UPDATE", function(len, ply)
@@ -69,7 +72,7 @@ if SERVER then
 else
 	local function update_prop(ent_index, chunk)
 		local ent = Entity(ent_index)
-		hook.Run("PropUpdateChunk", Entity(ent_index), chunk)
+		InfMap.prop_update_chunk(Entity(ent_index), chunk)
 	end
 
 	// turn player flashlight off

@@ -67,7 +67,7 @@ function ENT:Initialize()
         self:GetPhysicsObject():EnableMotion(false)
     end
 
-    hook.Run("PropUpdateChunk", self, self.REFERENCE_DATA[2])
+    InfMap.prop_update_chunk(self, self.REFERENCE_DATA[2])
 end
 
 function ENT:Think()

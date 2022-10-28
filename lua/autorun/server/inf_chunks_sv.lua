@@ -69,13 +69,13 @@ local function update_entity(ent, pos, chunk)
 				end
 
 				unfucked_SetPos(constrained_ent, pos + (constrained_ent:InfMap_GetPos() - ent_pos))
-				hook.Run("PropUpdateChunk", constrained_ent, chunk)
+				InfMap.prop_update_chunk(constrained_ent, chunk)
 			end
 			InfMap.reset_constrained_data(carry)
 		end
 	end
 
-	hook.Run("PropUpdateChunk", ent, chunk)
+	InfMap.prop_update_chunk(ent, chunk)
 	unfucked_SetPos(ent, pos)
 end
 
@@ -114,7 +114,7 @@ hook.Add("Think", "infinite_gravhull_update", function()
 			continue
 		end
 		if ship.CHUNK_OFFSET != ent.CHUNK_OFFSET then
-			hook.Run("PropUpdateChunk", ent, ship.CHUNK_OFFSET)
+			InfMap.prop_update_chunk(ent, ship.CHUNK_OFFSET)
 		end
 	end
 end)
@@ -158,7 +158,7 @@ local co = coroutine.create(function()
 		for _, ent in ipairs(ents.GetAll()) do
 			if !IsValid(ent) then continue end
 			if InfMap.filter_entities(ent) then continue end
-			if ent:GetClass() == "infmap_terrain" then continue end
+			if InfMap.terrain_filter[ent:GetClass()] then continue end
 
 			/////////////////////////////////
 

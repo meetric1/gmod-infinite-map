@@ -72,7 +72,7 @@ if CLIENT then
 
 		local hit_data = trace_func(data, extra)
 		local hit_ent = hit_data.Entity
-		if hit_ent and hit_ent:IsValid() and hit_ent:GetClass() == "infmap_terrain" then
+		if hit_ent and hit_ent:IsValid() and hit_ent:GetClass() == "infmap_terrain_collider" then
 			hit_data.Entity = game.GetWorld()
 		end
 		return hit_data
@@ -104,7 +104,7 @@ EntityMT.InfMap_SetPos = EntityMT.InfMap_SetPos or EntityMT.SetPos
 function EntityMT:SetPos(pos)
 	local chunk_pos, chunk_offset = InfMap.localize_vector(pos)
 	if chunk_offset != self.CHUNK_OFFSET then
-		hook.Run("PropUpdateChunk", self, chunk_offset)
+		InfMap.prop_update_chunk(self, chunk_offset)
 	end
 	return self:InfMap_SetPos(chunk_pos)
 end
@@ -151,7 +151,7 @@ function PhysObjMT:SetPos(pos, teleport)
 	local chunk_pos, chunk_offset = InfMap.localize_vector(pos)
 	local ent = self:GetEntity()
 	if chunk_offset != ent.CHUNK_OFFSET then
-		hook.Run("PropUpdateChunk", ent, chunk_offset)
+		InfMap.prop_update_chunk(ent, chunk_offset)
 	end
 	return self:InfMap_SetPos(chunk_pos, teleport)
 end
@@ -181,7 +181,7 @@ VehicleMT.InfMap_SetPos = VehicleMT.InfMap_SetPos or VehicleMT.SetPos
 function VehicleMT:SetPos(pos)
 	local chunk_pos, chunk_offset = InfMap.localize_vector(pos)
 	if chunk_offset != self.CHUNK_OFFSET then
-		hook.Run("PropUpdateChunk", self, chunk_offset)
+		InfMap.prop_update_chunk(self, chunk_offset)
 	end
 	return self:InfMap_SetPos(chunk_pos)
 end
@@ -297,7 +297,7 @@ local function modify_trace_data(orig_data, trace_func, extra)
 	hit_data.HitPos = InfMap.unlocalize_vector(hit_data.HitPos, start_offset)
 	hit_data.StartPos = InfMap.unlocalize_vector(hit_data.StartPos, start_offset)
 	local hit_ent = hit_data.Entity
-	if IsValid(hit_ent) and hit_ent:GetClass() == "infmap_terrain" then
+	if IsValid(hit_ent) and hit_ent:GetClass() == "infmap_terrain_collider" then
 		hit_data.Entity = game.GetWorld()
 	end
 	return hit_data
@@ -374,39 +374,10 @@ hook.Add("OnEntityCreated", "infinite_propreset", function(ent)
 			if IsValid(owner) and owner.CHUNK_OFFSET then
 				pos = owner.CHUNK_OFFSET
 			end
-			hook.Run("PropUpdateChunk", ent, pos)
+			InfMap.prop_update_chunk(ent, pos)
 		end
 	end)
 end)
-
-
-/*
-// lazy fix to put props spawned by players in their designated chunks
-local function spawned_model(ply, model, ent)
-	if ent and ent:IsValid() then
-		local chunk_pos, chunk_offset = InfMap.localize_vector(ent:InfMap_GetPos())
-		hook.Run("PropUpdateChunk", ent, ply.CHUNK_OFFSET + chunk_offset)
-		if chunk_offset != Vector() then ent:Inf_SetPos(chunk_pos) end
-	end
-end
-local function spawned(ply, ent)
-	if ent and ent:IsValid() then
-		local chunk_pos, chunk_offset = InfMap.localize_vector(ent:InfMap_GetPos())
-		hook.Run("PropUpdateChunk", ent, ply.CHUNK_OFFSET + chunk_offset)
-		if chunk_offset != Vector() then ent:Inf_SetPos(chunk_pos) end
-	end
-end
-
-hook.Add("PlayerSpawnedProp", "infinite_entdetour", spawned_model)
-hook.Add("PlayerSpawnedEffect", "infinite_entdetour", spawned_model)
-hook.Add("PlayerSpawnedRagdoll", "infinite_entdetour", spawned_model)
-hook.Add("PlayerSpawnedNPC", "infinite_entdetour", spawned)
-hook.Add("PlayerSpawnedSENT", "infinite_entdetour", spawned)
-hook.Add("PlayerSpawnedVehicle", "infinite_entdetour", spawned)
-hook.Add("PlayerSpawnedSWEP", "infinite_entdetour", spawned)
-hook.Add("WeaponEquip", "infinite_entdetour", function(weapon, ply)
-	hook.Run("PropUpdateChunk", weapon, ply.CHUNK_OFFSET or Vector())
-end)*/
 
 
 // disable picking up weapons/items in other chunks

@@ -69,7 +69,7 @@ hook.Add("RenderScene", "!infinite_update_visbounds", function(eyePos, eyeAngles
 			ent.RENDER_BOUNDS = {min, max}
 		end
 
-		if world_chunk_offset:LengthSqr() > 16 and ent:GetClass() != "infmap_terrain" then
+		if world_chunk_offset:LengthSqr() > 16 and ent:GetClass() != "infmap_terrain_collider" then
 			ent:SetRenderBoundsWS(eyePos + prop_dir, eyePos + prop_dir)
 		else
 			local min, max = ent:GetRotatedAABB(ent.RENDER_BOUNDS[1], ent.RENDER_BOUNDS[2])
@@ -112,12 +112,12 @@ end)
 // server tells clients when a prop has entered another chunk
 // detour rendering of entities in other chunks
 local empty_function = function() end
-hook.Add("PropUpdateChunk", "!infinite_clientrecev", function(ent, chunk)
-	if !ent then return end
-	ent.CHUNK_OFFSET = chunk
+function InfMap.prop_update_chunk(ent, chunk)
+	hook.Run("PropUpdateChunk", ent, chunk, ent.CHUNK_OFFSET)
 
+	ent.CHUNK_OFFSET = chunk
 	local class = ent:GetClass()
-	if class == "infmap_clone" or class == "infmap_terrain" or class == "infmap_terrain_render" then return end
+	if InfMap.terrain_filter[class] then return end
 	
 	// loop through all ents, offset them relative to player since player has moved
 	if ent == LocalPlayer() then 
@@ -126,7 +126,7 @@ hook.Add("PropUpdateChunk", "!infinite_clientrecev", function(ent, chunk)
 			if !min_bound or !max_bound then continue end
 			if v == LocalPlayer() or InfMap.filter_entities(v) then continue end
 
-			hook.Run("PropUpdateChunk", v, (v.CHUNK_OFFSET or Vector()))
+			InfMap.prop_update_chunk(v, (v.CHUNK_OFFSET or Vector()))
 		end
 		return 
 	end
@@ -136,7 +136,7 @@ hook.Add("PropUpdateChunk", "!infinite_clientrecev", function(ent, chunk)
 		for _, controller in ipairs(ent.prop2mesh_controllers) do
 			if !controller.ent then continue end
 			controller.ent.CHUNK_OFFSET = chunk
-			hook.Run("PropUpdateChunk", controller.ent, chunk)	// update renderoverride
+			InfMap.prop_update_chunk(controller.ent, chunk)	// update renderoverride
 			table.insert(InfMap.all_ents, controller.ent)
 		end
 	end
@@ -223,4 +223,4 @@ hook.Add("PropUpdateChunk", "!infinite_clientrecev", function(ent, chunk)
 			end
 		end
 	end
-end)
+end
