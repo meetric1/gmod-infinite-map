@@ -43,8 +43,9 @@ hook.Add("RenderScene", "!infinite_update_visbounds", function(eyePos, eyeAngles
 	//eyePos = LocalPlayer():GetShootPos()
 	local sub_size = 2^14 - InfMap.chunk_size - 64	// how far out render bounds can be before outside of the map
 	local lp_chunk_offset = LocalPlayer().CHUNK_OFFSET
+	local shrunk = 0.02	// how much you locally shrink render bounds [in reality should be chunksize / prop_dir:Length()]
 	for _, ent in ipairs(InfMap.all_ents) do	// I feel bad for doing this
-		if !ent or !ent:IsValid() then continue end
+		if !IsValid(ent) then continue end
 		if !ent.RenderOverride then continue end
 		if !ent.CHUNK_OFFSET then continue end
 
@@ -52,13 +53,12 @@ hook.Add("RenderScene", "!infinite_update_visbounds", function(eyePos, eyeAngles
 		// to combat this we locally "shrink" the bounds so they are right infront of the players eyes
 		local world_chunk_offset = ent.CHUNK_OFFSET - lp_chunk_offset
 		if world_chunk_offset == Vector() then continue end
-		
+
 		local prop_dir = (InfMap.unlocalize_vector(ent:GetPos(), world_chunk_offset) - eyePos)
-		local shrunk = Vector(1, 1, 1)
-		if prop_dir:LengthSqr() > sub_size * sub_size then 	// if render bounds is outside normal source bounds it does not render
-			shrunk = sub_size / prop_dir:Length()
-			prop_dir = prop_dir * shrunk
-		end
+
+		local far_lod = world_chunk_offset:LengthSqr() > 16
+		//local shrunk = !far_lod and 0.02 or sub_size / prop_dir:Length()
+		prop_dir = prop_dir * shrunk
 
 		// grab render bounds in case its been edited (prop resizer compatability)
 		if !ent.RENDER_BOUNDS then 
@@ -66,18 +66,19 @@ hook.Add("RenderScene", "!infinite_update_visbounds", function(eyePos, eyeAngles
 			ent.RENDER_BOUNDS = {min, max}
 		end
 
-		if world_chunk_offset:LengthSqr() > 9 and ent:GetClass() != "infmap_terrain" then
+		if far_lod and ent:GetClass() != "infmap_terrain" then
 			ent:SetRenderBoundsWS(eyePos + prop_dir, eyePos + prop_dir)
 		else
 			local min, max = ent:GetRotatedAABB(ent.RENDER_BOUNDS[1], ent.RENDER_BOUNDS[2])
 			if min == Vector() and max == Vector() then
 				min, max = ent.RENDER_BOUNDS[1], ent.RENDER_BOUNDS[2]
 			end
-
+			
 			min = min * shrunk
 			max = max * shrunk
 
 			ent:SetRenderBoundsWS(eyePos + prop_dir + min, eyePos + prop_dir + max)
+			debugoverlay.Box(eyePos + prop_dir, min, max, 0, Color(0, 0, 255, 0))
 		end
 	end
 
@@ -114,6 +115,9 @@ local empty_function = function() end
 hook.Add("PropUpdateChunk", "!infinite_clientrecev", function(ent, chunk)
 	if !ent then return end
 	ent.CHUNK_OFFSET = chunk
+
+	local class = ent:GetClass()
+	if class == "infmap_clone" or class == "infmap_terrain" or class == "infmap_terrain_render" then return end
 	
 	// loop through all ents, offset them relative to player since player has moved
 	if ent == LocalPlayer() then 
@@ -121,7 +125,6 @@ hook.Add("PropUpdateChunk", "!infinite_clientrecev", function(ent, chunk)
 			local min_bound, max_bound = v:GetModelRenderBounds()
 			if !min_bound or !max_bound then continue end
 			if v == LocalPlayer() or InfMap.filter_entities(v) then continue end
-			if v:GetClass() == "infmap_clone" then continue end
 
 			hook.Run("PropUpdateChunk", v, (v.CHUNK_OFFSET or Vector()))
 		end

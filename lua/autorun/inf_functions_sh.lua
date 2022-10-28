@@ -6,7 +6,8 @@ InfMap = InfMap or {}
 InfMap.simplex = include("simplex.lua")
 
 function InfMap.height_function(x, y) 
-    return InfMap.simplex.Noise2D(x / 3, y / 3) * 0 - 15
+	if (x > -1.01 and x < 1.01) and (y > -1.01 and y < 1.01) then return -15 end
+    return ((InfMap.simplex.Noise3D(x / 10, y / 10, 0) + 0.5) * 1000) * (InfMap.simplex.Noise3D(x / 100, y / 100, 50) * 1000) + (InfMap.simplex.Noise3D(x / 150, y / 150, 100) + 0.31) * 1000000
 end
 
 function InfMap.in_chunk(pos, size) 

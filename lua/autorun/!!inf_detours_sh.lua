@@ -72,8 +72,8 @@ if CLIENT then
 
 		local hit_data = trace_func(data, extra)
 		local hit_ent = hit_data.Entity
-		if hit_ent and hit_ent:IsValid() and hit_ent:GetClass() == "infinite_terrain" then
-			hit_ent = game.GetWorld()
+		if hit_ent and hit_ent:IsValid() and hit_ent:GetClass() == "infmap_terrain" then
+			hit_data.Entity = game.GetWorld()
 		end
 		return hit_data
 	end
@@ -85,9 +85,9 @@ if CLIENT then
 	end
 
 	//print("fuckoff traceline")
-	//hook.Add("InitPostEntity", "infmap_thefuck?", function()
+	//hook.Add("Initialize", "infmap_thefuck?", function()
 	//	print("FUCKING U P TRACELINE\n\n")
-	//	util.TraceLine = InfMap.TraceLine
+	//	util.TraceLine = nil
 	//end)
 
 	return
@@ -201,7 +201,7 @@ end
 CTakeDamageInfoMT.InfMap_GetDamagePosition = CTakeDamageInfoMT.InfMap_GetDamagePosition or CTakeDamageInfoMT.GetDamagePosition
 function CTakeDamageInfoMT:GetDamagePosition()
 	local inflictor = self:GetInflictor()
-	if !inflictor or !inflictor:IsValid() then 
+	if !IsValid(inflictor) then 
 		inflictor = game.GetWorld()
 	end
 	return InfMap.unlocalize_vector(self:InfMap_GetDamagePosition(), inflictor.CHUNK_OFFSET)
@@ -297,8 +297,8 @@ local function modify_trace_data(orig_data, trace_func, extra)
 	hit_data.HitPos = InfMap.unlocalize_vector(hit_data.HitPos, start_offset)
 	hit_data.StartPos = InfMap.unlocalize_vector(hit_data.StartPos, start_offset)
 	local hit_ent = hit_data.Entity
-	if hit_ent and hit_ent:IsValid() and hit_ent:GetClass() == "infinite_terrain" then
-		hit_ent = game.GetWorld()
+	if IsValid(hit_ent) and hit_ent:GetClass() == "infmap_terrain" then
+		hit_data.Entity = game.GetWorld()
 	end
 	return hit_data
 end
@@ -356,13 +356,13 @@ end)
 // ^^
 hook.Add("OnEntityCreated", "infinite_propreset", function(ent)
 	timer.Simple(0, function()	// let entity data table update
-		if ent and ent:IsValid() then 
+		if IsValid(ent) then 
 			if ent.CHUNK_OFFSET then return end
 			if InfMap.filter_entities(ent) and ent:GetClass() != "rpg_missile" then return end
 
 			local pos = Vector()
 			local owner = ent:GetOwner()
-			if owner and owner:IsValid() and owner.CHUNK_OFFSET then
+			if IsValid(owner) and owner.CHUNK_OFFSET then
 				pos = owner.CHUNK_OFFSET
 			end
 			hook.Run("PropUpdateChunk", ent, pos)

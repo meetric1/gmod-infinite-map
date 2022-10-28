@@ -61,7 +61,7 @@ local function update_entity(ent, pos, chunk)
 	if ent:IsPlayer() then
 		// carried props are teleported to the next chunk
 		local carry = ply_objs[ent]
-		if carry and carry:IsValid() then
+		if IsValid(carry) then
 			// teleport entire contraption
 			InfMap.constrained_status(carry)	// initialize constrained data
 			local ent_pos = ent:InfMap_GetPos()
@@ -112,7 +112,7 @@ end)
 InfMap.gravhull_ents = {}
 hook.Add("Think", "infinite_gravhull_update", function()
 	for ent, ship in pairs(InfMap.gravhull_ents) do
-		if !ent or !ent:IsValid() or !ship or !ship:IsValid() then
+		if !IsValid(ent) or !IsValid(ship) then
 			InfMap.gravhull_ents[ent] = nil
 			continue
 		end
@@ -125,7 +125,7 @@ end)
 // object wrapping, if in next chunk, put in next chunk and do localization math
 hook.Add("Think", "infinite_chunkmove", function()
 	for _, main_ent in ipairs(all_ents) do
-		if !main_ent or !main_ent:IsValid() then continue end
+		if !IsValid(main_ent) then continue end
 		if !main_ent.CHUNK_OFFSET then continue end
 		
 		if !InfMap.in_chunk(main_ent:InfMap_GetPos()) then
@@ -167,7 +167,7 @@ local co = coroutine.create(function()
 	while true do 
 		local err, str = pcall(function()
 		for _, ent in ipairs(ents.GetAll()) do
-			if !ent or !ent:IsValid() then continue end
+			if !IsValid(ent) then continue end
 			if InfMap.filter_entities(ent) then continue end
 			if ent:GetClass() == "infmap_terrain" then continue end
 

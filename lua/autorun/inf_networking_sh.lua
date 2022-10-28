@@ -22,7 +22,7 @@ if SERVER then
 
 		// make sure to teleport things in chairs too
 		pcall(function()	// vehicles when initialized arent actually initialized and dont actually have their datatables set up
-			if ent.GetDriver and ent:GetDriver():IsValid() then
+			if ent.GetDriver and IsValid(ent:GetDriver()) then
 				hook.Run("PropUpdateChunk", ent:GetDriver(), chunk)
 			end
 		end)
