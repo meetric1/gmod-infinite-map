@@ -157,8 +157,9 @@ function InfMap.prop_update_chunk(ent, chunk)
 		if ent.RENDER_BOUNDS then min, max = ent.RENDER_BOUNDS[1], ent.RENDER_BOUNDS[2] end
 		if min and max then 
 			ent:SetRenderBounds(min, max) 
-			ent.RENDER_BOUNDS = nil
 		end
+
+		ent.RENDER_BOUNDS = nil
 		if ent.ORIGINAL_PHYSGUN_COLOR then
 			ent:SetWeaponColor(ent.ORIGINAL_PHYSGUN_COLOR)
 			ent.ORIGINAL_PHYSGUN_COLOR = nil

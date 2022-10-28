@@ -100,6 +100,7 @@ end
 
 function ENT:GetRenderMesh()
     if !self.RENDER_MESH then return end
+	self:SetRenderBounds(-Vector(1, 1, 1) * 2^14, Vector(1, 1, 1) * 2^14)
     return self.RENDER_MESH
 end
 

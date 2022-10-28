@@ -167,21 +167,27 @@ function ENT:BuildCollision(heightFunction)
 
     local offset_z = z * InfMap.chunk_size * 2
 
-    local p1 = Vector(InfMap.chunk_size, InfMap.chunk_size, heightFunction(x + 0.5, y + 0.5) - offset_z)
-    local p2 = Vector(-InfMap.chunk_size, InfMap.chunk_size, heightFunction(x - 0.5, y + 0.5) - offset_z)
-    local p3 = Vector(InfMap.chunk_size, -InfMap.chunk_size, heightFunction(x + 0.5, y - 0.5) - offset_z)
-    local p4 = Vector(-InfMap.chunk_size, -InfMap.chunk_size, heightFunction(x - 0.5, y - 0.5) - offset_z)
+    local final_mesh = {}
+    for y1 = -1, 1 do
+        for x1 = -1, 1 do
+            local size = InfMap.chunk_size
+            local offset = Vector(x1 * InfMap.chunk_size * 2, y1 * InfMap.chunk_size * 2, -offset_z)
+            local p1 = Vector(size, size, heightFunction(x + x1 + 0.5, y + y1 + 0.5)) + offset
+            local p2 = Vector(-size, size, heightFunction(x + x1 - 0.5, y + y1 + 0.5)) + offset
+            local p3 = Vector(size, -size, heightFunction(x + x1 + 0.5, y + y1 - 0.5)) + offset
+            local p4 = Vector(-size, -size, heightFunction(x + x1 - 0.5, y + y1 - 0.5)) + offset
 
+            table.Add(final_mesh, {
+                {pos = p1},
+                {pos = p2},
+                {pos = p3},
 
-    local final_mesh = {
-        {pos = p1},
-        {pos = p2},
-        {pos = p3},
-
-        {pos = p2},
-        {pos = p3},
-        {pos = p4}
-    }
+                {pos = p2},
+                {pos = p3},
+                {pos = p4}
+            })
+        end
+    end
 
     final_mesh = split_convex(final_mesh, Vector(0, 0, bounds), Vector(0, 0, -1))
     final_mesh = split_convex(final_mesh, Vector(0, 0, -bounds), Vector(0, 0, 1))
