@@ -107,6 +107,7 @@ if CLIENT then
     hook.Add("PropUpdateChunk", "infmap_terrain_init", function(ent, chunk, old_chunk)
         if ent == LocalPlayer() then
 			for k, v in ipairs(ents.FindByClass("infmap_terrain_render")) do
+				if !v.GenerateMesh then return end
             	v:GenerateMesh(InfMap.height_function, chunk)
 			end
         end

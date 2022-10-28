@@ -264,27 +264,29 @@ local function resetAll()
 end
 
 hook.Add("PropUpdateChunk", "infmap_infgen_terrain", function(ent, chunk, old_chunk)
-    if ent:IsPlayer() then
-        // remove chunks that dont have anything in them
-        if old_chunk then
-            local invalid = InfMap.chunk_table[v_tostring(old_chunk)]
-            for k, v in ipairs(ents.GetAll()) do
-                if InfMap.filter_entities(v) or InfMap.terrain_filter[v:GetClass()] or v == ent then continue end
-                if v.CHUNK_OFFSET == old_chunk then
-                    invalid = nil
+    timer.Simple(0, function()  // wait for entire contraption to teleport
+        if IsValid(ent) and !(InfMap.filter_entities(ent) or InfMap.terrain_filter[ent:GetClass()]) then
+            // remove chunks that dont have anything in them
+            if old_chunk then
+                local invalid = InfMap.chunk_table[v_tostring(old_chunk)]
+                for k, v in ipairs(ents.GetAll()) do
+                    if InfMap.filter_entities(v) or InfMap.terrain_filter[v:GetClass()] or v == ent then continue end
+                    if v.CHUNK_OFFSET == old_chunk then
+                        invalid = nil
+                    end
                 end
+                SafeRemoveEntity(invalid)
             end
-            SafeRemoveEntity(invalid)
+
+            // chunk already exists, dont make another
+            if IsValid(InfMap.chunk_table[v_tostring(chunk)]) then return end
+
+            local e = ents.Create("infmap_terrain_collider")
+            InfMap.prop_update_chunk(e, chunk)
+            e:Spawn()
+            InfMap.chunk_table[v_tostring(chunk)] = e
         end
-
-        // chunk already exists, dont make another
-        if IsValid(InfMap.chunk_table[v_tostring(chunk)]) then return end
-
-        local e = ents.Create("infmap_terrain_collider")
-        InfMap.prop_update_chunk(e, chunk)
-        e:Spawn()
-        InfMap.chunk_table[v_tostring(chunk)] = e
-    end
+    end)
 end)
 
 hook.Add("InitPostEntity", "infinite_terrain_init", function() timer.Simple(0, resetAll) end)

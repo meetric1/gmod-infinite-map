@@ -7,7 +7,7 @@ InfMap.simplex = include("simplex.lua")
 
 function InfMap.height_function(x, y) 
 	if (x > -1.01 and x < 1.01) and (y > -1.01 and y < 1.01) then return -15 end
-	//return math.tan(x^2 + y^2)
+	//return x ^ y
     return ((InfMap.simplex.Noise3D(x / 10, y / 10, 0) + 0.5) * 1000) * (InfMap.simplex.Noise3D(x / 100, y / 100, 50) * 1000) + (InfMap.simplex.Noise3D(x / 150, y / 150, 100) + 0.31) * 1000000
 end
 
