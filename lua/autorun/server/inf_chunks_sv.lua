@@ -151,14 +151,6 @@ hook.Add("Think", "infinite_chunkmove", function()
 	end
 end)
 
-// self explainatory
-local function intersect_box(min_a, max_a, min_b, max_b) 
-	local x_check = max_b[1] < min_a[1] or min_b[1] > max_a[1]
-	local y_check = max_b[2] < min_a[2] or min_b[2] > max_a[2]
-	local z_check = max_b[3] < min_a[3] or min_b[3] > max_a[3]
-	return !(x_check or y_check or z_check)
-end
-
 // collision with props crossing through chunk bounderies
 local co = coroutine.create(function()
 	while true do 
@@ -198,7 +190,7 @@ local co = coroutine.create(function()
 							local chunk_pos = Vector(x, y, z) * InfMap.chunk_size * 2
 							local chunk_min = chunk_pos - Vector(1, 1, 1) * InfMap.chunk_size
 							local chunk_max = chunk_pos + Vector(1, 1, 1) * InfMap.chunk_size
-							if intersect_box(aabb_min, aabb_max, chunk_min, chunk_max) then
+							if InfMap.intersect_box(aabb_min, aabb_max, chunk_min, chunk_max) then
 								// dont clone 2 times
 								if ent.CHUNK_CLONES[i] then continue end
 

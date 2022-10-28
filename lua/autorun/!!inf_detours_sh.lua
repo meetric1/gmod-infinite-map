@@ -338,11 +338,17 @@ end
 
 // wiremod internally clamps setpos, lets unclamp it...
 hook.Add("Initialize", "infmap_wire_detour", function()
-	if WireLib then
+	if WireLib then	// wiremod unclamp
 		local isnan = WireLib.isnan
 		function WireLib.setPos(ent, pos)
 			if isnan(pos.x) or isnan(pos.y) or isnan(pos.z) then return end
 			return ent:SetPos(pos)
+		end
+	end
+
+	if SF then	//starfall unclamp
+		function SF.clampPos(pos) 
+			return pos 
 		end
 	end
 end)

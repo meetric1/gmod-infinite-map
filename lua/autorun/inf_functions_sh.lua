@@ -45,6 +45,14 @@ function InfMap.unlocalize_vector(pos, chunk)
 	return (chunk or Vector()) * InfMap.chunk_size * 2 + pos
 end
 
+// self explainatory
+function InfMap.intersect_box(min_a, max_a, min_b, max_b) 
+	local x_check = max_b[1] < min_a[1] or min_b[1] > max_a[1]
+	local y_check = max_b[2] < min_a[2] or min_b[2] > max_a[2]
+	local z_check = max_b[3] < min_a[3] or min_b[3] > max_a[3]
+	return !(x_check or y_check or z_check)
+end
+
 local filter = {
 	infmap_clone = true,
 	physgun_beam = true,
