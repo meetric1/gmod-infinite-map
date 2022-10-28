@@ -79,6 +79,7 @@ local filter = {
 	//gmod_safespace_interior = true,
 	sizehandler = true,
 	player_pickup = true,
+	//crossbow_bolt = true,
 }
 
 function InfMap.filter_entities(e)

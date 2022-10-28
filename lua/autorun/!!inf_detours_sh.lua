@@ -354,11 +354,14 @@ hook.Add("PlayerSpawn", "infinite_plyreset", function(ply, trans)
 end)
 
 // ^^
+local ent_unfilter = {
+	rpg_missile = true,
+}
 hook.Add("OnEntityCreated", "infinite_propreset", function(ent)
 	timer.Simple(0, function()	// let entity data table update
 		if IsValid(ent) then 
 			if ent.CHUNK_OFFSET then return end
-			if InfMap.filter_entities(ent) and ent:GetClass() != "rpg_missile" then return end
+			if InfMap.filter_entities(ent) and !ent_unfilter[ent:GetClass()] then return end
 
 			local pos = Vector()
 			local owner = ent:GetOwner()

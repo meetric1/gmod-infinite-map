@@ -19,7 +19,6 @@ local class_filter = {
 	prop_vehicle_jeep = true,
 	player = true,
 	prop_vehicle_prisoner_pod = true,
-	//gmod_sent_vehicle_fphysics_base = true,
 	prop_physics = true,
 }
 
@@ -43,8 +42,6 @@ local function unfucked_SetPos(ent, pos, filter)
 		ent:InfMap_SetPos(pos)
 		if phys:IsValid() then
 			phys:SetVelocity(vel, true)
-		else
-			ent:SetVelocity(vel)
 		end
 	end
 end

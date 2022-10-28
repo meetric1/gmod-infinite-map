@@ -36,19 +36,6 @@ function ENT:BuildCollision(heightFunction)
 end
 
 
-function ENT:GetRenderMesh()
-    if !self.RENDER_MESH then return end
-    return self.RENDER_MESH
-end
-
-if CLIENT then
-    //hook.Add("PropUpdateChunk", "infmap_terrain_init", function(ent, chunk)
-    //    if ent:GetClass() == "infmap_terrain" then
-    //        ent:ClientInitialize()
-    //    end
-    //end)
-end
-
 /****************** SERVER *********************/
 
 function ENT:Initialize()

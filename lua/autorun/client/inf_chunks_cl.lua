@@ -42,8 +42,8 @@ end)
 hook.Add("RenderScene", "!infinite_update_visbounds", function(eyePos, eyeAngles)
 	//eyePos = LocalPlayer():GetShootPos()
 	local sub_size = 2^14 - InfMap.chunk_size - 64	// how far out render bounds can be before outside of the map
+	local sub_size_sqr = sub_size * sub_size
 	local lp_chunk_offset = LocalPlayer().CHUNK_OFFSET
-	local shrunk = 0.02	// how much you locally shrink render bounds [in reality should be chunksize / prop_dir:Length()]
 	for _, ent in ipairs(InfMap.all_ents) do	// I feel bad for doing this
 		if !IsValid(ent) then continue end
 		if !ent.RenderOverride then continue end
@@ -56,8 +56,11 @@ hook.Add("RenderScene", "!infinite_update_visbounds", function(eyePos, eyeAngles
 
 		local prop_dir = (InfMap.unlocalize_vector(ent:GetPos(), world_chunk_offset) - eyePos)
 
-		local far_lod = world_chunk_offset:LengthSqr() > 16
 		//local shrunk = !far_lod and 0.02 or sub_size / prop_dir:Length()
+		local shrunk = 0.02	// how much you locally shrink render bounds [in reality should be chunksize / prop_dir:Length()]
+		if prop_dir:LengthSqr() < sub_size_sqr then
+			shrunk = 1
+		end
 		prop_dir = prop_dir * shrunk
 
 		// grab render bounds in case its been edited (prop resizer compatability)
@@ -66,19 +69,16 @@ hook.Add("RenderScene", "!infinite_update_visbounds", function(eyePos, eyeAngles
 			ent.RENDER_BOUNDS = {min, max}
 		end
 
-		if far_lod and ent:GetClass() != "infmap_terrain" then
+		if world_chunk_offset:LengthSqr() > 16 and ent:GetClass() != "infmap_terrain" then
 			ent:SetRenderBoundsWS(eyePos + prop_dir, eyePos + prop_dir)
 		else
 			local min, max = ent:GetRotatedAABB(ent.RENDER_BOUNDS[1], ent.RENDER_BOUNDS[2])
-			if min == Vector() and max == Vector() then
-				min, max = ent.RENDER_BOUNDS[1], ent.RENDER_BOUNDS[2]
-			end
 			
 			min = min * shrunk
 			max = max * shrunk
 
 			ent:SetRenderBoundsWS(eyePos + prop_dir + min, eyePos + prop_dir + max)
-			debugoverlay.Box(eyePos + prop_dir, min, max, 0, Color(0, 0, 255, 0))
+			//debugoverlay.Box(eyePos + prop_dir, min, max, 0, Color(0, 0, 255, 0))
 		end
 	end
 
@@ -155,7 +155,10 @@ hook.Add("PropUpdateChunk", "!infinite_clientrecev", function(ent, chunk)
 		
 		local min, max
 		if ent.RENDER_BOUNDS then min, max = ent.RENDER_BOUNDS[1], ent.RENDER_BOUNDS[2] end
-		if min and max then ent:SetRenderBounds(min, max) end
+		if min and max then 
+			ent:SetRenderBounds(min, max) 
+			ent.RENDER_BOUNDS = nil
+		end
 		if ent.ORIGINAL_PHYSGUN_COLOR then
 			ent:SetWeaponColor(ent.ORIGINAL_PHYSGUN_COLOR)
 			ent.ORIGINAL_PHYSGUN_COLOR = nil
@@ -170,7 +173,7 @@ hook.Add("PropUpdateChunk", "!infinite_clientrecev", function(ent, chunk)
 
 	// physgun glow and beam can be seen from any chunk
 	// turn physgun off by setting its color to negative infinity if its not in our chunk
-	if ent:GetClass() == "player" then
+	if ent:IsPlayer() then
 		ent.ORIGINAL_PHYSGUN_COLOR = ent.ORIGINAL_PHYSGUN_COLOR or ent:GetWeaponColor()
 		ent:SetWeaponColor(Vector(-math.huge, -math.huge, -math.huge))
 	end
@@ -181,7 +184,8 @@ hook.Add("PropUpdateChunk", "!infinite_clientrecev", function(ent, chunk)
 		ent.ValidRenderOverride = ent.RenderOverride and true or false
 	end
 	
-	if chunk_offset:LengthSqr() > 100 then	// lod test
+	// lod test
+	if chunk_offset:LengthSqr() > 100 and !ent:IsPlayer() then	// make players have no lod so u can see your friends far away :)
 		// object is so small and so far away why even bother rendering it
 		if ent:BoundingRadius() < 10 then 
 			ent.RenderOverride = empty_function
@@ -196,8 +200,10 @@ hook.Add("PropUpdateChunk", "!infinite_clientrecev", function(ent, chunk)
 		if !mat_str then mat_str = "models/wireframe" end
 		local mat = Material(mat_str)
 		ent.RenderOverride = function(self)	// high lod
+			//render.SuppressEngineLighting(true)
 			render_SetMaterial(mat)
 			render_DrawBox(self:GetPos() + visual_offset, self:GetAngles(), self:OBBMins(), self:OBBMaxs())
+			//render.SuppressEngineLighting(false)
 		end
 	else
 		local cam_Start3D = cam.Start3D
