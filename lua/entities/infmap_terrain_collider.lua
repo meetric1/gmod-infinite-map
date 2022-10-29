@@ -253,7 +253,7 @@ InfMap.chunk_table = {}
 
 local function resetAll()
     local e = ents.Create("prop_physics")
-    e:SetPos(Vector(0, 0, -10))
+    e:SetPos(Vector(200, 200, -10))
     e:SetModel("models/hunter/blocks/cube8x8x025.mdl")
     e:SetMaterial("models/gibs/metalgibs/metal_gibs")
     e:Spawn()

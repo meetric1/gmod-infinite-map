@@ -356,7 +356,7 @@ end)
 // when entities are spawned, reset them
 hook.Add("PlayerSpawn", "infinite_plyreset", function(ply, trans)
 	print("Resetting " .. ply:Nick() .." to chunk 0,0,0")
-	ply:SetPos(Vector(math.Rand(-1, 1) * 200, math.Rand(-1, 1) * 200))
+	ply:SetPos(Vector(math.Rand(0, 2) * 200, math.Rand(0, 2) * 200))
 end)
 
 // ^^
