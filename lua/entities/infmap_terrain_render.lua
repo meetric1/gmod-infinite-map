@@ -30,20 +30,20 @@ function ENT:GenerateMesh(heightFunction, chunk)
 	local uvscale = 300
     mesh.Begin(self.RENDER_MESH.Mesh, MATERIAL_TRIANGLES, total_tris * 2)  // 2 triangles per chunk
         err, msg = pcall(function()
-			for y = -InfMap.render_distance, InfMap.render_distance do
-				for x = -InfMap.render_distance, InfMap.render_distance do
+			for y = -InfMap.render_distance, InfMap.render_distance - 1 do
+				for x = -InfMap.render_distance, InfMap.render_distance - 1 do
 					// chunk offset in world space
 					local chunkoffsetx = chunk[1] + x
 					local chunkoffsety = chunk[2] + y
 
 					// the height of the vertex using the math function
-					local vertexHeight1 = heightFunction(chunkoffsetx - 0.5, chunkoffsety - 0.5)
-					local vertexHeight2 = heightFunction(chunkoffsetx - 0.5, chunkoffsety + 0.5)
-					local vertexHeight3 = heightFunction(chunkoffsetx + 0.5, chunkoffsety - 0.5)
-					local vertexHeight4 = heightFunction(chunkoffsetx + 0.5, chunkoffsety + 0.5)
+					local vertexHeight1 = heightFunction(chunkoffsetx, 	   chunkoffsety    )
+					local vertexHeight2 = heightFunction(chunkoffsetx, 	   chunkoffsety + 1)
+					local vertexHeight3 = heightFunction(chunkoffsetx + 1, chunkoffsety    )
+					local vertexHeight4 = heightFunction(chunkoffsetx + 1, chunkoffsety + 1)
 
 					// vertex positions in local space
-					local local_offset = InfMap.unlocalize_vector(Vector(), Vector(x, y, -chunk[3]))
+					local local_offset = InfMap.unlocalize_vector(Vector(InfMap.chunk_size, InfMap.chunk_size), Vector(x, y, -chunk[3]))
 					local vertexPos1 = Vector(-InfMap.chunk_size, -InfMap.chunk_size, vertexHeight1) + local_offset
 					local vertexPos2 = Vector(-InfMap.chunk_size, InfMap.chunk_size, vertexHeight2) + local_offset
 					local vertexPos3 = Vector(InfMap.chunk_size, -InfMap.chunk_size, vertexHeight3) + local_offset
@@ -134,7 +134,7 @@ if CLIENT then
 		render.OverrideDepthEnable(true, false)
 		render.SetMaterial(default_mat)
 		cam.PushModelMatrix(mat)
-		big_plane:Draw()
+		//big_plane:Draw()
 		cam.PopModelMatrix()
 		render.OverrideDepthEnable(false, false)
 	end)

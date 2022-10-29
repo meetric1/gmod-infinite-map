@@ -168,14 +168,14 @@ function ENT:BuildCollision(heightFunction)
     local offset_z = z * InfMap.chunk_size * 2
 
     local final_mesh = {}
-    for y1 = -1, 1 do
-        for x1 = -1, 1 do
+    for y1 = -1, 0 do
+        for x1 = -1, 0 do
             local size = InfMap.chunk_size
-            local offset = Vector(x1 * InfMap.chunk_size * 2, y1 * InfMap.chunk_size * 2, -offset_z)
-            local p1 = Vector(size, size, heightFunction(x + x1 + 0.5, y + y1 + 0.5)) + offset
-            local p2 = Vector(-size, size, heightFunction(x + x1 - 0.5, y + y1 + 0.5)) + offset
-            local p3 = Vector(size, -size, heightFunction(x + x1 + 0.5, y + y1 - 0.5)) + offset
-            local p4 = Vector(-size, -size, heightFunction(x + x1 - 0.5, y + y1 - 0.5)) + offset
+            local offset = Vector(x1 * InfMap.chunk_size * 2 + InfMap.chunk_size, y1 * InfMap.chunk_size * 2 + InfMap.chunk_size, -offset_z)
+            local p1 = Vector(size, size, heightFunction(x + x1 + 1, y + y1 + 1)) + offset
+            local p2 = Vector(-size, size, heightFunction(x + x1, y + y1 + 1)) + offset
+            local p3 = Vector(size, -size, heightFunction(x + x1 + 1, y + y1)) + offset
+            local p4 = Vector(-size, -size, heightFunction(x + x1, y + y1)) + offset
 
             table.Add(final_mesh, {
                 {pos = p1},

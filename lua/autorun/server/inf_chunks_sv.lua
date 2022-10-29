@@ -20,6 +20,7 @@ local class_filter = {
 	player = true,
 	prop_vehicle_prisoner_pod = true,
 	prop_physics = true,
+	//gmod_sent_vehicle_fphysics_base = true,
 }
 
 // setting position kills all velocity for some reason
