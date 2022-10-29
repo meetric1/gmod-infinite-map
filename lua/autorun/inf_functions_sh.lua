@@ -9,10 +9,8 @@ local max = 2^28
 function InfMap.height_function(x, y) 
 	if (x >= -0.01) and (y >= -0.01 and y < 1.51) then return -15 end
 	//local final = InfMap.simplex.Noise3D(x / 10, y / 10, 100) / InfMap.simplex.Noise3D(x / 10, y / 10, 0) * 10000
-	local n = InfMap.simplex.Noise3D(x / 100, y / 100, 50) * 10000
-	local holes =  1 / n
-    local final = holes + (InfMap.simplex.Noise3D(x / 10, y / 10, 0) * 100) * n + (InfMap.simplex.Noise3D(x / 150, y / 150, 100) + 0.3) * 1000000 + 10000
-	//return InfMap.simplex.Noise3D(x / 5, y / 5, 100) * 100000
+    //local final = (InfMap.simplex.Noise3D(x / 10, y / 10, 0) * 100) * InfMap.simplex.Noise3D(x / 100, y / 100, 50) * 10000 + (InfMap.simplex.Noise3D(x / 150, y / 150, 100) + 0.3) * 1000000 + 10000
+	local final = -15
 	return math.Clamp(final, -max, max)
 end
 

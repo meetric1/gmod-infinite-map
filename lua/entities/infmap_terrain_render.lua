@@ -13,7 +13,48 @@ ENT.Instructions	= ""
 ENT.Spawnable		= false
 
 InfMap = InfMap or {}
-InfMap.render_distance = 16
+InfMap.render_distance = 10
+
+local uvscale = 300
+local function add_quad(p1, p2, p3, p4, n1, n2)
+	// first tri
+	mesh.Position(p1)
+	mesh.TexCoord(0, 0, 0)        // texture UV
+	mesh.Normal(n1)
+	mesh.UserData(1, 1, 1, 1)
+	mesh.AdvanceVertex()
+
+	mesh.Position(p2)
+	mesh.TexCoord(0, uvscale, 0)
+	mesh.Normal(n1)
+	mesh.UserData(1, 1, 1, 1)
+	mesh.AdvanceVertex()
+
+	mesh.Position(p3)
+	mesh.TexCoord(0, 0, uvscale)
+	mesh.Normal(n1)
+	mesh.UserData(1, 1, 1, 1)
+	mesh.AdvanceVertex()
+
+	// second tri
+	mesh.Position(p3)
+	mesh.TexCoord(0, 0, uvscale)
+	mesh.Normal(n2)
+	mesh.UserData(1, 1, 1, 1)
+	mesh.AdvanceVertex()
+
+	mesh.Position(p2)
+	mesh.TexCoord(0, uvscale, 0)
+	mesh.Normal(n2)
+	mesh.UserData(1, 1, 1, 1)
+	mesh.AdvanceVertex()
+
+	mesh.Position(p4)
+	mesh.TexCoord(0, uvscale, uvscale)
+	mesh.Normal(n2)
+	mesh.UserData(1, 1, 1, 1)
+	mesh.AdvanceVertex()
+end
 
 local default_mat = Material("phoenix_storms/ps_grass")
 function ENT:GenerateMesh(heightFunction, chunk)
@@ -26,12 +67,14 @@ function ENT:GenerateMesh(heightFunction, chunk)
 
     local mesh = mesh   // local lookup is faster than global
     local err, msg
-	local total_tris = (InfMap.render_distance * 2 + 1) ^ 2
-	local uvscale = 300
-    mesh.Begin(self.RENDER_MESH.Mesh, MATERIAL_TRIANGLES, total_tris * 2)  // 2 triangles per chunk
+	local render_distance = InfMap.render_distance
+	local total_tris = (render_distance * 2 + 1) ^ 2
+	
+    mesh.Begin(self.RENDER_MESH.Mesh, MATERIAL_TRIANGLES, 2^13)  // 2 triangles per chunk
         err, msg = pcall(function()
-			for y = -InfMap.render_distance, InfMap.render_distance - 1 do
-				for x = -InfMap.render_distance, InfMap.render_distance - 1 do
+			// no lod
+			for y = -render_distance, render_distance - 1 do
+				for x = -render_distance, render_distance - 1 do
 					// chunk offset in world space
 					local chunkoffsetx = chunk[1] + x
 					local chunkoffsety = chunk[2] + y
@@ -52,43 +95,44 @@ function ENT:GenerateMesh(heightFunction, chunk)
 					local normal1 = -(vertexPos1 - vertexPos2):Cross(vertexPos1 - vertexPos3)//:GetNormalized()
 					local normal2 = -(vertexPos4 - vertexPos3):Cross(vertexPos4 - vertexPos2)//:GetNormalized()
 
-					// first tri
-					mesh.Position(vertexPos1)
-					mesh.TexCoord(0, 0, 0)        // texture UV
-					mesh.Normal(normal1)
-					mesh.UserData(1, 1, 1, 1)
-					mesh.AdvanceVertex()
+					add_quad(vertexPos1, vertexPos2, vertexPos3, vertexPos4, normal1, normal2)
+				end
+			end
 
-					mesh.Position(vertexPos2)
-					mesh.TexCoord(0, uvscale, 0)
-					mesh.Normal(normal1)
-					mesh.UserData(1, 1, 1, 1)
-					mesh.AdvanceVertex()
+			// high lod
+			local lod_table = {1.5, 2, 3, 6}
+			for i = 1, #lod_table do
+				local lod = lod_table[i]
+				local lod_render_distance = lod * render_distance
+				local lod_center = lod * render_distance * 0.5
+				local cs = InfMap.chunk_size
+				for y = -lod_render_distance, lod_render_distance - 1, lod do
+					for x = -lod_render_distance, lod_render_distance - 1, lod do
+						// if in middle chunk
+						if !(x <= -lod_center or x >= lod_center or y <= -lod_center or y >= lod_center) then continue end
 
-					mesh.Position(vertexPos3)
-					mesh.TexCoord(0, 0, uvscale)
-					mesh.Normal(normal1)
-					mesh.UserData(1, 1, 1, 1)
-					mesh.AdvanceVertex()
+						// chunk offset in world space
+						local chunkoffsetx = chunk[1] + x
+						local chunkoffsety = chunk[2] + y
 
-					// second tri
-					mesh.Position(vertexPos3)
-					mesh.TexCoord(0, 0, uvscale)
-					mesh.Normal(normal2)
-					mesh.UserData(1, 1, 1, 1)
-					mesh.AdvanceVertex()
+						// the height of the vertex using the math function
+						local vertexHeight1 = heightFunction(chunkoffsetx, 	   chunkoffsety    )
+						local vertexHeight2 = heightFunction(chunkoffsetx, 	   chunkoffsety + lod)
+						local vertexHeight3 = heightFunction(chunkoffsetx + lod, chunkoffsety    )
+						local vertexHeight4 = heightFunction(chunkoffsetx + lod, chunkoffsety + lod)
 
-					mesh.Position(vertexPos2)
-					mesh.TexCoord(0, uvscale, 0)
-					mesh.Normal(normal2)
-					mesh.UserData(1, 1, 1, 1)
-					mesh.AdvanceVertex()
+						// vertex positions in local space
+						local local_offset = InfMap.unlocalize_vector(Vector(cs, cs), Vector(x, y, -chunk[3])) - Vector(0, 0, cs * lod)
+						local vertexPos1 = Vector(-cs * lod, -cs * lod, vertexHeight1) + local_offset
+						local vertexPos2 = Vector(-cs * lod, cs * lod, vertexHeight2) + local_offset
+						local vertexPos3 = Vector(cs * lod, -cs * lod, vertexHeight3) + local_offset
+						local vertexPos4 = Vector(cs * lod, cs * lod, vertexHeight4) + local_offset
 
-					mesh.Position(vertexPos4)
-					mesh.TexCoord(0, uvscale, uvscale)
-					mesh.Normal(normal2)
-					mesh.UserData(1, 1, 1, 1)
-					mesh.AdvanceVertex()
+						local normal1 = -(vertexPos1 - vertexPos2):Cross(vertexPos1 - vertexPos3)//:GetNormalized()
+						local normal2 = -(vertexPos4 - vertexPos3):Cross(vertexPos4 - vertexPos2)//:GetNormalized()
+
+						add_quad(vertexPos1, vertexPos2, vertexPos3, vertexPos4, normal1, normal2)
+					end
 				end
 			end
         end)
@@ -130,11 +174,12 @@ if CLIENT then
 	big_plane:BuildFromTriangles(data)
 	hook.Add("PostDraw2DSkyBox", "infmap_terrain_drawover", function()
 		local mat = Matrix()
-		mat:SetTranslation(-InfMap.unlocalize_vector(Vector(), LocalPlayer().CHUNK_OFFSET))
+		local lpp = LocalPlayer():GetPos()
+		mat:SetTranslation(-InfMap.unlocalize_vector(Vector(), Vector(0, 0, -10)))
 		render.OverrideDepthEnable(true, false)
 		render.SetMaterial(default_mat)
 		cam.PushModelMatrix(mat)
-		//big_plane:Draw()
+		big_plane:Draw()
 		cam.PopModelMatrix()
 		render.OverrideDepthEnable(false, false)
 	end)

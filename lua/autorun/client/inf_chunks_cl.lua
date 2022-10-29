@@ -69,7 +69,10 @@ hook.Add("RenderScene", "!infinite_update_visbounds", function(eyePos, eyeAngles
 			ent.RENDER_BOUNDS = {min, max}
 		end
 
-		if world_chunk_offset:LengthSqr() > 16 and ent:GetClass() != "infmap_terrain_collider" then
+		if world_chunk_offset:LengthSqr() > 16 then
+			if prop_dir:LengthSqr() > 100000000 then
+				prop_dir = prop_dir * 0.01
+			end
 			ent:SetRenderBoundsWS(eyePos + prop_dir, eyePos + prop_dir)
 		else
 			local min, max = ent:GetRotatedAABB(ent.RENDER_BOUNDS[1], ent.RENDER_BOUNDS[2])
@@ -188,7 +191,7 @@ function InfMap.prop_update_chunk(ent, chunk)
 	// lod test
 	if chunk_offset:LengthSqr() > 100 and !ent:IsPlayer() then	// make players have no lod so u can see your friends far away :)
 		// object is so small and so far away why even bother rendering it
-		if ent:BoundingRadius() < 10 then 
+		if ent:BoundingRadius() < 10 or ent:IsWeapon() then 
 			ent.RenderOverride = empty_function
 			return 
 		end
@@ -201,10 +204,8 @@ function InfMap.prop_update_chunk(ent, chunk)
 		if !mat_str then mat_str = "models/wireframe" end
 		local mat = Material(mat_str)
 		ent.RenderOverride = function(self)	// high lod
-			//render.SuppressEngineLighting(true)
 			render_SetMaterial(mat)
 			render_DrawBox(self:GetPos() + visual_offset, self:GetAngles(), self:OBBMins(), self:OBBMaxs())
-			//render.SuppressEngineLighting(false)
 		end
 	else
 		local cam_Start3D = cam.Start3D
