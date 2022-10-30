@@ -204,14 +204,13 @@ if CLIENT then
 			for y = -chunks_around_player, chunks_around_player do
 				for x = -chunks_around_player, chunks_around_player do
 					if !IsValid(InfMap.client_chunks[y][x].RENDER_MESH.Mesh) then
-						print("genning",x,y)
-						i = i + 0.1
+						//i = i + 0.01
 						local gen_x = x * InfMap.render_distance * 2 + big_chunk[1] * InfMap.render_distance * 2
 						local gen_y = y * InfMap.render_distance * 2 + big_chunk[2] * InfMap.render_distance * 2
-						timer.Simple(i, function()
+						//timer.Simple(i, function()
 							InfMap.client_chunks[y][x]:GenerateMesh(InfMap.height_function, Vector(gen_x, gen_y, 0), InfMap.client_chunks[y][x].RENDER_MESH.Matrix)
 							InfMap.client_meshes[y][x] = InfMap.client_chunks[y][x].RENDER_MESH.Mesh
-						end)
+						//end)
 					end
 					InfMap.client_meshes[y][x] = InfMap.client_chunks[y][x].RENDER_MESH.Mesh
 				end
