@@ -13,7 +13,7 @@ ENT.Instructions	= ""
 ENT.Spawnable		= false
 
 InfMap = InfMap or {}
-InfMap.render_distance = 10
+InfMap.render_distance = 16
 
 local uvscale = 300
 local function add_quad(p1, p2, p3, p4, n1, n2)
@@ -57,12 +57,12 @@ local function add_quad(p1, p2, p3, p4, n1, n2)
 end
 
 local default_mat = Material("phoenix_storms/ps_grass")
-function ENT:GenerateMesh(heightFunction, chunk)
+function ENT:GenerateMesh(heightFunction, chunk, mat)
 	if self.RENDER_MESH and IsValid(self.RENDER_MESH.Mesh) then
 		self.RENDER_MESH.Mesh:Destroy()
 		self.RENDER_MESH.Mesh = Mesh()
 	else
-		self.RENDER_MESH = {Mesh = Mesh(), Material = default_mat}
+		self.RENDER_MESH = {Mesh = Mesh(), Material = default_mat, Matrix = mat}
 	end
 
     local mesh = mesh   // local lookup is faster than global
@@ -86,7 +86,7 @@ function ENT:GenerateMesh(heightFunction, chunk)
 					local vertexHeight4 = heightFunction(chunkoffsetx + 1, chunkoffsety + 1)
 
 					// vertex positions in local space
-					local local_offset = InfMap.unlocalize_vector(Vector(InfMap.chunk_size, InfMap.chunk_size), Vector(x, y, -chunk[3]))
+					local local_offset = InfMap.unlocalize_vector(Vector(InfMap.chunk_size, InfMap.chunk_size), Vector(x, y, 0))
 					local vertexPos1 = Vector(-InfMap.chunk_size, -InfMap.chunk_size, vertexHeight1) + local_offset
 					local vertexPos2 = Vector(-InfMap.chunk_size, InfMap.chunk_size, vertexHeight2) + local_offset
 					local vertexPos3 = Vector(InfMap.chunk_size, -InfMap.chunk_size, vertexHeight3) + local_offset
@@ -100,6 +100,7 @@ function ENT:GenerateMesh(heightFunction, chunk)
 			end
 
 			// high lod
+			/*
 			local lod_table = {1.5, 2, 3, 6}
 			for i = 1, #lod_table do
 				local lod = lod_table[i]
@@ -134,27 +135,89 @@ function ENT:GenerateMesh(heightFunction, chunk)
 						add_quad(vertexPos1, vertexPos2, vertexPos3, vertexPos4, normal1, normal2)
 					end
 				end
-			end
+			end*/
         end)
     mesh.End()
 
     if !err then print(msg) end  // if there is an error, catch it and throw it outside of mesh.begin since you crash if mesh.end is not called
-	self:SetRenderBounds(-Vector(1, 1, 1) * 2^14, Vector(1, 1, 1) * 2^14)
+	local min = Vector(1, 1, 1) * -2^14
+	local max = Vector(1, 1, 1) * 2^14
+	self:SetRenderBounds(min, max)
 end
 
 function ENT:GetRenderMesh()
     if !self.RENDER_MESH then return end
-	self:SetRenderBounds(-Vector(1, 1, 1) * 2^14, Vector(1, 1, 1) * 2^14)
     return self.RENDER_MESH
 end
 
+function ENT:Initialize()
+    self:SetModel("models/Combine_Helicopter/helicopter_bomb01.mdl")
+    self:SetSolid(SOLID_NONE)
+    self:SetMoveType(MOVETYPE_NONE)
+    self:DrawShadow(false)
+end
+
 if CLIENT then
+	InfMap.client_chunks = InfMap.client_chunks or {}
+	InfMap.client_meshes = InfMap.client_meshes or {}
+	local last_big_chunk = Vector()
+	local chunks_around_player = 2
     hook.Add("PropUpdateChunk", "infmap_terrain_init", function(ent, chunk, old_chunk)
         if ent == LocalPlayer() then
-			for k, v in ipairs(ents.FindByClass("infmap_terrain_render")) do
-				if !v.GenerateMesh then return end
-            	v:GenerateMesh(InfMap.height_function, chunk)
+			local _, big_chunk = InfMap.localize_vector(chunk, InfMap.render_distance) big_chunk[3] = 0
+			local chunk_res_scale = InfMap.chunk_size * 2 * InfMap.render_distance * 2
+			local chunk_res_scale_2 = InfMap.chunk_size * InfMap.render_distance
+			local offset = (chunk - big_chunk * InfMap.render_distance * 2) * InfMap.chunk_size * 2
+			local delta_chunk = chunk - (old_chunk or chunk)
+			for y = -chunks_around_player, chunks_around_player do
+				InfMap.client_chunks[y] = InfMap.client_chunks[y] or {}
+				InfMap.client_meshes[y] = InfMap.client_meshes[y] or {}
+				for x = -chunks_around_player, chunks_around_player do
+					// create chunk if it doesnt exist
+					if !InfMap.client_chunks[y][x] then 
+						local e = ents.CreateClientside("infmap_terrain_render")
+						e:Spawn()
+						e:GenerateMesh(InfMap.height_function, Vector(x, y, 0) * InfMap.render_distance * 2, Matrix())
+						InfMap.client_chunks[y][x] = e
+						InfMap.client_meshes[y][x] = e.RENDER_MESH.Mesh
+					end
+
+					local chunk_ent = InfMap.client_chunks[y][x]
+					chunk_ent.RENDER_MESH.Matrix:SetTranslation(Vector(x, y) * chunk_res_scale - offset)
+
+					if big_chunk != last_big_chunk then
+						local dx = delta_chunk[1]	// calculus flashbacks
+						local dy = delta_chunk[2]
+						if InfMap.client_meshes[y + dy] and InfMap.client_meshes[y + dy][x + dx] then
+							chunk_ent.RENDER_MESH.Mesh = InfMap.client_meshes[y + dy][x + dx]		//cant be directly set because it may be accessed again
+						else
+							chunk_ent.RENDER_MESH.Mesh = nil
+						end
+					end
+				end
 			end
+
+			if last_big_chunk == big_chunk then return end
+
+			// update meshes
+			local i = 0
+			for y = -chunks_around_player, chunks_around_player do
+				for x = -chunks_around_player, chunks_around_player do
+					if !IsValid(InfMap.client_chunks[y][x].RENDER_MESH.Mesh) then
+						print("genning",x,y)
+						i = i + 0.1
+						local gen_x = x * InfMap.render_distance * 2 + big_chunk[1] * InfMap.render_distance * 2
+						local gen_y = y * InfMap.render_distance * 2 + big_chunk[2] * InfMap.render_distance * 2
+						timer.Simple(i, function()
+							InfMap.client_chunks[y][x]:GenerateMesh(InfMap.height_function, Vector(gen_x, gen_y, 0), InfMap.client_chunks[y][x].RENDER_MESH.Matrix)
+							InfMap.client_meshes[y][x] = InfMap.client_chunks[y][x].RENDER_MESH.Mesh
+						end)
+					end
+					InfMap.client_meshes[y][x] = InfMap.client_chunks[y][x].RENDER_MESH.Mesh
+				end
+			end
+
+			last_big_chunk = big_chunk
         end
     end)
 
@@ -183,12 +246,4 @@ if CLIENT then
 		cam.PopModelMatrix()
 		render.OverrideDepthEnable(false, false)
 	end)
-end
-
-
-function ENT:Initialize()
-    self:SetModel("models/Combine_Helicopter/helicopter_bomb01.mdl")
-    self:SetSolid(SOLID_NONE)
-    self:SetMoveType(MOVETYPE_NONE)
-    self:DrawShadow(false)
 end

@@ -260,9 +260,6 @@ local function resetAll()
     e:GetPhysicsObject():EnableMotion(false)
     constraint.Weld(e, game.GetWorld(), 0, 0, 0)
 
-    local e = ents.Create("infmap_terrain_render")
-    e:Spawn()
-
     local e = ents.Create("infmap_terrain_collider")
     InfMap.chunk_table[v_tostring(Vector())] = e
     InfMap.prop_update_chunk(e, Vector())

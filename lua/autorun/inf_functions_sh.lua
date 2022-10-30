@@ -19,8 +19,8 @@ function InfMap.in_chunk(pos, size)
 	return !(pos[1] <= -cs or pos[1] >= cs or pos[2] <= -cs or pos[2] >= cs or pos[3] <= -cs or pos[3] >= cs)
 end
 
-function InfMap.localize_vector(pos) 
-	local cs = InfMap.chunk_size
+function InfMap.localize_vector(pos, size) 
+	local cs = size or InfMap.chunk_size
 	local cs_double = cs * 2
 
 	local floor = math.floor
