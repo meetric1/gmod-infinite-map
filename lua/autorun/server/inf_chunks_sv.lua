@@ -36,14 +36,17 @@ local function unfucked_SetPos(ent, pos, filter)
 
 	local vel = ent:GetVelocity()
 	local phys = ent:GetPhysicsObject()
-	if phys:IsValid() and !class_filter[ent:GetClass()] and !(ent:IsNPC() or ent:IsNextBot()) then 
-		phys:SetVelocity(vel)	// ????????????????????
+	local ang = ent:GetAngles()
+	if phys:IsValid() and !class_filter[ent:GetClass()] and !(ent:IsNPC() or ent:IsNextBot()) then
 		phys:InfMap_SetPos(pos, true)
+		phys:SetVelocity(vel)
+		if ang ~= nil then phys:SetAngles(ang) end
 	else
 		ent:InfMap_SetPos(pos)
 		if phys:IsValid() then
 			phys:SetVelocity(vel, true)
 		end
+		if ang ~= nil then ent:SetAngles(ang) end
 	end
 end
 
