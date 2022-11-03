@@ -40,13 +40,13 @@ local function unfucked_SetPos(ent, pos, filter)
 	if phys:IsValid() and !class_filter[ent:GetClass()] and !(ent:IsNPC() or ent:IsNextBot()) then
 		phys:InfMap_SetPos(pos, true)
 		phys:SetVelocity(vel)
-		if ang ~= nil then phys:SetAngles(ang) end
+		if ang then phys:SetAngles(ang) end
 	else
 		ent:InfMap_SetPos(pos)
 		if phys:IsValid() then
 			phys:SetVelocity(vel, true)
 		end
-		if ang ~= nil then ent:SetAngles(ang) end
+		if ang then ent:SetAngles(ang) end
 	end
 end
 

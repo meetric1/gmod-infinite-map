@@ -215,7 +215,9 @@ if CLIENT then
 				SafeRemoveEntity(ent)
 			end
 		end
-		table.Empty(InfMap.client_chunks)
+		for y = -chunks_around_player, chunks_around_player do
+			InfMap.client_chunks[y] = InfMap.client_chunks[y] or {}
+		end
 	end)
 
 	local size = 2^31
