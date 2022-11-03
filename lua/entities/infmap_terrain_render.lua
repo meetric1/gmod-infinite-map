@@ -157,68 +157,66 @@ function ENT:Initialize()
     self:DrawShadow(false)
 end
 
+function ENT:OnRemove()
+	if SERVER then return end
+	if self.RENDER_MESH and IsValid(self.RENDER_MESH.Mesh) then
+		self.RENDER_MESH.Mesh:Destroy()
+	end
+end
+
 if CLIENT then
-	InfMap.client_chunks = InfMap.client_chunks or {}
-	InfMap.client_meshes = InfMap.client_meshes or {}
-	local last_big_chunk = Vector()
+	local last_mega_chunk
 	local chunks_around_player = 2
+	InfMap.client_chunks = InfMap.client_chunks or {}
+	for y = -chunks_around_player, chunks_around_player do
+		InfMap.client_chunks[y] = InfMap.client_chunks[y] or {}
+	end
     hook.Add("PropUpdateChunk", "infmap_terrain_init", function(ent, chunk, old_chunk)
         if ent == LocalPlayer() then
-			local _, big_chunk = InfMap.localize_vector(chunk, InfMap.render_distance) big_chunk[3] = 0
+			local _, mega_chunk = InfMap.localize_vector(chunk, InfMap.render_distance) mega_chunk[3] = 0
 			local chunk_res_scale = InfMap.chunk_size * 2 * InfMap.render_distance * 2
-			local chunk_res_scale_2 = InfMap.chunk_size * InfMap.render_distance
-			local offset = (chunk - big_chunk * InfMap.render_distance * 2) * InfMap.chunk_size * 2
-			local delta_chunk = chunk - (old_chunk or chunk)
+			local chunk_scale = InfMap.chunk_size * 2
+			local delta_chunk = mega_chunk - (last_mega_chunk or mega_chunk)
+			local chunk_alloc = table.Copy(InfMap.client_chunks)
 			for y = -chunks_around_player, chunks_around_player do
-				InfMap.client_chunks[y] = InfMap.client_chunks[y] or {}
-				InfMap.client_meshes[y] = InfMap.client_meshes[y] or {}
 				for x = -chunks_around_player, chunks_around_player do
+					// if the chunk the current xy chunk is going to go to is outside of the render distance remove it
+					if math.abs(x - delta_chunk[1]) > chunks_around_player or math.abs(y - delta_chunk[2]) > chunks_around_player then
+						SafeRemoveEntity(InfMap.client_chunks[y][x])
+						InfMap.client_chunks[y][x] = nil
+					end
+
+					if chunk_alloc[y + delta_chunk[2]] and chunk_alloc[y + delta_chunk[2]][x + delta_chunk[1]] then
+						InfMap.client_chunks[y][x] = chunk_alloc[y + delta_chunk[2]][x + delta_chunk[1]]
+					else
+						InfMap.client_chunks[y][x] = nil
+					end
 					// create chunk if it doesnt exist
 					if !InfMap.client_chunks[y][x] then 
 						local e = ents.CreateClientside("infmap_terrain_render")
 						e:Spawn()
-						e:GenerateMesh(InfMap.height_function, Vector(x, y, 0) * InfMap.render_distance * 2, Matrix())
+						e:GenerateMesh(InfMap.height_function, (Vector(x, y, 0) + mega_chunk) * InfMap.render_distance * 2, Matrix())
+						e.CHUNK_OFFSET = Vector(x, y, 0) + mega_chunk
 						InfMap.client_chunks[y][x] = e
-						InfMap.client_meshes[y][x] = e.RENDER_MESH.Mesh
 					end
 
-					local chunk_ent = InfMap.client_chunks[y][x]
-					chunk_ent.RENDER_MESH.Matrix:SetTranslation(Vector(x, y) * chunk_res_scale - offset)
-
-					if big_chunk != last_big_chunk then
-						local dx = delta_chunk[1]	// calculus flashbacks
-						local dy = delta_chunk[2]
-						if InfMap.client_meshes[y + dy] and InfMap.client_meshes[y + dy][x + dx] then
-							chunk_ent.RENDER_MESH.Mesh = InfMap.client_meshes[y + dy][x + dx]		//cant be directly set because it may be accessed again
-						else
-							chunk_ent.RENDER_MESH.Mesh = nil
-						end
-					end
+					local e = InfMap.client_chunks[y][x]
+					e.RENDER_MESH.Matrix:SetTranslation(e.CHUNK_OFFSET * chunk_res_scale - chunk * chunk_scale)
 				end
 			end
-
-			if last_big_chunk == big_chunk then return end
-
-			// update meshes
-			local i = 0
-			for y = -chunks_around_player, chunks_around_player do
-				for x = -chunks_around_player, chunks_around_player do
-					if !IsValid(InfMap.client_chunks[y][x].RENDER_MESH.Mesh) then
-						//i = i + 0.01
-						local gen_x = x * InfMap.render_distance * 2 + big_chunk[1] * InfMap.render_distance * 2
-						local gen_y = y * InfMap.render_distance * 2 + big_chunk[2] * InfMap.render_distance * 2
-						//timer.Simple(i, function()
-							InfMap.client_chunks[y][x]:GenerateMesh(InfMap.height_function, Vector(gen_x, gen_y, 0), InfMap.client_chunks[y][x].RENDER_MESH.Matrix)
-							InfMap.client_meshes[y][x] = InfMap.client_chunks[y][x].RENDER_MESH.Mesh
-						//end)
-					end
-					InfMap.client_meshes[y][x] = InfMap.client_chunks[y][x].RENDER_MESH.Mesh
-				end
-			end
-
-			last_big_chunk = big_chunk
+			
+			last_mega_chunk = mega_chunk
         end
     end)
+
+	hook.Add("PostCleanupMap", "infmap_terrain_cleanup", function()
+		for y, t in pairs(InfMap.client_chunks) do
+			for x, ent in pairs(t) do
+				SafeRemoveEntity(ent)
+			end
+		end
+		table.Empty(InfMap.client_chunks)
+	end)
 
 	local size = 2^31
 	local uvsize = size / 10000

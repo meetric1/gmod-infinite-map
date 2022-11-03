@@ -9,7 +9,6 @@ if SERVER then return end
 // this has to be forced in order for render overrides to work
 hook.Add("InitPostEntity", "inf_init", function()
 	LocalPlayer():ConCommand("cl_drawspawneffect 0")
-	LocalPlayer().CHUNK_OFFSET = Vector()
 end)
 
 // detour render bounds of entities in other chunks
