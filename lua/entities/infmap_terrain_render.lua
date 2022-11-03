@@ -192,7 +192,7 @@ if CLIENT then
 						InfMap.client_chunks[y][x] = nil
 					end
 					// create chunk if it doesnt exist
-					if !InfMap.client_chunks[y][x] then 
+					if !IsValid(InfMap.client_chunks[y][x]) then 
 						local e = ents.CreateClientside("infmap_terrain_render")
 						e:Spawn()
 						e:GenerateMesh(InfMap.height_function, (Vector(x, y, 0) + mega_chunk) * InfMap.render_distance * 2, Matrix())
@@ -214,9 +214,6 @@ if CLIENT then
 			for x, ent in pairs(t) do
 				SafeRemoveEntity(ent)
 			end
-		end
-		for y = -chunks_around_player, chunks_around_player do
-			InfMap.client_chunks[y] = InfMap.client_chunks[y] or {}
 		end
 	end)
 
