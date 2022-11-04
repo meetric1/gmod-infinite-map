@@ -60,6 +60,7 @@ hook.Add("RenderScene", "!infinite_update_visbounds", function(eyePos, eyeAngles
 		if prop_dir:LengthSqr() < sub_size_sqr then
 			shrunk = 1
 		end
+
 		prop_dir = prop_dir * shrunk
 
 		// grab render bounds in case its been edited (prop resizer compatability)
@@ -78,7 +79,6 @@ hook.Add("RenderScene", "!infinite_update_visbounds", function(eyePos, eyeAngles
 			
 			min = min * shrunk
 			max = max * shrunk
-
 			ent:SetRenderBoundsWS(eyePos + prop_dir + min, eyePos + prop_dir + max)
 			//debugoverlay.Box(eyePos + prop_dir, min, max, 0, Color(0, 0, 255, 0))
 		end

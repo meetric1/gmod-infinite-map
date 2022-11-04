@@ -3,6 +3,7 @@ if game.GetMap() != "gm_infinite" then return end
 AddCSLuaFile()
 
 InfMap = InfMap or {}
+InfMap.chunk_size = 10000
 InfMap.simplex = include("simplex.lua")
 
 local max = 2^28
