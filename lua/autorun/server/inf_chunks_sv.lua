@@ -34,13 +34,7 @@ local function unfucked_SetPos(ent, pos, filter)
 	pos[2] = math.Clamp(pos[2], -source_bounds, source_bounds)
 	pos[3] = math.Clamp(pos[3], -source_bounds, source_bounds)
 
-	local vel = ent:GetVelocity()
-	local phys = ent:GetPhysicsObject()
-	if phys:IsValid() and !class_filter[ent:GetClass()] and !(ent:IsNPC() or ent:IsNextBot()) then
-		phys:InfMap_SetPos(pos, true)
-	else
-		ent:InfMap_SetPos(pos)
-	end
+	ent:InfMap_SetPos(pos)
 end
 
 local function unfucked_SetVelAng(ent, vel, ang)
