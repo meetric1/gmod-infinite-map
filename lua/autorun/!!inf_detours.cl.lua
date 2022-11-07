@@ -25,6 +25,16 @@ function EntityMT:LocalToWorld(pos)
 	if !self.CHUNK_OFFSET or !LocalPlayer().CHUNK_OFFSET then return self:InfMap_LocalToWorld(pos) end
 	return InfMap.unlocalize_vector(self:InfMap_LocalToWorld(pos), self.CHUNK_OFFSET - LocalPlayer().CHUNK_OFFSET)
 end
+local clamp = math.Clamp
+local function clamp_vector(pos, max)
+	return Vector(clamp(pos[1], -max, max), clamp(pos[2], -max, max), clamp(pos[3], -max, max))
+end
+
+EntityMT.InfMap_SetPos = EntityMT.InfMap_SetPos or EntityMT.SetPos
+function EntityMT:SetPos(pos)
+	local pos = clamp_vector(pos, 2^14)
+	return self:InfMap_SetPos(pos)
+end
 
 
 // traces shouldnt appear when shot from other chunks
