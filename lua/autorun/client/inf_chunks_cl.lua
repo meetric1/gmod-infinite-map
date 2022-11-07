@@ -25,6 +25,7 @@ local function update_ents(all)
 		invalid = invalid or InfMap.filter_entities(ent)
 		//invalid = invalid or ent:GetVelocity() + LocalPlayer():GetVelocity() == Vector()
 		invalid = invalid or !ent.RenderOverride
+		invalid = invalid or ent:GetNoDraw()
 		
 		if invalid then
 			table.remove(InfMap.all_ents, i)	// remove invalid entity

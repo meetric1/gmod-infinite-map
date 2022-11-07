@@ -39,9 +39,18 @@ if SERVER then
 		if ent:IsPlayer() or ent:IsNPC() then
 			//print(ent, "weapons passed in chunk", chunk)
 			for _, weapon in ipairs(ent:GetWeapons()) do
+				hook.Run("PropUpdateChunk", weapon, chunk, weapon.CHUNK_OFFSET)
 				ent.CHUNK_OFFSET = chunk
 				ent:SetCustomCollisionCheck(true)
-				send_data(weapon, chunk)
+				send_data(weapon, chunk)	// force weapons because they are nodraw
+			end
+		end
+
+		if !IsValid(ent:GetParent()) then
+			for _, parent in ipairs(InfMap.get_all_parents(ent)) do
+				if parent == ent then continue end
+				InfMap.prop_update_chunk(parent, chunk)
+				print("parent passed", parent)
 			end
 		end
 	end

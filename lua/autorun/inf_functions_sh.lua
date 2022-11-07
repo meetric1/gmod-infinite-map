@@ -96,10 +96,10 @@ local filter = {
 	env_smokestack = true,
 	env_rockettrail = true,
 	rpg_missile = true,
-	//gmod_safespace_interior = true,
+	gmod_safespace_interior = true,
 	sizehandler = true,
 	player_pickup = true,
-	//crossbow_bolt = true,
+	phys_spring = true,
 }
 
 function InfMap.filter_entities(e)
@@ -126,6 +126,28 @@ function InfMap.get_all_constrained(main_ent)
 				if v.Ent2 then recursive_find(v.Ent2) end
 			end
 
+			//local parent = ent:GetParent()
+			//if parent then recursive_find(parent) end
+			//for k, child in pairs(ent:GetChildren()) do
+			//	if child:IsPlayer() then continue end
+			//	recursive_find(child)
+			//end
+		end
+	end
+	recursive_find(main_ent)
+
+	return entity_table
+end
+
+// code edited from starfallex
+function InfMap.get_all_parents(main_ent)
+	local entity_lookup = {}
+	local entity_table = {}
+	local function recursive_find(ent)
+		if entity_lookup[ent] then return end
+		entity_lookup[ent] = true
+		if ent:IsValid() then
+			entity_table[#entity_table + 1] = ent
 			local parent = ent:GetParent()
 			if parent then recursive_find(parent) end
 			for k, child in pairs(ent:GetChildren()) do
