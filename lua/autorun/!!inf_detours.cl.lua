@@ -14,6 +14,18 @@ local PlayerMT = FindMetaTable("Player")
 local NextBotMT = FindMetaTable("NextBot")
 local CTakeDamageInfoMT = FindMetaTable("CTakeDamageInfo")
 
+EntityMT.InfMap_GetPos = EntityMT.InfMap_GetPos or EntityMT.GetPos
+function EntityMT:GetPos()
+	if !self.CHUNK_OFFSET or !LocalPlayer().CHUNK_OFFSET then return self:InfMap_GetPos(pos) end
+	return InfMap.unlocalize_vector(self:InfMap_GetPos(), self.CHUNK_OFFSET - LocalPlayer().CHUNK_OFFSET)
+end
+
+EntityMT.InfMap_LocalToWorld = EntityMT.InfMap_LocalToWorld or EntityMT.LocalToWorld
+function EntityMT:LocalToWorld(pos)
+	if !self.CHUNK_OFFSET or !LocalPlayer().CHUNK_OFFSET then return self:InfMap_LocalToWorld(pos) end
+	return InfMap.unlocalize_vector(self:InfMap_LocalToWorld(pos), self.CHUNK_OFFSET - LocalPlayer().CHUNK_OFFSET)
+end
+
 
 // traces shouldnt appear when shot from other chunks
 hook.Add("EntityFireBullets", "infmap_detour", function(ent, data)
@@ -81,8 +93,13 @@ InfMap.TraceLine = InfMap.TraceLine or util.TraceLine
 function util.TraceLine(data)
 	return modify_trace_data(data, InfMap.TraceLine)
 end
-// detour the doors addon detour (double detour!)
-InfMap.RealTraceLine = InfMap.RealTraceLine or util.RealTraceLine
-function util.RealTraceLine(data)
-	return modify_trace_data(data, InfMap.RealTraceLine)
+// hull traceline
+InfMap.TraceHull = InfMap.TraceHull or util.TraceHull
+function util.TraceHull(data)
+	return modify_trace_data(data, InfMap.TraceHull)
+end
+// entity traceline
+InfMap.TraceEntity = InfMap.TraceEntity or util.TraceEntity
+function util.TraceEntity(data, ent)
+	return modify_trace_data(data, InfMap.TraceEntity, ent)
 end

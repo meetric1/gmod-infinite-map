@@ -53,7 +53,7 @@ hook.Add("RenderScene", "!infinite_update_visbounds", function(eyePos, eyeAngles
 		local world_chunk_offset = ent.CHUNK_OFFSET - lp_chunk_offset
 		if world_chunk_offset == Vector() then continue end
 
-		local prop_dir = (InfMap.unlocalize_vector(ent:GetPos(), world_chunk_offset) - eyePos)
+		local prop_dir = (InfMap.unlocalize_vector(ent:InfMap_GetPos(), world_chunk_offset) - eyePos)
 
 		//local shrunk = !far_lod and 0.02 or sub_size / prop_dir:Length()
 		local shrunk = 0.02	// how much you locally shrink render bounds [in reality should be chunksize / prop_dir:Length()]
@@ -204,7 +204,7 @@ function InfMap.prop_update_chunk(ent, chunk)
 		local mat = Material(mat_str)
 		ent.RenderOverride = function(self)	// high lod
 			render_SetMaterial(mat)
-			render_DrawBox(self:GetPos() + visual_offset, self:GetAngles(), self:OBBMins(), self:OBBMaxs())
+			render_DrawBox(self:InfMap_GetPos() + visual_offset, self:GetAngles(), self:OBBMins(), self:OBBMaxs())
 		end
 	else
 		local cam_Start3D = cam.Start3D

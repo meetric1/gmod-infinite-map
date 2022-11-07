@@ -20,6 +20,17 @@ function EntityMT:GetPos()
 	return InfMap.unlocalize_vector(self:InfMap_GetPos(), self.CHUNK_OFFSET)
 end
 
+EntityMT.InfMap_WorldSpaceCenter = EntityMT.InfMap_WorldSpaceCenter or EntityMT.WorldSpaceCenter
+function EntityMT:WorldSpaceCenter()
+	return InfMap.unlocalize_vector(self:InfMap_WorldSpaceCenter(), self.CHUNK_OFFSET)
+end
+
+EntityMT.InfMap_WorldSpaceAABB = EntityMT.InfMap_WorldSpaceAABB or EntityMT.WorldSpaceAABB
+function EntityMT:WorldSpaceAABB()
+	local v1, v2 = self:InfMap_WorldSpaceAABB()
+	return InfMap.unlocalize_vector(v1, self.CHUNK_OFFSET), InfMap.unlocalize_vector(v2, self.CHUNK_OFFSET)
+end
+
 EntityMT.InfMap_SetPos = EntityMT.InfMap_SetPos or EntityMT.SetPos
 function EntityMT:SetPos(pos)
 	local chunk_pos, chunk_offset = InfMap.localize_vector(pos)
@@ -59,6 +70,26 @@ function EntityMT:GetAttachment(num)
 	return data
 end
 
+local function unfuck_keyvalue(self, value)
+	if !self:GetKeyValues()[value] then return end
+	self:SetKeyValue(value, tostring(InfMap.unlocalize_vector(Vector(self:GetKeyValues()[value]), -self.CHUNK_OFFSET)))
+end
+
+EntityMT.InfMap_Spawn = EntityMT.InfMap_Spawn or EntityMT.Spawn
+function EntityMT:Spawn()
+	if self:IsConstraint() or self:GetClass() == "phys_spring" then	// elastic isnt considered a constraint..?
+		unfuck_keyvalue(self, "attachpoint")
+		unfuck_keyvalue(self, "springaxis")
+		unfuck_keyvalue(self, "slideaxis")
+		unfuck_keyvalue(self, "hingeaxis")
+		unfuck_keyvalue(self, "axis")
+		unfuck_keyvalue(self, "position2")
+		self:SetPos(self:InfMap_GetPos())
+	end
+	return self:InfMap_Spawn()
+end
+
+
 /************ Physics Object Metatable **************/
 
 PhysObjMT.InfMap_GetPos = PhysObjMT.InfMap_GetPos or PhysObjMT.GetPos
@@ -76,18 +107,26 @@ function PhysObjMT:SetPos(pos, teleport)
 	return self:InfMap_SetPos(chunk_pos, teleport)
 end
 
-// Internally these functions are used for constraints, unfortunately they are created in world space at the LocalToWorld positions causing huge problems
-/*
+PhysObjMT.InfMap_ApplyForceOffset = PhysObjMT.InfMap_ApplyForceOffset or PhysObjMT.ApplyForceOffset
+function PhysObjMT:ApplyForceOffset(impulse, position)
+	return self:InfMap_ApplyForceOffset(impulse, InfMap.unlocalize_vector(position, -self:GetEntity().CHUNK_OFFSET))
+end
+
 PhysObjMT.InfMap_LocalToWorld = PhysObjMT.InfMap_LocalToWorld or PhysObjMT.LocalToWorld
 function PhysObjMT:LocalToWorld(pos)
 	return InfMap.unlocalize_vector(self:InfMap_LocalToWorld(pos), self:GetEntity().CHUNK_OFFSET)
+end
+
+PhysObjMT.InfMap_CalculateVelocityOffset = PhysObjMT.InfMap_CalculateVelocityOffset or PhysObjMT.CalculateVelocityOffset
+function PhysObjMT:CalculateVelocityOffset(impulse, position)
+	return self:InfMap_CalculateVelocityOffset(impulse, InfMap.unlocalize_vector(position, -self:GetEntity().CHUNK_OFFSET))
 end
 
 PhysObjMT.InfMap_WorldToLocal = PhysObjMT.InfMap_WorldToLocal or PhysObjMT.WorldToLocal
 function PhysObjMT:WorldToLocal(pos)
 	return self:InfMap_WorldToLocal(pos - InfMap.unlocalize_vector(Vector(), self:GetEntity().CHUNK_OFFSET))
 end
-*/
+
 
 /*************** Vehicle Metatable *****************/
 
