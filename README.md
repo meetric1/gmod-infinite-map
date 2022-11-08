@@ -9,28 +9,53 @@ This is partially inspired by gm_infiniteflatgrass (from the Gravity Hull addon)
 * Generally better addon support
 * Ability to see over 2 billion hammer units in real time
 * ACF Support (May need help from ACF devs on this one)
-* WAC Support (sorry, no LFS)
+* WAC (Maybe LFS) Support
 * Simphys car support
 * Basic terrain including a ocean / lake system
 * Ability to "Go to space"
 * (Maybe) Procedural Planets^
 * An attempt to revive the Spacebuild gamemode
 
+### To Do:
+* Detour Bullets
+* Cross Chunk Traceline detour
+* Explosion Detour
+* Sound Detour
+* A form of Terrain menu with togglable world border (intentional farlands?)
+* (Maybe) Planets & Water System
+* (Maybe) Collision support for props larger than a chunk
+
+### Stuff I am NOT doing:
+* Trees
+* Higher poly terrain
+* Support for every addon, there WILL be conflictions!
+* Navmesh support (no nextbots)
+* Hammer editor support
+* Particle detours
+* Optimizations reguarding large amounts of spawned objects, this is source internal and performance wont be great
+
 ### How It Works
 The map isnt actually infinite, its impossible to go past the source bounds, so the entirety of the play space in the map is occupied in the same location. A hook is used to determine which props should and should not collide, and all entities are given perceived visual offsets per entity depending on which chunk (or cell) they are in, giving the illusion the map is presumably infinite (You cant do anything physical past the source boundery, but you can render things past it). The original Gravity Hull addon used this same method with "Cells" (But I call them chunks)
 
 ### For better addon support this mod currently detours the following functions (ONLY ON THE SERVER!):
+* Entity:GetPos
 * Entity:SetPos
 * Entity:LocalToWorld
 * Entity:WorldToLocal
 * Entity:EyePos
 * Entity:NearestPoint
 * Entity:GetAttachment
+* Entity:WorldSpaceCenter
+* Entity:WorldSpaceAABB
+* Entity:Spawn (for constraints)
 
 * PhysObj:GetPos
 * PhysObj:SetPos
+* PhysObj:ApplyForceOffset
+* PhysObj:LocalToWorld
+* PhysObj:WorldToLocal
+* PhysObj:CalculateVelocityOffset
 
-* Vehicle:GetPos
 * Vehicle:SetPos
 * Vehicle:LocalToWorld
 * Vehicle:WorldToLocal
@@ -43,7 +68,7 @@ The map isnt actually infinite, its impossible to go past the source bounds, so 
 * CLuaLocomotionMT:Approach
 * CLuaLocomotionMT:FaceTowards
 
-* Player:ShootPos
+* Player:GetShootPos
 
 * util.TraceLine
 * util.TraceHull
@@ -51,3 +76,4 @@ The map isnt actually infinite, its impossible to go past the source bounds, so 
 * util.IsInWorld
 * ents.FindInSphere
 * WireLib:SetPos (unclamps wiremods setpos function since it wont let objects position be set outside of the source bounderies)
+* SF.clampPos (same thing but for starfall)
