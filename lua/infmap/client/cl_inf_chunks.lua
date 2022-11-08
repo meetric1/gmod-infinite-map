@@ -1,11 +1,3 @@
-if game.GetMap() != "gm_infinite" then return end
-
-AddCSLuaFile()
-
-InfMap = InfMap or {}
-
-if SERVER then return end
-
 // this has to be forced in order for render overrides to work
 hook.Add("InitPostEntity", "inf_init", function()
 	LocalPlayer():ConCommand("cl_drawspawneffect 0")

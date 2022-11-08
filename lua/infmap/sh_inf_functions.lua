@@ -1,12 +1,7 @@
-if game.GetMap() != "gm_infinite" then return end
-
-AddCSLuaFile()
-
-InfMap = InfMap or {}
 InfMap.chunk_size = 10000
 InfMap.simplex = include("simplex.lua")
 
-local max = 2^28 + 10
+local max = 2^28
 function InfMap.height_function(x, y) 
 	//local final = InfMap.simplex.Noise3D(x / 10, y / 10, 100) / InfMap.simplex.Noise3D(x / 10, y / 10, 0) * 10000
     local final = (InfMap.simplex.Noise3D(x / 10, y / 10, 0) * 100) * math.min(InfMap.simplex.Noise3D(x / 100, y / 100, 10) * 10000, 0) + (InfMap.simplex.Noise3D(x / 150 + 1, y / 150, 100)) * 1000000

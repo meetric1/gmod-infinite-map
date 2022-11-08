@@ -1,9 +1,3 @@
-if game.GetMap() != "gm_infinite" then return end
-
-AddCSLuaFile()
-
-InfMap = InfMap or {}
-
 if SERVER then
 	util.AddNetworkString("INF_PROP_UPDATE")
 	util.AddNetworkString("INF_FLASHLIGHT_OFF")

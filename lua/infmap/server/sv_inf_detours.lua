@@ -1,9 +1,3 @@
-if game.GetMap() != "gm_infinite" then return end
-
-if CLIENT then return end
-
-InfMap = InfMap or {}
-
 // metatable fuckery
 local EntityMT = FindMetaTable("Entity")
 local VehicleMT = FindMetaTable("Vehicle")

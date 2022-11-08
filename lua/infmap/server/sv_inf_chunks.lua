@@ -1,7 +1,3 @@
-if game.GetMap() != "gm_infinite" then return end
-
-InfMap = InfMap or {}
-
 // physgun, gravgun, and use support
 local ply_objs = {}
 local function pickup(ply, ent) ply_objs[ply] = ent end	// kind of cursed.. key = player, value = prop
