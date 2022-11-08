@@ -15,14 +15,6 @@ hook.Add("GravGunOnDropped", "infinte_detour", drop)
 hook.Add("OnPlayerPhysicsPickup", "infinite_detour", pickup)
 hook.Add("OnPlayerPhysicsDrop", "infinte_detour", drop)
 
-local class_filter = {
-	prop_vehicle_jeep = true,
-	player = true,
-	prop_vehicle_prisoner_pod = true,
-	prop_physics = true,
-	//gmod_sent_vehicle_fphysics_base = true,
-}
-
 // setting position kills all velocity for some reason
 local source_bounds = 2^14 - 64
 local function unfucked_SetPos(ent, pos, filter)
@@ -51,14 +43,6 @@ local function unfucked_SetVelAng(ent, vel, ang)
 end
 
 local function update_entity(ent, pos, chunk)
-	// remove all clones since it has moved chunks, (so we can rebuild clones)
-	if ent.CHUNK_CLONES then
-		for _, e in pairs(ent.CHUNK_CLONES) do	// (ipairs doesnt work since index is sortof random)
-			SafeRemoveEntity(e)
-		end
-		ent.CHUNK_CLONES = nil
-	end
-
 	if ent:IsPlayer() then
 		// carried props are teleported to the next chunk
 		local carry = ply_objs[ent]
@@ -206,7 +190,7 @@ local co = coroutine.create(function()
 			if !InfMap.in_chunk(ent:InfMap_GetPos(), InfMap.chunk_size - bounding_radius) then
 				ent.CHUNK_CLONES = ent.CHUNK_CLONES or {}
 				local i = 0
-				local aabb_min, aabb_max = ent:WorldSpaceAABB()
+				local aabb_min, aabb_max = ent:InfMap_WorldSpaceAABB()
 				for z = -1, 1 do
 					for y = -1, 1 do
 						for x = -1, 1 do
@@ -219,16 +203,17 @@ local co = coroutine.create(function()
 							local chunk_pos = Vector(x, y, z) * InfMap.chunk_size * 2
 							local chunk_min = chunk_pos - Vector(1, 1, 1) * InfMap.chunk_size
 							local chunk_max = chunk_pos + Vector(1, 1, 1) * InfMap.chunk_size
+							//debugoverlay.Box(chunk_pos, chunk_min, chunk_max, 0.1, Color(255, 0, 255, 0))
+
 							if InfMap.intersect_box(aabb_min, aabb_max, chunk_min, chunk_max) then
 								// dont clone 2 times
-								if ent.CHUNK_CLONES[i] then continue end
+								if IsValid(ent.CHUNK_CLONES[i]) then continue end
 
 								// clone object
 								local e = ents.Create("infmap_clone")
-								e:SetReferenceData(ent, ent.CHUNK_OFFSET + Vector(x, y, z))
+								e:SetReferenceData(ent, Vector(x, y, z))
 								e:Spawn()
 								ent.CHUNK_CLONES[i] = e
-								//print("Cloned on", ent, Vector(x, y, z))
 							else
 								if !ent.CHUNK_CLONES[i] then continue end
 								// remove cloned object if its moved out of chunk

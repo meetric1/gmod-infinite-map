@@ -30,6 +30,13 @@ if SERVER then
 			end
 		end)
 
+		if SERVER and ent.CHUNK_CLONES then	// remove all clones since it has moved chunks, (so we can rebuild clones)
+			for _, e in pairs(ent.CHUNK_CLONES) do	// (ipairs doesnt work since index is sortof random)
+				SafeRemoveEntity(e)
+			end
+			ent.CHUNK_CLONES = nil
+		end
+
 		// dont network bad ents to client, they may not even be able to see them
 		if (InfMap.filter_entities(ent) or ent:GetNoDraw()) and !InfMap.terrain_filter[ent:GetClass()] then return end
 

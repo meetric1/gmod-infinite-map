@@ -13,7 +13,7 @@ ENT.Instructions	= ""
 ENT.Spawnable		= false
 
 function ENT:SetReferenceData(ent, chunk)
-    self.REFERENCE_DATA = {ent, chunk, (ent.CHUNK_OFFSET - chunk) * InfMap.chunk_size * 2}    //1 = ent, 2 = world chunk, 3 = local chunk
+    self.REFERENCE_DATA = {ent, chunk, ent.CHUNK_OFFSET + chunk}    //1 = ent, 2 = world chunk, 3 = local chunk
 end
 
 local function unfuck_table(verts)
@@ -67,7 +67,7 @@ function ENT:Initialize()
         self:GetPhysicsObject():EnableMotion(false)
     end
 
-    InfMap.prop_update_chunk(self, self.REFERENCE_DATA[2])
+    InfMap.prop_update_chunk(self, self.REFERENCE_DATA[3])
 end
 
 function ENT:Think()
@@ -87,12 +87,12 @@ function ENT:Think()
         SafeRemoveEntity(self)
     end
     local parent = data[1]
-    if !parent or !parent:IsValid() then
+    if !parent or !parent:IsValid() or data[3] != parent.CHUNK_OFFSET + data[2] then
         SafeRemoveEntity(self)
         return
     end
 
-    self:InfMap_SetPos(data[1]:InfMap_GetPos() + data[3])
+    self:InfMap_SetPos(data[1]:InfMap_GetPos() - data[2] * InfMap.chunk_size * 2)
     self:SetAngles(data[1]:GetAngles())
     
     local phys = self:GetPhysicsObject()
