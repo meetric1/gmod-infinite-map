@@ -1,5 +1,3 @@
-if game.GetMap() != "gm_infinite" then return end
-
 AddCSLuaFile()
 
 ENT.Type = "anim"
@@ -170,22 +168,36 @@ function ENT:BuildCollision(heightFunction)
     local final_mesh = {}
     for y1 = -1, 0 do
         for x1 = -1, 0 do
-            local size = InfMap.chunk_size
-            local offset = Vector(x1 * InfMap.chunk_size * 2 + InfMap.chunk_size, y1 * InfMap.chunk_size * 2 + InfMap.chunk_size, -offset_z)
-            local p1 = Vector(size, size, heightFunction(x + x1 + 1, y + y1 + 1)) + offset
-            local p2 = Vector(-size, size, heightFunction(x + x1, y + y1 + 1)) + offset
-            local p3 = Vector(size, -size, heightFunction(x + x1 + 1, y + y1)) + offset
-            local p4 = Vector(-size, -size, heightFunction(x + x1, y + y1)) + offset
+            local chunk_resolution = InfMap.chunk_resolution
+            for i_y = 0, chunk_resolution - 1 do
+                for i_x = 0, chunk_resolution - 1 do
+                    local size = InfMap.chunk_size
+                    local i_x1 = (i_x    ) / chunk_resolution
+                    local i_y1 = (i_y    ) / chunk_resolution
+                    local i_x2 = (i_x + 1) / chunk_resolution
+                    local i_y2 = (i_y + 1) / chunk_resolution
+                    local min_pos_x = -InfMap.chunk_size + i_x1 * InfMap.chunk_size * 2
+                    local min_pos_y = -InfMap.chunk_size + i_y1 * InfMap.chunk_size * 2
+                    local max_pos_x = -InfMap.chunk_size + i_x2 * InfMap.chunk_size * 2
+                    local max_pos_y = -InfMap.chunk_size + i_y2 * InfMap.chunk_size * 2
 
-            table.Add(final_mesh, {
-                {pos = p1},
-                {pos = p2},
-                {pos = p3},
+                    local offset = Vector(x1 * InfMap.chunk_size * 2 + InfMap.chunk_size, y1 * InfMap.chunk_size * 2 + InfMap.chunk_size, -offset_z)
+                    local p1 = Vector(max_pos_x, max_pos_y, heightFunction(x + x1 + i_x2, y + y1 + i_y2)) + offset
+                    local p2 = Vector(min_pos_x, max_pos_y, heightFunction(x + x1 + i_x1, y + y1 + i_y2)) + offset
+                    local p3 = Vector(max_pos_x, min_pos_y, heightFunction(x + x1 + i_x2, y + y1 + i_y1)) + offset
+                    local p4 = Vector(min_pos_x, min_pos_y, heightFunction(x + x1 + i_x1, y + y1 + i_y1)) + offset
 
-                {pos = p2},
-                {pos = p3},
-                {pos = p4}
-            })
+                    table.Add(final_mesh, {
+                        {pos = p1},
+                        {pos = p2},
+                        {pos = p3},
+
+                        {pos = p2},
+                        {pos = p3},
+                        {pos = p4}
+                    })
+                end
+            end
         end
     end
 

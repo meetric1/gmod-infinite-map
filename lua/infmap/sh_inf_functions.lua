@@ -1,12 +1,15 @@
 InfMap.chunk_size = 10000
 InfMap.simplex = include("simplex.lua")
+InfMap.megachunk_size = 10
+InfMap.chunk_resolution = 3
+InfMap.render_distance = 3
 
 local max = 2^28
 function InfMap.height_function(x, y) 
 	x = x + 46.1
     local final = (InfMap.simplex.Noise3D(x / 10, y / 10, 0) * 100) * math.min(InfMap.simplex.Noise3D(x / 100, y / 100, 0) * 15000, 10) + (InfMap.simplex.Noise3D(x / 150 + 1, y / 150, 150)) * 700000
 	x = x - 46.1
-	if (x >= 0 and x < 50) and (y >= -0.01 and y < 1.51) then final = (x < 10 and -15 or -math.huge) end
+	if (x >= 0 and x < 50) and (y >= 0 and y < 1) then final = (x < 10 and -15 or -math.huge) end
 	return math.Clamp(final, -max, max)
 end
 
