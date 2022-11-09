@@ -89,6 +89,7 @@ hook.Add("PostDrawOpaqueRenderables", "infinite_player_render", function()
 	for k, v in ipairs(player.GetAll()) do
 		if v.CHUNK_OFFSET != chunk_offset and v:Alive() then
 			v:DrawModel()
+			v:RemoveEffects(EF_DIMLIGHT)	// force flashlight off if in another chunk
 		end
 	end
 

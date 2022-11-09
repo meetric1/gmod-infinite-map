@@ -9,7 +9,7 @@ if SERVER then
 	// add shared files
 	local shared_files, shared_dirs = file.Find("infmap/*","LUA")
 	if shared_files then
-		for _, f in ipairs(shared_files) do	// add shared files
+		for _, f in ipairs(shared_files) do
 			AddCSLuaFile("infmap/" .. f)
 			print("Included ".. f)
 		end
@@ -21,7 +21,7 @@ if SERVER then
 		if client_files then
 			for _, f in ipairs(client_files) do
 				AddCSLuaFile("infmap/client/" .. f)
-				print("Included".. f)
+				print("Included ".. f)
 			end
 		end
 	end

@@ -1,6 +1,5 @@
 if SERVER then
 	util.AddNetworkString("INF_PROP_UPDATE")
-	util.AddNetworkString("INF_FLASHLIGHT_OFF")
 
 	local function send_data(ent, chunk)
 		net.Start("INF_PROP_UPDATE")
@@ -67,35 +66,11 @@ if SERVER then
 			end
 		end
 	end)
-
-	// when flashlight is turned on network it to players
-	hook.Add("PlayerSwitchFlashlight", "infinite_flashlight_detour", function(ply, enabled)
-		if !enabled then return end
-		for _, v in ipairs(player.GetAll()) do
-			if ply.CHUNK_OFFSET != v.CHUNK_OFFSET then
-				net.Start("INF_FLASHLIGHT_OFF")
-				net.WriteInt(ply:EntIndex(), 16)
-				net.Send(v)
-			end
-		end
-	end)
 else
 	local function update_prop(ent_index, chunk)
 		local ent = Entity(ent_index)
 		InfMap.prop_update_chunk(Entity(ent_index), chunk)
 	end
-
-	// turn player flashlight off
-	net.Receive("INF_FLASHLIGHT_OFF", function()
-		local ply_idx = net.ReadInt(16)
-		timer.Create("inf_flashlight_antigay"..ply_idx, 0.01, 100, function()	//flashlight has a random delay for some reason
-			local ply = Entity(ply_idx)
-			if ply:IsValid() and ply:FlashlightIsOn() then
-				ply:RemoveEffects(EF_DIMLIGHT)
-				timer.Remove("inf_flashlight_antigay"..ply_idx)
-			end
-		end)
-	end)
 
 	net.Receive("INF_PROP_UPDATE", function()
 		local ent_index = net.ReadUInt(16)

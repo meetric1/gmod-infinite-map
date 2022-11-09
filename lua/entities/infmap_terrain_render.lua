@@ -69,33 +69,41 @@ function ENT:GenerateMesh(heightFunction, chunk, mat)
     local err, msg
 	local render_distance = InfMap.render_distance
 	local total_tris = (render_distance * 2 + 1) ^ 2
+	self.CHUNK_MIN = 0
+	self.CHUNK_MAX = 0
 	
     mesh.Begin(self.RENDER_MESH.Mesh, MATERIAL_TRIANGLES, 2^13)  // 2 triangles per chunk
         err, msg = pcall(function()
 			// no lod
 			for y = -render_distance, render_distance - 1 do
 				for x = -render_distance, render_distance - 1 do
-					// chunk offset in world space
-					local chunkoffsetx = chunk[1] + x
-					local chunkoffsety = chunk[2] + y
+					//for i_y = 0, 9 do
+						//for i_x = 0, 9 do
+							// chunk offset in world space
+							local chunkoffsetx = chunk[1] + x
+							local chunkoffsety = chunk[2] + y
 
-					// the height of the vertex using the math function
-					local vertexHeight1 = heightFunction(chunkoffsetx, 	   chunkoffsety    )
-					local vertexHeight2 = heightFunction(chunkoffsetx, 	   chunkoffsety + 1)
-					local vertexHeight3 = heightFunction(chunkoffsetx + 1, chunkoffsety    )
-					local vertexHeight4 = heightFunction(chunkoffsetx + 1, chunkoffsety + 1)
+							// the height of the vertex using the math function
+							local vertexHeight1 = heightFunction(chunkoffsetx, 	   chunkoffsety    )
+							local vertexHeight2 = heightFunction(chunkoffsetx, 	   chunkoffsety + 1)
+							local vertexHeight3 = heightFunction(chunkoffsetx + 1, chunkoffsety    )
+							local vertexHeight4 = heightFunction(chunkoffsetx + 1, chunkoffsety + 1)
 
-					// vertex positions in local space
-					local local_offset = InfMap.unlocalize_vector(Vector(InfMap.chunk_size, InfMap.chunk_size), Vector(x, y, 0))
-					local vertexPos1 = Vector(-InfMap.chunk_size, -InfMap.chunk_size, vertexHeight1) + local_offset
-					local vertexPos2 = Vector(-InfMap.chunk_size, InfMap.chunk_size, vertexHeight2) + local_offset
-					local vertexPos3 = Vector(InfMap.chunk_size, -InfMap.chunk_size, vertexHeight3) + local_offset
-					local vertexPos4 = Vector(InfMap.chunk_size, InfMap.chunk_size, vertexHeight4) + local_offset
+							// vertex positions in local space
+							local local_offset = InfMap.unlocalize_vector(Vector(InfMap.chunk_size, InfMap.chunk_size), Vector(x, y, 0))
+							local vertexPos1 = Vector(-InfMap.chunk_size, -InfMap.chunk_size, vertexHeight1) + local_offset
+							local vertexPos2 = Vector(-InfMap.chunk_size, InfMap.chunk_size, vertexHeight2) + local_offset
+							local vertexPos3 = Vector(InfMap.chunk_size, -InfMap.chunk_size, vertexHeight3) + local_offset
+							local vertexPos4 = Vector(InfMap.chunk_size, InfMap.chunk_size, vertexHeight4) + local_offset
 
-					local normal1 = -(vertexPos1 - vertexPos2):Cross(vertexPos1 - vertexPos3)//:GetNormalized()
-					local normal2 = -(vertexPos4 - vertexPos3):Cross(vertexPos4 - vertexPos2)//:GetNormalized()
+							local normal1 = -(vertexPos1 - vertexPos2):Cross(vertexPos1 - vertexPos3)//:GetNormalized()
+							local normal2 = -(vertexPos4 - vertexPos3):Cross(vertexPos4 - vertexPos2)//:GetNormalized()
 
-					add_quad(vertexPos1, vertexPos2, vertexPos3, vertexPos4, normal1, normal2)
+							add_quad(vertexPos1, vertexPos2, vertexPos3, vertexPos4, normal1, normal2)
+							self.CHUNK_MAX = math.max(self.CHUNK_MAX, math.max(math.max(vertexHeight1, vertexHeight2), math.max(vertexHeight3, vertexHeight4)))
+							self.CHUNK_MIN = math.min(self.CHUNK_MIN, math.min(math.min(vertexHeight1, vertexHeight2), math.min(vertexHeight3, vertexHeight4)))
+						//end
+					//end
 				end
 			end
 
@@ -140,9 +148,22 @@ function ENT:GenerateMesh(heightFunction, chunk, mat)
     mesh.End()
 
     if !err then print(msg) end  // if there is an error, catch it and throw it outside of mesh.begin since you crash if mesh.end is not called
-	local min = Vector(1, 1, 1) * -2^14
-	local max = Vector(1, 1, 1) * 2^14
-	self:SetRenderBounds(min, max)
+	self:SetRenderBoundsWS(-Vector(1, 1, 1) * 2^14, Vector(1, 1, 1) * 2^14)
+end
+
+// cursed localized renderbounds shit so clients dont get destroyed from massive render bounds
+local sub_size = 2^14 - InfMap.chunk_size - 64	// how far out render bounds can be before outside of the map
+local min = -Vector(1, 1, 0) * InfMap.chunk_size * InfMap.render_distance * 2
+local max = Vector(1, 1, 0) * InfMap.chunk_size * InfMap.render_distance * 2
+function ENT:SetLocalRenderBounds(eyePos)
+	max[3] = self.CHUNK_MAX
+	min[3] = self.CHUNK_MIN
+	if max[3] - min[3] > 2^20 then return end	// hard cutoff because when renderbounds gets too big it stops working, thanks source
+	local prop_dir = self.RENDER_MESH.Matrix:GetTranslation() - eyePos
+	local shrunk = sub_size / prop_dir:Length()
+	
+	//debugoverlay.Box(eyePos + prop_dir, min, max, 0, Color(255, 0, 255, 0))
+	self:SetRenderBounds(eyePos + prop_dir * shrunk + min * shrunk, eyePos + prop_dir * shrunk + max * shrunk)
 end
 
 function ENT:GetRenderMesh()
@@ -166,7 +187,7 @@ end
 
 if CLIENT then
 	local last_mega_chunk
-	local chunks_around_player = 2
+	local chunks_around_player = 3
 	InfMap.client_chunks = InfMap.client_chunks or {}
 	for y = -chunks_around_player, chunks_around_player do
 		InfMap.client_chunks[y] = InfMap.client_chunks[y] or {}
@@ -208,6 +229,17 @@ if CLIENT then
 			last_mega_chunk = mega_chunk
         end
     end)
+
+	// update renderbounds for these entities
+	hook.Add("RenderScene", "infmap_update_renderbounds", function(eyePos)
+		for y = -chunks_around_player, chunks_around_player do
+			for x = -chunks_around_player, chunks_around_player do
+				local chunk = InfMap.client_chunks[y][x]
+				if !IsValid(chunk) or !chunk.RENDER_MESH then continue end
+				chunk:SetLocalRenderBounds(eyePos)
+			end
+		end
+	end)
 
 	hook.Add("PostCleanupMap", "infmap_terrain_cleanup", function()
 		for y, t in pairs(InfMap.client_chunks) do
