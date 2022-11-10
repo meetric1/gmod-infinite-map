@@ -41,7 +41,7 @@ end)
 net.Receive( "inf_entsound", function( len, ply )
 	local soundTable = net.ReadTable()
 	local ent = soundTable.Entity
-	if LocalPlayer().CHUNK_OFFSET != ent.CHUNK_OFFSET then //this does not properly support moving chunks with continuous sounds playing e.g. thrusters! (or explosions?)
+	if LocalPlayer():GetPos():Distance(ent:GetPos()) > InfMap.chunk_size then //this does not properly support moving chunks with continuous sounds playing e.g. thrusters! (or explosions?)
 		soundTable.Volume = 0 //set volume to zero if not in chunk, otherwise continuous sounds will not update to players outside chunk
 	end
 	if ent:IsValid() then //wac fix, not an entity?
