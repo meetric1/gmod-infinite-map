@@ -304,6 +304,27 @@ hook.Add("Initialize", "infmap_wire_detour", function()
 	end
 end)
 
+//detour sounds for client processing
+util.AddNetworkString( "inf_entsound" )
+
+hook.Add( "EntityEmitSound", "inf_ent_sound", function( t )
+	if t.Entity:IsWorld() then //emitting sounds from world is stupid, lets change to entity
+		local dist = 2^14
+		local ent
+		for k, v in pairs( ents.GetAll() ) do
+			if v:GetPos():DistToSqr(t.Pos) < dist then //get closest entity to emitted sound
+				dist = v:GetPos():DistToSqr(t.Pos) 
+				ent = v 
+			end
+		end
+		t.Entity = ent
+	end
+	net.Start("inf_entsound")
+	net.WriteTable(t) //send to client for local playback
+	net.Broadcast()
+	return false
+end)
+
 // when entities are spawned, reset them
 hook.Add("PlayerSpawn", "infinite_plyreset", function(ply, trans)
 	print("Resetting " .. ply:Nick() .." to chunk 0,0,0")
