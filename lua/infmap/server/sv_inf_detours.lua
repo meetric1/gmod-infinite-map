@@ -310,7 +310,7 @@ util.AddNetworkString( "inf_entsound" )
 hook.Add( "EntityEmitSound", "inf_ent_sound", function( t )
 	if t.Entity:IsWorld() then //emitting sounds from world is stupid, lets change to entity
 		local dist = 2^14
-		local ent, vec, co
+		local ent, vec
 		for k, v in pairs( ents.GetAll() ) do
 			vec = InfMap.localize_vector(v:GetPos()) //get true pos correction
 			if vec:DistToSqr(t.Pos) < dist and v:GetClass() != "infmap_terrain_collider" then //get closest entity to emitted sound, not terrain collider!
