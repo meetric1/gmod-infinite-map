@@ -59,7 +59,7 @@ if SERVER then
 	net.Receive("INF_PROP_UPDATE", function(len, ply)
 		print("Sending chunk/prop data to", ply)
 		for _, ent in ipairs(ents.GetAll()) do
-			if (InfMap.filter_entities(ent) or ent:GetNoDraw()) and ent:GetClass() != "infmap_clone" then continue end
+			if ent:IsConstraint() or ent:GetNoDraw() then continue end
 			if ent.CHUNK_OFFSET then
 				local chunk = ent.CHUNK_OFFSET
 				send_data(ent, ent.CHUNK_OFFSET)
