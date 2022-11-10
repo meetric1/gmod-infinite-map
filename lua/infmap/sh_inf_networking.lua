@@ -31,7 +31,7 @@ if SERVER then
 		end
 
 		// dont network bad ents to client, they may not even be able to see them
-		if (InfMap.filter_entities(ent) or ent:GetNoDraw()) and !InfMap.terrain_filter[ent:GetClass()] then return end
+		if ent:GetNoDraw() or ent:IsConstraint() then return end
 
 		send_data(ent, chunk)
 
@@ -69,6 +69,7 @@ if SERVER then
 else
 	local function update_prop(ent_index, chunk)
 		local ent = Entity(ent_index)
+		print(ent, " passed in chunk ", chunk)
 		InfMap.prop_update_chunk(Entity(ent_index), chunk)
 	end
 

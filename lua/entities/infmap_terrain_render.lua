@@ -102,7 +102,7 @@ function ENT:GenerateMesh(heightFunction, chunk, time)
 end
 
 // cursed localized renderbounds shit so clients dont get destroyed from massive render bounds
-local sub_size = 2^14 - InfMap.chunk_size - 64	// how far out render bounds can be before outside of the map
+local sub_size = 2^14 - InfMap.chunk_size * 1.5	// how far out render bounds can be before outside of the map
 local min = -Vector(1, 1, 0) * InfMap.chunk_size * InfMap.megachunk_size * 2
 local max = Vector(1, 1, 0) * InfMap.chunk_size * InfMap.megachunk_size * 2
 function ENT:SetLocalRenderBounds(eyePos)
@@ -193,7 +193,7 @@ if CLIENT then
 		end
 	end)
 
-	hook.Add("PostCleanupMap", "infmap_terrain_cleanup", function()
+	hook.Add("PreCleanupMap", "infmap_terrain_cleanup", function()
 		for y, t in pairs(InfMap.client_chunks) do
 			for x, ent in pairs(t) do
 				SafeRemoveEntity(ent)

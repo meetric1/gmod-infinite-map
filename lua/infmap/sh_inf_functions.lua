@@ -7,9 +7,13 @@ InfMap.render_distance = 3
 local max = 2^28
 function InfMap.height_function(x, y) 
 	x = x + 46.1
-    local final = (InfMap.simplex.Noise3D(x / 10, y / 10, 0) * 100) * math.min(InfMap.simplex.Noise3D(x / 100, y / 100, 0) * 15000, 10) + (InfMap.simplex.Noise3D(x / 150 + 1, y / 150, 150)) * 700000
+    local final = (InfMap.simplex.Noise3D(x / 10, y / 10, 0) * 100) * math.min(InfMap.simplex.Noise3D(x / 100, y / 100, 0) * 15000, 0) // small mountains
+	final = final + (InfMap.simplex.Noise3D(x / 150 + 1, y / 150, 150)) * 700000	// big mountains
+	if InfMap.simplex.Noise2D(x / 10, y / 10) < -0.99725 then
+		final = -math.huge
+	end //HUGE mountains
 	x = x - 46.1
-	if (x >= 0 and x < 50) and (y >= 0 and y < 1) then final = (x < 10 and -15 or -math.huge) end
+	if (x >= 0) and (y >= 0 and y < 1) then final = -15 end
 	return math.Clamp(final, -max, max)
 end
 
@@ -56,14 +60,9 @@ function InfMap.intersect_box(min_a, max_a, min_b, max_b)
 	return !(x_check or y_check or z_check)
 end
 
-InfMap.terrain_filter = {
+InfMap.filter = {
 	infmap_clone = true ,
 	infmap_terrain_collider = true,
-	infmap_terrain_render = true
-}
-
-local filter = {
-	infmap_clone = true,
 	infmap_terrain_render = true,
 	physgun_beam = true,
 	worldspawn = true,
@@ -101,7 +100,7 @@ local filter = {
 }
 
 function InfMap.filter_entities(e)
-	if filter[e:GetClass()] then return true end
+	if InfMap.filter[e:GetClass()] then return true end
 	if e:EntIndex() == 0 then return true end
 	if SERVER and e:IsConstraint() then return true end
 	//if !e.GetModelRenderBounds and !e:GetModelRenderBounds() then return true end

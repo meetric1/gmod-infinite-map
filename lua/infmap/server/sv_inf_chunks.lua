@@ -167,7 +167,6 @@ local co = coroutine.create(function()
 		for _, ent in ipairs(ents.GetAll()) do
 			if !IsValid(ent) then continue end
 			if InfMap.filter_entities(ent) then continue end
-			if InfMap.terrain_filter[ent:GetClass()] then continue end
 
 			/////////////////////////////////
 

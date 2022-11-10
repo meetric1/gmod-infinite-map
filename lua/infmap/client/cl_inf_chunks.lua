@@ -113,7 +113,6 @@ function InfMap.prop_update_chunk(ent, chunk)
 
 	ent.CHUNK_OFFSET = chunk
 	local class = ent:GetClass()
-	if InfMap.terrain_filter[class] then return end
 	
 	// loop through all ents, offset them relative to player since player has moved
 	if ent == LocalPlayer() then 
