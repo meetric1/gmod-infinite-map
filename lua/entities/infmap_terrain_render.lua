@@ -1,5 +1,7 @@
 AddCSLuaFile()
 
+if !InfMap then return end
+
 ENT.Type = "anim"
 ENT.Base = "base_gmodentity"
 
@@ -16,23 +18,23 @@ local function add_quad(tab, p1, p2, p3, p4, n1, n2)
 	local tablen = #tab
 
 	// first tri
-	tab[tablen + 1] = {pos = p1, u = 0, 	  v = 0,	   normal = n1, userdata = ud}
-	tab[tablen + 2] = {pos = p2, u = uvscale, v = 0,       normal = n1, userdata = ud}
-	tab[tablen + 3] = {pos = p3, u = 0	  	, v = uvscale, normal = n1, userdata = ud}
+	tab[tablen + 1] = {p1, 0, 	    0,	   	 n1}
+	tab[tablen + 2] = {p2, uvscale, 0,       n1}
+	tab[tablen + 3] = {p3, 0,	    uvscale, n1}
 
 	// second tri
-	tab[tablen + 4] = {pos = p3, u = 0, 	  v = uvscale, normal = n2, userdata = ud}
-	tab[tablen + 5] = {pos = p2, u = uvscale, v = 0,       normal = n2, userdata = ud}
-	tab[tablen + 6] = {pos = p4, u = uvscale, v = uvscale, normal = n2, userdata = ud}
+	tab[tablen + 4] = {p3, 0, 	    uvscale, n2}
+	tab[tablen + 5] = {p2, uvscale, 0,       n2}
+	tab[tablen + 6] = {p4, uvscale, uvscale, n2}
 end
 
 local default_mat = Material("phoenix_storms/ps_grass")
-function ENT:GenerateMesh(heightFunction, chunk, time)
+function ENT:GenerateMesh(heightFunction, chunk, time)	// pretty expensive function.. so we slowly generate data and then compile it into a mesh once we have it
 	local megachunk_size = InfMap.megachunk_size
 	self.CHUNK_MIN = 0
 	self.CHUNK_MAX = 0
 
-	local final_tris = {}
+	self.TRIANGLES = {}
 	local coro = coroutine.create(function()
 		coroutine.wait(time)
 		for y = -megachunk_size, megachunk_size - 1 do
@@ -70,7 +72,7 @@ function ENT:GenerateMesh(heightFunction, chunk, time)
 						local normal1 = -(vertexPos1 - vertexPos2):Cross(vertexPos1 - vertexPos3)//:GetNormalized()
 						local normal2 = -(vertexPos4 - vertexPos3):Cross(vertexPos4 - vertexPos2)//:GetNormalized()
 
-						add_quad(final_tris, vertexPos1, vertexPos2, vertexPos3, vertexPos4, normal1, normal2)
+						add_quad(self.TRIANGLES, vertexPos1, vertexPos2, vertexPos3, vertexPos4, normal1, normal2)
 						self.CHUNK_MAX = math.max(self.CHUNK_MAX, math.max(math.max(vertexHeight1, vertexHeight2), math.max(vertexHeight3, vertexHeight4)))
 						self.CHUNK_MIN = math.min(self.CHUNK_MIN, math.min(math.min(vertexHeight1, vertexHeight2), math.min(vertexHeight3, vertexHeight4)))
 					end
@@ -81,21 +83,32 @@ function ENT:GenerateMesh(heightFunction, chunk, time)
 	end)
 
 	hook.Add("Think", self, function()
-		if coroutine.status(coro) == "suspended" then
+		if coroutine.status(coro) == "suspended" and IsValid(self) then
 			coroutine.resume(coro)
 		else
 			hook.Remove("Think", self)
-			if !IsValid(self) then return end
-			if self.RENDER_MESH and IsValid(self.RENDER_MESH.Mesh) then
-				self.RENDER_MESH.Mesh:Destroy()
-				self.RENDER_MESH.Mesh = Mesh()
-			else
-				local mat = Matrix()
-				mat:SetTranslation(self.CHUNK_OFFSET * InfMap.chunk_size * 2 * InfMap.megachunk_size * 2 - LocalPlayer().CHUNK_OFFSET * InfMap.chunk_size * 2)
-				self.RENDER_MESH = {Mesh = Mesh(), Material = default_mat, Matrix = mat}
+			if !IsValid(self) then 
+				table.Empty(self.TRIANGLES)
+				self.TRIANGLES = nil
+				return 
 			end
 
-			self.RENDER_MESH.Mesh:BuildFromTriangles(final_tris)
+			local mat = Matrix()
+			mat:SetTranslation(self.CHUNK_OFFSET * InfMap.chunk_size * 2 * InfMap.megachunk_size * 2 - LocalPlayer().CHUNK_OFFSET * InfMap.chunk_size * 2)
+			self.RENDER_MESH = {Mesh = Mesh(), Material = default_mat, Matrix = mat}
+
+			local mesh = mesh
+			mesh.Begin(self.RENDER_MESH.Mesh, MATERIAL_TRIANGLES, math.min(#self.TRIANGLES / 3, 2^15))
+				for _, tri in ipairs(self.TRIANGLES) do
+					mesh.Position(tri[1])
+					mesh.TexCoord(0, tri[2], tri[3])
+					mesh.Normal(tri[4])
+					mesh.UserData(1, 1, 1, 1)
+					mesh.AdvanceVertex()
+				end
+			mesh.End()
+			table.Empty(self.TRIANGLES)
+			self.TRIANGLES = nil
 			self:SetRenderBoundsWS(-Vector(1, 1, 1) * 2^14, Vector(1, 1, 1) * 2^14)
 		end
 	end)

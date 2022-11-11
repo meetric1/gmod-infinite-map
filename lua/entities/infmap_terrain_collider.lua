@@ -1,5 +1,7 @@
 AddCSLuaFile()
 
+if !InfMap then return end
+
 ENT.Type = "anim"
 ENT.Base = "base_gmodentity"
 
@@ -158,7 +160,7 @@ end
 local bounds = 2^14
 local max_radius = math.floor(math.sqrt(bounds^2 + bounds^2))
 function ENT:BuildCollision(heightFunction)
-    local chunk_offset = self.CHUNK_OFFSET or Vector()
+    local chunk_offset = self.CHUNK_OFFSET
     local x = chunk_offset[1]
     local y = chunk_offset[2]
     local z = chunk_offset[3]
@@ -231,7 +233,6 @@ function ENT:Initialize()
         phys:EnableMotion(false)
         phys:SetMass(50000)  // max weight should help a bit with the physics solver
         phys:AddGameFlag(FVPHYSICS_CONSTRAINT_STATIC)
-        phys:AddGameFlag(FVPHYSICS_NO_NPC_IMPACT_DMG)
         phys:AddGameFlag(FVPHYSICS_NO_SELF_COLLISIONS)
     elseif SERVER then
         SafeRemoveEntity(self)  // physics object doesnt exist (no points)
@@ -248,18 +249,18 @@ if CLIENT then
     hook.Add("PropUpdateChunk", "infmap_terrain_update", function(ent, chunk, oldchunk)
         if ent:GetClass() == "infmap_terrain_collider" then
             ent.CHUNK_OFFSET = chunk
-            if !ent.Initialize then
-                timer.Create("tryinitialize"..ent:EntIndex(), 0, 100, function()
-                    if ent.Initialize then
-                        ent:Initialize()
-                        timer.Remove("tryinitialize"..ent:EntIndex())
-                    end
-                end)
-            else
+            if ent.Initialize then
                 ent:Initialize()
             end
         end
     end)
+
+    function ENT:Think()
+        if !IsValid(self:GetPhysicsObject()) and self.CHUNK_OFFSET then
+            print("Rebuilding Collisions for chunk ", self.CHUNK_OFFSET)
+            self:BuildCollision(InfMap.height_function)
+        end
+    end
     return 
 end
 
