@@ -258,7 +258,7 @@ if CLIENT then
     function ENT:Think()
         if !IsValid(self:GetPhysicsObject()) and self.CHUNK_OFFSET then
             print("Rebuilding Collisions for chunk ", self.CHUNK_OFFSET)
-            self:BuildCollision(InfMap.height_function)
+            self:Initialize()
         end
     end
     return 

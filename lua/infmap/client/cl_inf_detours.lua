@@ -28,6 +28,12 @@ function EntityMT:SetPos(pos)
 	return self:InfMap_SetPos(pos)
 end
 
+PhysObjMT.InfMap_SetPos = PhysObjMT.InfMap_SetPos or PhysObjMT.SetPos
+function PhysObjMT:SetPos(pos)
+	local pos = clamp_vector(pos, 2^14)
+	return self:InfMap_SetPos(pos)
+end
+
 
 // traces shouldnt appear when shot from other chunks
 hook.Add("EntityFireBullets", "infmap_detour", function(ent, data)

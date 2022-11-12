@@ -123,7 +123,7 @@ local max = Vector(1, 1, 0) * InfMap.chunk_size * InfMap.megachunk_size * 2
 function ENT:SetLocalRenderBounds(eyePos)
 	max[3] = self.CHUNK_MAX
 	min[3] = self.CHUNK_MIN
-	if max[3] - min[3] > 2^20 then return end	// hard cutoff because when renderbounds gets too big it stops working, thanks source
+	if max[3] - min[3] > 2^22 then return end	// hard cutoff because when renderbounds gets too big it stops working, thanks source
 	local prop_dir = self.RENDER_MESH.Matrix:GetTranslation() - eyePos
 	local shrunk = sub_size / prop_dir:Length()
 	
@@ -218,7 +218,7 @@ end)
 
 local size = 2^31
 local uvsize = size / 10000
-local min = -1000000
+local min = -10000000
 local data = {
 	{pos = Vector(size, size, min), normal = Vector(0, 0, 1), u = uvsize, v = 0, tangent = Vector(1, 0, 0), userdata = {1, 0, 0, -1}},
 	{pos = Vector(size, -size, min), normal = Vector(0, 0, 1), u = uvsize, v = uvsize, tangent = Vector(1, 0, 0), userdata = {1, 0, 0, -1}},
@@ -233,11 +233,23 @@ big_plane:BuildFromTriangles(data)
 hook.Add("PostDraw2DSkyBox", "infmap_terrain_drawover", function()
 	local mat = Matrix()
 	local lpp = LocalPlayer():GetPos()
-	mat:SetTranslation(-InfMap.unlocalize_vector(Vector(), Vector(0, 0, -10)))
+	mat:SetTranslation(-InfMap.unlocalize_vector(Vector(), Vector(0, 0, -1)))
 	render.OverrideDepthEnable(true, false)
 	render.SetMaterial(default_mat)
 	cam.PushModelMatrix(mat)
 	big_plane:Draw()
 	cam.PopModelMatrix()
 	render.OverrideDepthEnable(false, false)
+end)
+
+hook.Add("SetupWorldFog", "!infmap_fog", function()
+	if !LocalPlayer().CHUNK_OFFSET then return end
+	render.FogStart(10000)
+	render.FogMaxDensity(1)
+	render.FogColor(153, 178, 204)
+	//render.FogColor(180, 190, 200)
+	render.FogEnd(1000000)
+	render.SetFogZ(InfMap.unlocalize_vector(Vector(0, 0, -100000), -LocalPlayer().CHUNK_OFFSET)[3])
+	render.FogMode(MATERIAL_FOG_LINEAR)
+	return true
 end)

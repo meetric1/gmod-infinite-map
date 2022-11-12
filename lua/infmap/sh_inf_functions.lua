@@ -2,7 +2,7 @@ InfMap.chunk_size = 10000
 InfMap.simplex = include("simplex.lua")
 InfMap.megachunk_size = 10
 InfMap.chunk_resolution = 3
-InfMap.render_distance = 3
+InfMap.render_distance = 2
 
 local max = 2^28
 function InfMap.height_function(x, y) 

@@ -302,6 +302,11 @@ hook.Add("Initialize", "infmap_wire_detour", function()
 			return pos 
 		end
 	end
+
+	InfMap.ShouldSaveEntity = InfMap.ShouldSaveEntity or gmsave.ShouldSaveEntity
+	function gmsave.ShouldSaveEntity(ent, t)
+		return InfMap.ShouldSaveEntity(ent, t) and !InfMap.filter[t.classname]
+	end
 end)
 
 // when entities are spawned, reset them
