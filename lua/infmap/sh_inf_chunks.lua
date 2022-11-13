@@ -6,12 +6,26 @@ if CLIENT then return end
 
 // TO THE MAX
 hook.Add("InitPostEntity", "infmap_physenv_setup", function()
-	local mach_25 = 337598	// mach 25 in hammer units
-	physenv.SetPerformanceSettings({MaxVelocity = mach_25, MaxAngularVelocity = mach_25 / 2})
-	RunConsoleCommand("sv_maxvelocity", tostring(mach_25))
+	local mach_10 = 135039	// mach 10 in hammer units
+	physenv.SetPerformanceSettings({MaxVelocity = mach_10, MaxAngularVelocity = mach_10})
+	RunConsoleCommand("sv_maxvelocity", tostring(mach_10))
 
 	// SCARY 
 	RunConsoleCommand("sv_crazyphysics_remove", "0")
 	RunConsoleCommand("sv_crazyphysics_defuse", "0")
+end)
+
+local source_max_map_bounds_times_2 = 2^14 * 2
+local function is_nan(pos)
+	return pos[1] != pos[1] or pos[2] != pos[2] or pos[3] != pos[3]
+end
+hook.Add("OnCrazyPhysics", "infmap_crazyphysics", function(ent, phys)
+	local pos = phys:InfMap_GetPos()
+	if is_nan(pos) or is_nan(phys:GetVelocity()) or is_nan(phys:GetAngleVelocity()) then	// check if the position is nan
+		SafeRemoveEntity(ent)
+	end
+	if !InfMap.in_chunk(pos, source_max_map_bounds_times_2) then	// if its farther than it should be
+		SafeRemoveEntity(ent)
+	end
 end)
 

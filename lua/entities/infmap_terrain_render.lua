@@ -14,7 +14,7 @@ ENT.Spawnable		= false
 
 if SERVER then return end	// clientside only entity
 
-local uvscale = 150
+local uvscale = 100
 local ud = {1, 1, 1, 1}
 local function add_quad(tab, p1, p2, p3, p4, n1, n2)
 	local tablen = #tab
@@ -244,12 +244,11 @@ end)
 
 hook.Add("SetupWorldFog", "!infmap_fog", function()
 	if !LocalPlayer().CHUNK_OFFSET then return end
-	render.FogStart(10000)
+	render.FogStart(100000)
 	render.FogMaxDensity(1)
 	render.FogColor(153, 178, 204)
 	//render.FogColor(180, 190, 200)
 	render.FogEnd(1000000)
-	render.SetFogZ(InfMap.unlocalize_vector(Vector(0, 0, -100000), -LocalPlayer().CHUNK_OFFSET)[3])
 	render.FogMode(MATERIAL_FOG_LINEAR)
 	return true
 end)

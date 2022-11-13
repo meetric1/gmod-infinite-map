@@ -36,6 +36,7 @@ hook.Add("RenderScene", "!infinite_update_visbounds", function(eyePos, eyeAngles
 	local sub_size = 2^14 - InfMap.chunk_size - 64	// how far out render bounds can be before outside of the map
 	local sub_size_sqr = sub_size * sub_size
 	local lp_chunk_offset = LocalPlayer().CHUNK_OFFSET
+	if !lp_chunk_offset then return end
 	for _, ent in ipairs(InfMap.all_ents) do	// I feel bad for doing this
 		if !IsValid(ent) then continue end
 		if !ent.RenderOverride then continue end

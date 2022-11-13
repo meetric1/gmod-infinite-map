@@ -227,7 +227,7 @@ function ENT:Initialize()
     self:SetMaterial("NULL")
     self:AddSolidFlags(FSOLID_FORCE_WORLD_ALIGNED)
     self:AddFlags(FL_STATICPROP)
-    self:AddFlags(FL_DONTTOUCH)
+    //self:AddFlags(FL_DONTTOUCH)
     local phys = self:GetPhysicsObject()
     if IsValid(phys) then
         phys:EnableMotion(false)
