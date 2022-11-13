@@ -6,7 +6,12 @@ if CLIENT then return end
 
 // TO THE MAX
 hook.Add("InitPostEntity", "infmap_physenv_setup", function()
-	physenv.SetPerformanceSettings({MaxVelocity = 405120, MaxAngularVelocity = 405120 / 4}) // mach 30
-	RunConsoleCommand("sv_maxvelocity", "405120")
+	local mach_25 = 337598	// mach 25 in hammer units
+	physenv.SetPerformanceSettings({MaxVelocity = mach_25, MaxAngularVelocity = mach_25 / 2})
+	RunConsoleCommand("sv_maxvelocity", tostring(mach_25))
+
+	// SCARY 
+	RunConsoleCommand("sv_crazyphysics_remove", "0")
+	RunConsoleCommand("sv_crazyphysics_defuse", "0")
 end)
 

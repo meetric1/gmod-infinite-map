@@ -210,11 +210,9 @@ local istable = istable
 local IsEntity = IsEntity
 local function modify_trace_data(orig_data, trace_func, extra)
 	local data = {}
-
 	for k, v in pairs(orig_data) do
 		data[k] = v
 	end
-
 	// #1 localize start and end position of trace
 	local start_pos, start_offset = InfMap.localize_vector(data.start)
 
@@ -252,6 +250,8 @@ local function modify_trace_data(orig_data, trace_func, extra)
 	local hit_ent = hit_data.Entity
 	if IsValid(hit_ent) and hit_ent:GetClass() == "infmap_terrain_collider" then
 		hit_data.Entity = game.GetWorld()
+		hit_data.HitWorld = true
+		hit_data.NonHitWorld = false // what the fuck garry?
 	end
 	return hit_data
 end
@@ -259,10 +259,23 @@ end
 // traceline
 InfMap.TraceLine = InfMap.TraceLine or util.TraceLine
 function util.TraceLine(data)
-	//print(data.start)
-	return modify_trace_data(data, InfMap.TraceLine)
-end
+	local cloned_data = {}
+	for k, v in pairs(data) do
+		cloned_data[k] = v
+	end
+	local original_start_pos = cloned_data.start
 
+	local hit_data
+	for i = 1, 10 do	// max chunks it can pass
+		hit_data = modify_trace_data(cloned_data, InfMap.TraceLine)
+		if !hit_data.HitSky then break end
+
+		cloned_data.start = hit_data.HitPos
+	end
+
+	hit_data.StartPos = start
+	return hit_data
+end
 // hull traceline
 InfMap.TraceHull = InfMap.TraceHull or util.TraceHull
 function util.TraceHull(data)
