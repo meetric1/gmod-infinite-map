@@ -259,22 +259,7 @@ end
 // traceline
 InfMap.TraceLine = InfMap.TraceLine or util.TraceLine
 function util.TraceLine(data)
-	local cloned_data = {}
-	for k, v in pairs(data) do
-		cloned_data[k] = v
-	end
-	local original_start_pos = cloned_data.start
-
-	local hit_data
-	for i = 1, 10 do	// max chunks it can pass
-		hit_data = modify_trace_data(cloned_data, InfMap.TraceLine)
-		if !hit_data.HitSky then break end
-
-		cloned_data.start = hit_data.HitPos
-	end
-
-	hit_data.StartPos = start
-	return hit_data
+	return modify_trace_data(data, InfMap.TraceLine)
 end
 // hull traceline
 InfMap.TraceHull = InfMap.TraceHull or util.TraceHull
@@ -331,6 +316,7 @@ end)
 // ^^
 local ent_unfilter = {
 	rpg_missile = true,
+	crossbow_bolt = true,
 }
 hook.Add("OnEntityCreated", "infinite_propreset", function(ent)
 	timer.Simple(0, function()	// let entity data table update

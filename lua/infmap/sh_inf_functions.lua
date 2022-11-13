@@ -5,14 +5,14 @@ InfMap.chunk_resolution = 3
 InfMap.render_distance = 2
 
 local max = 2^28
+local offset = 23.05
 function InfMap.height_function(x, y) 
-	x = x + 46.1
-    local final = (InfMap.simplex.Noise3D(x / 30, y / 30, 0) * 150) * math.min(InfMap.simplex.Noise3D(x / 150, y / 150, 0) * 15000, 0) // small mountains
-	final = final + (InfMap.simplex.Noise3D(x / 150 + 1, y / 150, 150)) * 700000	// big mountains
-	//if InfMap.simplex.Noise2D(x / 10, y / 10) < -0.99725 then
-	//	final = -math.huge
-	//end //HUGE mountains
-	x = x - 46.1
+	//x = x + offset
+    //local final = (InfMap.simplex.Noise3D(x / 15, y / 15, 0) * 150) * math.min(InfMap.simplex.Noise3D(x / 75, y / 75, 0) * 7500, 0) // small mountains
+	//final = final + (InfMap.simplex.Noise3D(x / 75 + 1, y / 75, 150)) * 350000	// big mountains
+	//x = x - offset
+	local final = ((InfMap.simplex.Noise2D(x / 25 + 1, y / 25)) * 20) ^ 4// big mountains
+	
 	if (x >= 0) and (y >= 0 and y < 1) then final = -15 end
 
 	return math.Clamp(final, -max, max)
@@ -99,6 +99,7 @@ InfMap.filter = {
 	sizehandler = true,
 	player_pickup = true,
 	phys_spring = true,
+	crossbow_bolt = true,
 }
 
 function InfMap.filter_entities(e)

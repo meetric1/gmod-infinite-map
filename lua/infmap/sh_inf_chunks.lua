@@ -17,15 +17,15 @@ end)
 
 local source_max_map_bounds_times_2 = 2^14 * 2
 local function is_nan(pos)
-	return pos[1] != pos[1] or pos[2] != pos[2] or pos[3] != pos[3]
+	return (pos[1] != pos[1] or pos[2] != pos[2] or pos[3] != pos[3]) or (pos[1] == math.huge or pos[2] == math.huge or pos[3] == math.huge)
 end
 hook.Add("OnCrazyPhysics", "infmap_crazyphysics", function(ent, phys)
 	local pos = phys:InfMap_GetPos()
 	if is_nan(pos) or is_nan(phys:GetVelocity()) or is_nan(phys:GetAngleVelocity()) then	// check if the position is nan
-		SafeRemoveEntity(ent)
+		ent:Remove()
 	end
 	if !InfMap.in_chunk(pos, source_max_map_bounds_times_2) then	// if its farther than it should be
-		SafeRemoveEntity(ent)
+		ent:Remove()
 	end
 end)
 
