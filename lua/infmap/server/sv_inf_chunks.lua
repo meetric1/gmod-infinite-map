@@ -77,8 +77,9 @@ timer.Create("infinite_chunkmove_update", 0.1, 0, function()
 		local ent = all_ents[i]
 		local invalid = !ent.CHUNK_OFFSET
 		invalid = invalid or InfMap.filter_entities(ent)
-		invalid = invalid or (ent:GetPhysicsObject():IsValid() and !ent:GetPhysicsObject():IsMoveable())
-		invalid = invalid or (ent:IsPlayer() and (!ent:Alive() or ent:InVehicle()))
+		invalid = invalid or (IsValid(ent:GetPhysicsObject()) and !ent:GetPhysicsObject():IsMoveable())
+		invalid = invalid or IsValid(ent:GetParent())
+		invalid = invalid or ent:IsPlayer() and !ent:Alive()
 		
 		if invalid then
 			table.remove(all_ents, i)	// remove invalid entity
@@ -86,7 +87,7 @@ timer.Create("infinite_chunkmove_update", 0.1, 0, function()
 
 		// gravhull support
 		local ship = ent.MyShip or ent.InShip
-		if ship and ship:IsValid() then
+		if IsValid(ship) then
 			InfMap.gravhull_ents[ent] = ship
 		else
 			InfMap.gravhull_ents[ent] = nil
@@ -172,11 +173,11 @@ local co = coroutine.create(function()
 
 			if !ent.CHUNK_OFFSET then continue end
 			if !ent:IsSolid() then continue end
-			if ent:GetParent():IsValid() then continue end
+			if IsValid(ent:GetParent()) then continue end
 
 			//if ent:GetVelocity() == Vector() then continue end
 			// player support
-			if ent:IsPlayer() and (ent:GetMoveType() == MOVETYPE_NOCLIP or !ent:Alive() or ent:InVehicle()) then continue end
+			if ent:IsPlayer() and (ent:GetMoveType() == MOVETYPE_NOCLIP or !ent:Alive()) then continue end
 
 			// check all surrounding chunks with a fast check using radius instead of bounding box
 			local bounding_radius = ent:BoundingRadius()	// no tiny props, too much computation
