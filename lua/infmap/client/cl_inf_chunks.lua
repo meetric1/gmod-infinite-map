@@ -121,8 +121,9 @@ function InfMap.prop_update_chunk(ent, chunk)
 			local min_bound, max_bound = v:GetModelRenderBounds()
 			if !min_bound or !max_bound then continue end
 			if v == LocalPlayer() or InfMap.filter_entities(v) then continue end
+			if !v.CHUNK_OFFSET then continue end
 
-			InfMap.prop_update_chunk(v, (v.CHUNK_OFFSET or Vector()))
+			InfMap.prop_update_chunk(v, v.CHUNK_OFFSET)
 		end
 		return 
 	end
