@@ -54,7 +54,7 @@ else
 	end)
 
 	// initialize client after prop chunks have been networked
-	hook.Add("InitPostEntity", "infmap_start", function()
+	hook.Add("InitPostEntity", "infmap_initialize", function()
 		InfMap.prop_update_chunk(LocalPlayer(), LocalPlayer():GetNW2Vector("CHUNK_OFFSET"))
 	end)
 end

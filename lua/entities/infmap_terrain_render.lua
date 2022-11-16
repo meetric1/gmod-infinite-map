@@ -208,10 +208,12 @@ hook.Add("RenderScene", "infmap_update_renderbounds", function(eyePos)
 	end
 end)
 
-hook.Add("PostCleanupMap", "infmap_terrain_cleanup", function()
+hook.Add("PreCleanupMap", "infmap_terrain_cleanup", function()
+	local time = 0
 	for y, t in pairs(InfMap.client_chunks) do
 		for x, ent in pairs(t) do
-			SafeRemoveEntity(ent)
+			time = time + 0.01
+			ent:GenerateMesh(InfMap.height_function, ent.CHUNK_OFFSET * InfMap.megachunk_size * 2, time)
 		end
 	end
 end)
