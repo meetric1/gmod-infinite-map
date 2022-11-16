@@ -45,38 +45,16 @@ if SERVER then
 			end
 		end
 	end
-
-	//net.Receive("INF_PROP_UPDATE", function(len, ply)
-	//	print("Sending chunk/prop data to", ply)
-	//	for _, ent in ipairs(ents.GetAll()) do
-	//		if ent:IsConstraint() or ent:GetNoDraw() then continue end
-	//		if ent.CHUNK_OFFSET then
-	//			net.Start("INF_PROP_UPDATE")
-	//			net.WriteEntity(ent)
-	//			net.WriteInt(ent.CHUNK_OFFSET[1], 32)
-	//			net.WriteInt(ent.CHUNK_OFFSET[2], 32)
-	//			net.WriteInt(ent.CHUNK_OFFSET[3], 32)
-	//			net.Broadcast()
-	//		end
-	//	end
-	//end)
 else
-	// I exist!
-	hook.Add("InitPostEntity", "infmap_start", function()
-		InfMap.prop_update_chunk(LocalPlayer(), LocalPlayer():GetNW2Vector("CHUNK_OFFSET"))
-	end)
-
-	//net.Receive("INF_PROP_UPDATE", function(len)
-	//	local ent = net.ReadEntity()
-	//	if IsValid(ent) then
-	//		local chunk = Vector(net.ReadInt(32), net.ReadInt(32), net.ReadInt(32))
-	//		print(ent, " passed in chunk ", chunk)
-	//		InfMap.prop_update_chunk(ent, chunk)
-	//	end
-	//end)
 
 	hook.Add("EntityNetworkedVarChanged", "infmap_networkchanged", function(ent, name, oldval, newval)
+		if name != "CHUNK_OFFSET" or !IsValid(ent) then return end	// not our variable, ignore
 		print(ent, " passed in chunk ", newval) 
 		InfMap.prop_update_chunk(ent, newval)
+	end)
+
+	// initialize client after prop chunks have been networked
+	hook.Add("InitPostEntity", "infmap_start", function()
+		InfMap.prop_update_chunk(LocalPlayer(), LocalPlayer():GetNW2Vector("CHUNK_OFFSET"))
 	end)
 end
