@@ -28,12 +28,11 @@ if SERVER then
 
 		// network weapons from players always
 		if ent:IsPlayer() or ent:IsNPC() then
-			//print(ent, "weapons passed in chunk", chunk)
 			for _, weapon in ipairs(ent:GetWeapons()) do
 				hook.Run("PropUpdateChunk", weapon, chunk, weapon.CHUNK_OFFSET)
-				ent.CHUNK_OFFSET = chunk
-				ent:SetCustomCollisionCheck(true)
-				ent:SetNW2Vector("CHUNK_OFFSET", chunk)
+				weapon.CHUNK_OFFSET = chunk
+				weapon:SetCustomCollisionCheck(true)
+				weapon:SetNW2Vector("CHUNK_OFFSET", chunk)
 			end
 		end
 
@@ -48,7 +47,7 @@ if SERVER then
 else
 
 	hook.Add("EntityNetworkedVarChanged", "infmap_networkchanged", function(ent, name, oldval, newval)
-		if name != "CHUNK_OFFSET" or !IsValid(ent) then return end	// not our variable, ignore
+		if name != "CHUNK_OFFSET" then return end	// not our variable, ignore
 		print(ent, " passed in chunk ", newval) 
 		InfMap.prop_update_chunk(ent, newval)
 	end)
