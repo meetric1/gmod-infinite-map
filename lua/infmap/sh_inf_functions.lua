@@ -15,7 +15,7 @@ function InfMap.height_function(x, y)
 	
 	if (x >= 0) and (y >= 0 and y < 1) then final = -15 end
 
-	return math.Clamp(final, -max, max)
+	return math.Clamp(final, -max, 1000000)
 end
 
 function InfMap.in_chunk(pos, size) 

@@ -100,7 +100,7 @@ hook.Add("PostDrawOpaqueRenderables", "infinite_player_render", function()
 	debugoverlay.Sphere(Vector(), 100, 0, Color(255, 0, 0, 0))
 	debugoverlay.Box(Vector(), -cs, cs, 0, Color(0, 0, 0, 0))
 	
-	local co =  (LocalPlayer().CHUNK_OFFSET or Vector()) * InfMap.chunk_size * 2
+	local co =  chunk_offset * InfMap.chunk_size * 2
 	debugoverlay.Box(Vector(), -cs - co, cs - co, 0, Color(0, 0, 0, 0))
 	debugoverlay.Box(Vector(), -Vector(2^14, 2^14, 2^14) - co, Vector(2^14, 2^14, 2^14) - co, 0, Color(0, 0, 255, 0))
 	
@@ -113,16 +113,16 @@ function InfMap.prop_update_chunk(ent, chunk)
 	hook.Run("PropUpdateChunk", ent, chunk, ent.CHUNK_OFFSET)
 
 	ent.CHUNK_OFFSET = chunk
-	local class = ent:GetClass()
 	
 	// loop through all ents, offset them relative to player since player has moved
 	if ent == LocalPlayer() then 
 		for k, v in ipairs(ents.GetAll()) do 
 			local min_bound, max_bound = v:GetModelRenderBounds()
 			if !min_bound or !max_bound then continue end
-			if v == LocalPlayer() or InfMap.filter_entities(v) then continue end
+			if v == ent or InfMap.filter_entities(v) then continue end
+			if !v.CHUNK_OFFSET then continue end
 
-			InfMap.prop_update_chunk(v, (v.CHUNK_OFFSET or Vector()))
+			InfMap.prop_update_chunk(v, v.CHUNK_OFFSET)
 		end
 		return 
 	end
@@ -137,8 +137,12 @@ function InfMap.prop_update_chunk(ent, chunk)
 		end
 	end
 
+	// when first spawning in props will attempt to render offset before client has initialized
+	// after prop chunks have been networked to client we initalize them and therefore update all prop rendering
+	if !IsValid(LocalPlayer()) then return end
+
 	// offset single prop relative to player, only the prop has moved
-	local chunk_offset = chunk - (LocalPlayer().CHUNK_OFFSET or Vector())
+	local chunk_offset = chunk - LocalPlayer().CHUNK_OFFSET
 
 	// if in same chunk, ignore
 	// set render bounds back to the value it was at when first stored, if it doesnt exist set it to the model renderbounds
