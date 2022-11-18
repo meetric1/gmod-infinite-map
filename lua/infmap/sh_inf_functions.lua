@@ -1,22 +1,4 @@
-InfMap.chunk_size = 10000
-InfMap.simplex = include("simplex.lua")
-InfMap.megachunk_size = 10
-InfMap.chunk_resolution = 3
-InfMap.render_distance = 2
-
-local max = 2^28
-local offset = 23.05
-function InfMap.height_function(x, y) 
-	//x = x + offset
-    //local final = (InfMap.simplex.Noise3D(x / 15, y / 15, 0) * 150) * math.min(InfMap.simplex.Noise3D(x / 75, y / 75, 0) * 7500, 0) // small mountains
-	//final = final + (InfMap.simplex.Noise3D(x / 75 + 1, y / 75, 150)) * 350000	// big mountains
-	//x = x - offset
-	local final = ((InfMap.simplex.Noise2D(x / 25 + 1, y / 25)) * 20) ^ 4// big mountains
-	
-	if (x >= 0) and (y >= 0 and y < 1) then final = -15 end
-
-	return math.Clamp(final, -max, 1000000)
-end
+// useful functions used throughout the lua
 
 function InfMap.in_chunk(pos, size) 
 	local cs = size or InfMap.chunk_size
@@ -64,8 +46,6 @@ end
 // all the classes that are useless
 InfMap.filter = {
 	infmap_clone = true ,
-	infmap_terrain_collider = true,
-	infmap_terrain_render = true,
 	physgun_beam = true,
 	worldspawn = true,
 	gmod_hands = true,
@@ -171,17 +151,18 @@ local function constrained_invalid_filter(ent)
 end
 
 function InfMap.constrained_status(ent) 
-	if ent.CONSTRAINED_DATA then
+	if ent.CONSTRAINED_MAIN != nil then
 		return ent.CONSTRAINED_MAIN
 	end
-
-	ent.CONSTRAINED_DATA = InfMap.get_all_constrained(ent)
 
 	// first pass, these entities arent valid
 	if constrained_invalid_filter(ent) then 
 		ent.CONSTRAINED_MAIN = false
 		return ent.CONSTRAINED_MAIN
 	end
+
+	ent.CONSTRAINED_DATA = InfMap.get_all_constrained(ent)	// expensive function
+
 	local ent_index = ent:EntIndex()
 	for _, constrained_ent in ipairs(ent.CONSTRAINED_DATA) do
 		if constrained_ent:IsPlayerHolding() then	// if player is holding, instead of basing it off the index base it off of the object that is being held

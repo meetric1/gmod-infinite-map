@@ -1,7 +1,5 @@
 AddCSLuaFile()
 
-if !InfMap then return end
-
 ENT.Type = "anim"
 ENT.Base = "base_gmodentity"
 
@@ -239,77 +237,11 @@ function ENT:Initialize()
     end
 end
 
-hook.Add("PhysgunPickup", "infinite_chunkterrain_pickup", function(ply, ent)
-    if (ent:IsValid() and ent:GetClass() == "infmap_terrain_collider") then 
-        return false 
+if SERVER then return end
+
+function ENT:Think()
+    if !IsValid(self:GetPhysicsObject()) and self.CHUNK_OFFSET then
+        print("Rebuilding Collisions for chunk ", self.CHUNK_OFFSET)
+        self:Initialize()
     end
-end)
-
-if CLIENT then 
-    hook.Add("PropUpdateChunk", "infmap_terrain_update", function(ent, chunk, oldchunk)
-        if ent:GetClass() == "infmap_terrain_collider" then
-            ent.CHUNK_OFFSET = chunk
-            if ent.Initialize then
-                ent:Initialize()
-            end
-        end
-    end)
-
-    function ENT:Think()
-        if !IsValid(self:GetPhysicsObject()) and self.CHUNK_OFFSET then
-            print("Rebuilding Collisions for chunk ", self.CHUNK_OFFSET)
-            self:Initialize()
-        end
-    end
-    return 
 end
-
-local function v_tostring(v)
-    return v[1] .. "," .. v[2] .. "," .. v[3]
-end
-
-InfMap.chunk_table = {}
-
-local function resetAll()
-    local e = ents.Create("prop_physics")
-    e:SetPos(Vector(200, 200, -10))
-    e:SetModel("models/hunter/blocks/cube8x8x025.mdl")
-    e:SetMaterial("models/gibs/metalgibs/metal_gibs")
-    e:Spawn()
-    e:GetPhysicsObject():EnableMotion(false)
-    constraint.Weld(e, game.GetWorld(), 0, 0, 0)
-
-    local e = ents.Create("infmap_terrain_collider")
-    InfMap.chunk_table[v_tostring(Vector())] = e
-    InfMap.prop_update_chunk(e, Vector())
-    e:Spawn()
-end
-
-hook.Add("PropUpdateChunk", "infmap_infgen_terrain", function(ent, chunk, old_chunk)
-    timer.Simple(0, function()  // wait for entire contraption to teleport
-        if IsValid(ent) and !InfMap.filter_entities(ent) and ent:IsSolid() then
-            // remove chunks that dont have anything in them
-            if old_chunk then
-                local invalid = InfMap.chunk_table[v_tostring(old_chunk)]
-                for k, v in ipairs(ents.GetAll()) do
-                    if InfMap.filter_entities(v) or v == ent or !v:IsSolid() then continue end
-                    if v.CHUNK_OFFSET == old_chunk then
-                        invalid = nil
-                    end
-                end
-                SafeRemoveEntity(invalid)
-            end
-
-            // chunk already exists, dont make another
-            if IsValid(InfMap.chunk_table[v_tostring(chunk)]) then return end
-
-            local e = ents.Create("infmap_terrain_collider")
-            InfMap.prop_update_chunk(e, chunk)
-            e:Spawn()
-            InfMap.chunk_table[v_tostring(chunk)] = e
-        end
-    end)
-end)
-
-hook.Add("InitPostEntity", "infinite_terrain_init", function() timer.Simple(0, resetAll) end)
-hook.Add("PostCleanupMap", "infmap_cleanup", resetAll)

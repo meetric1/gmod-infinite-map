@@ -130,6 +130,7 @@ hook.Add("Think", "infinite_chunkmove", function()
 			local main_ang = main_ent:GetAngles()
 
 			for v, constrained_ent in ipairs(main_ent.CONSTRAINED_DATA) do
+				if !IsValid(constrained_ent) then continue end
 				constrained_vel[v] = constrained_ent:GetVelocity()
 				constrained_ang[v] = constrained_ent:GetAngles()
 			end
@@ -137,6 +138,7 @@ hook.Add("Think", "infinite_chunkmove", function()
 			for _, constrained_ent in ipairs(main_ent.CONSTRAINED_DATA) do	// includes itself
 				if main_ent == constrained_ent then continue end
 				if !constrained_ent:IsValid() or InfMap.filter_entities(constrained_ent) then continue end
+				local phys = constrained_ent:GetPhysicsObject()
 				if constrained_ent != main_ent then
 					constrained_ent:ForcePlayerDrop()
 				end
@@ -240,3 +242,42 @@ end)
 hook.Add("Think", "infinite_ccc", function()
 	coroutine.resume(co)
 end)
+
+// when players spawn reset them to 0,0,0 chunk
+hook.Add("PlayerSpawn", "infinite_plyreset", function(ply, trans)
+	InfMap.prop_update_chunk(ply, Vector())
+end)
+
+// when entities are spawned, put them in designated chunks
+local ent_unfilter = {
+	rpg_missile = true,
+	crossbow_bolt = true,
+}
+hook.Add("OnEntityCreated", "infinite_propreset", function(ent)
+	timer.Simple(0, function()	// let entity data table update
+		if IsValid(ent) then 
+			if ent.CHUNK_OFFSET then return end
+			if InfMap.filter_entities(ent) and !ent_unfilter[ent:GetClass()] then return end
+
+			local pos = Vector()
+			local owner = ent:GetOwner()
+			if IsValid(owner) and owner.CHUNK_OFFSET then
+				pos = owner.CHUNK_OFFSET
+			end
+			InfMap.prop_update_chunk(ent, pos)
+		end
+	end)
+end)
+
+
+// disable picking up weapons/items in other chunks
+local function can_pickup(ply, ent)
+	if !ply.CHUNK_OFFSET or !ent.CHUNK_OFFSET then return end	// when spawning, player weapons will be nil for 1 tick, allow pickup in all chunks
+	if ply.CHUNK_OFFSET != ent.CHUNK_OFFSET then
+		return false
+	end
+end
+
+hook.Add("PlayerCanPickupWeapon", "infinite_entdetour", can_pickup)
+hook.Add("PlayerCanPickuItem", "infinite_entdetour", can_pickup)
+hook.Add("GravGunPickupAllowed", "infinite_entdetour", can_pickup)
