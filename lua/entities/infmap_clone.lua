@@ -1,5 +1,3 @@
-if game.GetMap() != "gm_infinite" then return end
-
 AddCSLuaFile()
 
 ENT.Type = "anim"
