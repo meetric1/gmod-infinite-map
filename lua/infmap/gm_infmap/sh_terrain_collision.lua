@@ -13,7 +13,7 @@ function InfMap.height_function(x, y)
 	//x = x - offset
 	local final = ((InfMap.simplex.Noise2D(x / 25 + 1, y / 25)) * 20) ^ 4// big mountains
 	
-	if (x >= 0) and (y >= 0 and y < 1) then final = -15 end
+	if (x >= 0) and (y > -0.5 and y < 0.5) then final = -15 end
 
 	return math.Clamp(final, -max, 1000000)
 end

@@ -78,3 +78,16 @@ InfMap.filter
 
 InfMap.chunk_size
 -Size of each chunk, default is 10,000 but technically can be edited per map by just setting the variable
+
+
+HOOKS:
+"prop_update_chunk"[Entity, Vector, Vector]:
+-Runs when an entity has crossed a chunk border
+-First vector is the new chunk it has crossed in to, second vector is the chunk it was previously in
+-If the entity is first spawned in, the previous chunk will be nil
+-Warning: Using GetPos on the entity may give different results depending on how its chunk was updated, it may be before or after the initial SetPos teleport
+
+
+
+FINAL NOTE:
+(ON YOUR MAP) FEEL FREE TO DETOUR ANY OF THESE FUNCTIONS!

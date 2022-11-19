@@ -56,9 +56,10 @@ local function update_entity(ent, pos, chunk)
 				local constrained_vel = constrained_ent:GetVelocity()
 				local constrained_ang = constrained_ent:GetAngles()
 
+				InfMap.prop_update_chunk(constrained_ent, chunk)
 				unfucked_SetPos(constrained_ent, pos + (constrained_ent:InfMap_GetPos() - ent_pos))
 				unfucked_SetVelAng(constrained_ent, constrained_vel, constrained_ang)
-				InfMap.prop_update_chunk(constrained_ent, chunk)
+				
 			end
 			InfMap.reset_constrained_data(carry)
 		end
