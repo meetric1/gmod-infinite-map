@@ -1,6 +1,4 @@
 if SERVER then
-	util.AddNetworkString("INF_PROP_UPDATE")
-
 	function InfMap.prop_update_chunk(ent, chunk)
 		hook.Run("PropUpdateChunk", ent, chunk, ent.CHUNK_OFFSET)
 		print(ent, "passed in chunk", chunk)
@@ -45,7 +43,6 @@ if SERVER then
 		end
 	end
 else
-
 	hook.Add("EntityNetworkedVarChanged", "infmap_networkchanged", function(ent, name, oldval, newval)
 		if name != "CHUNK_OFFSET" then return end	// not our variable, ignore
 		print(ent, " passed in chunk ", newval) 
