@@ -78,6 +78,7 @@ end
 
 hook.Add("PropUpdateChunk", "infmap_soundfilter", function(ent, chunk)
 	if !sound_ents[ent] then return end
+	if CLIENT and chunk == LocalPlayer().CHUNK_OFFSET then return end
 	for _, s in pairs(sound_ents[ent]) do	// not in our chunk, shut the fuck up
 		s:Stop()
 	end
