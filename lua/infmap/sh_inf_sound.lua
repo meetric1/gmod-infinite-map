@@ -64,7 +64,7 @@ else
 	end)
 
 	// if the entity playing the sound leaves the chunk the client is in, stop it
-	hook.Add("PropUpdateChunk", "infmap_soundstop", function(ent, chunk)
+	hook.Add("PropUpdateChunk", "infmap_soundstop", function(ent, _, chunk)
 		local ent_idx = ent:EntIndex()
 		if !sound_ents[ent_idx] or LocalPlayer().CHUNK_OFFSET == chunk then return end
 		
