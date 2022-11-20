@@ -112,6 +112,7 @@ local empty_function = function() end
 function InfMap.prop_update_chunk(ent, chunk)
 	hook.Run("PropUpdateChunk", ent, chunk, ent.CHUNK_OFFSET)
 
+	local prev_chunk = ent.CHUNK_OFFSET
 	ent.CHUNK_OFFSET = chunk
 	
 	// loop through all ents, offset them relative to player since player has moved
@@ -120,6 +121,7 @@ function InfMap.prop_update_chunk(ent, chunk)
 			local min_bound, max_bound = v:GetModelRenderBounds()
 			if !min_bound or !max_bound then continue end
 			if v == ent or InfMap.filter_entities(v) then continue end
+			//v.CHUNK_OFFSET = v.CHUNK_OFFSET or prev_chunk	// corpse support
 			if !v.CHUNK_OFFSET then continue end
 
 			InfMap.prop_update_chunk(v, v.CHUNK_OFFSET)

@@ -32,6 +32,7 @@ hook.Add("PropUpdateChunk", "infmap_terrain_init", function(ent, chunk, old_chun
 				if !IsValid(InfMap.client_chunks[y][x]) then 
 					local e = ents.CreateClientside("infmap_terrain_render")
 					e:Spawn()
+					e:SetMaterial("phoenix_storms/ps_grass")
 					e.CHUNK_OFFSET = Vector(x, y, 0) + mega_chunk
 					time = time + 0.01
 					e:GenerateMesh(InfMap.height_function, (Vector(x, y, 0) + mega_chunk) * InfMap.megachunk_size * 2, time)

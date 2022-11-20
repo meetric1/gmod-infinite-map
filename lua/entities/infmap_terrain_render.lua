@@ -14,22 +14,21 @@ ENT.Spawnable		= false
 
 if SERVER then return end	// clientside only entity
 
-local uvscale = 100
+InfMap.uv_scale = 100
 local function add_quad(tab, p1, p2, p3, p4, n1, n2)
 	local tablen = #tab
 
 	// first tri
-	tab[tablen + 1] = {p1, 0, 	    0,	   	 n1}
-	tab[tablen + 2] = {p2, uvscale, 0,       n1}
-	tab[tablen + 3] = {p3, 0,	    uvscale, n1}
+	tab[tablen + 1] = {p1, 0, 			    0,	  		 	 n1}
+	tab[tablen + 2] = {p2, InfMap.uv_scale, 0,    			 n1}
+	tab[tablen + 3] = {p3, 0,	  			InfMap.uv_scale, n1}
 
 	// second tri
-	tab[tablen + 4] = {p3, 0, 	    uvscale, n2}
-	tab[tablen + 5] = {p2, uvscale, 0,       n2}
-	tab[tablen + 6] = {p4, uvscale, uvscale, n2}
+	tab[tablen + 4] = {p3, 0, 	    		InfMap.uv_scale, n2}
+	tab[tablen + 5] = {p2, InfMap.uv_scale, 0,  		     n2}
+	tab[tablen + 6] = {p4, InfMap.uv_scale, InfMap.uv_scale, n2}
 end
 
-local default_mat = Material("phoenix_storms/ps_grass")
 function ENT:GenerateMesh(heightFunction, chunk, time)	// pretty expensive function.. so we slowly generate data and then compile it into a mesh once we have it
 	local megachunk_size = InfMap.megachunk_size
 	self.CHUNK_MIN = 0
@@ -84,6 +83,7 @@ function ENT:GenerateMesh(heightFunction, chunk, time)	// pretty expensive funct
 	end)
 end
 
+local default_mat = Material("models/wireframe")
 function ENT:Think()
 	local coro = self.COROUTINE
 	if !coro then return end

@@ -20,31 +20,6 @@ if SERVER then
 		end
 		return false
 	end)
-
-	// detour createsound so we can use our own filter
-	/*local sound_ents = {}	// key = entity
-	InfMap.CreateSound = InfMap.CreateSound or CreateSound
-	function CreateSound(ent, soundname, filter)
-		if !filter then
-			filter = RecipientFilter()
-			filter:AddPAS(ent:InfMap_GetPos())
-		end
-
-		// remove players not in chunk
-		for _, ply in ipairs(filter:GetPlayers()) do
-			if ply.CHUNK_OFFSET != ent.CHUNK_OFFSET then
-				filter:RemovePlayer(ply)
-			end
-		end
-		
-		sound_ents[ent] = sound_ents[ent] or {}
-		sound_ents[ent][soundname] = InfMap.CreateSound(ent, soundname, filter)
-		return sound_ents[ent][soundname]
-	end
-
-	hook.Add("PropUpdateChunk", "infmap_soundfilter", function(ent, chunk)
-
-	end)*/
 else
 	// if not in our chunk, dont play sound
 	hook.Add("EntityEmitSound", "infmap_sounddetour", function(data)
@@ -76,3 +51,34 @@ else
 		sound_ents[ent_idx] = nil
 	end)
 end
+
+
+// detour createsound so we can use our own filter
+local sound_ents = {}	// key = entity
+InfMap.CreateSound = InfMap.CreateSound or CreateSound
+function CreateSound(ent, soundname, filter)
+	if SERVER then
+		if !filter then
+			filter = RecipientFilter()
+			filter:AddAllPlayers(ent:InfMap_GetPos())
+		end
+
+		// remove players not in chunk
+		for _, ply in ipairs(filter:GetPlayers()) do
+			if ply.CHUNK_OFFSET != ent.CHUNK_OFFSET then
+				filter:RemovePlayer(ply)
+			end
+		end
+	end
+	
+	sound_ents[ent] = sound_ents[ent] or {}
+	sound_ents[ent][soundname] = InfMap.CreateSound(ent, soundname, filter)
+	return sound_ents[ent][soundname]
+end
+
+hook.Add("PropUpdateChunk", "infmap_soundfilter", function(ent, chunk)
+	if !sound_ents[ent] then return end
+	for _, s in pairs(sound_ents[ent]) do	// not in our chunk, shut the fuck up
+		s:Stop()
+	end
+end)
