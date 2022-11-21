@@ -3,16 +3,16 @@
 if SERVER then
 	// serverside sounds need to be networked to individual clients
 	util.AddNetworkString("INF_SOUND")
-	local valid_channels = {
-		[0] = true,
-		[2] = true,
+	local invalid_channels = {
+		[1] = true,
+		[6] = true,
 	}
 	hook.Add("EntityEmitSound", "infmap_sounddetour", function(data)
 		local ent = data.Entity
 		if ent == game.GetWorld() then return end	// no parent entity, ignore
 		data.Entity = ent:EntIndex()
 		for _, ply in ipairs(player.GetAll()) do
-			if (ent != ply or valid_channels[data.Channel] or game.SinglePlayer()) and ply.CHUNK_OFFSET == ent.CHUNK_OFFSET then	// only network to clients that need to hear the sound
+			if (ent != ply or !invalid_channels[data.Channel] or game.SinglePlayer()) and ply.CHUNK_OFFSET == ent.CHUNK_OFFSET then	// only network to clients that need to hear the sound
 				net.Start("INF_SOUND") 
 				net.WriteTable(data)	// probably the only valid place for writing a table in network
 				net.Send(ply)
@@ -22,7 +22,7 @@ if SERVER then
 	end)
 else
 	// if not in our chunk, dont play sound
-	hook.Add("EntityEmitSound", "infmap_sounddetour", function(data)
+	hook.Add("EntityEmitSound", "!infmap_sounddetour", function(data)
 		local co = data.Entity.CHUNK_OFFSET
 		if co and co != LocalPlayer().CHUNK_OFFSET then	
 			return false
@@ -78,7 +78,7 @@ end
 
 if SERVER then return end
 
-hook.Add("PropUpdateChunk", "!infmap_soundfilter", function(ent, chunk)
+hook.Add("PropUpdateChunk", "infmap_soundfilter", function(ent, chunk)
 	if !sound_ents[ent] then return end
 	if chunk == LocalPlayer().CHUNK_OFFSET then return end
 	for sndname, snd in pairs(sound_ents[ent]) do	
