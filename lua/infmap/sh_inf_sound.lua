@@ -12,7 +12,7 @@ if SERVER then
 		if ent == game.GetWorld() then return end	// no parent entity, ignore
 		data.Entity = ent:EntIndex()
 		for _, ply in ipairs(player.GetAll()) do
-			if !(ent == ply and data.Channel == 6) and ply.CHUNK_OFFSET == ent.CHUNK_OFFSET then	// only network to clients that need to hear the sound
+			if (ent != ply or data.Channel == 0 or game.SinglePlayer()) and ply.CHUNK_OFFSET == ent.CHUNK_OFFSET then	// only network to clients that need to hear the sound
 				net.Start("INF_SOUND") 
 				net.WriteTable(data)	// probably the only valid place for writing a table in network
 				net.Send(ply)
