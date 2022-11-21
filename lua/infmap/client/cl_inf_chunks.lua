@@ -129,14 +129,10 @@ function InfMap.prop_update_chunk(ent, chunk)
 		return 
 	end
 
-	// prop2mesh support
-	if ent.prop2mesh_controllers then
-		for _, controller in ipairs(ent.prop2mesh_controllers) do
-			if !controller.ent then continue end
-			controller.ent.CHUNK_OFFSET = chunk
-			InfMap.prop_update_chunk(controller.ent, chunk)	// update renderoverride
-			table.insert(InfMap.all_ents, controller.ent)
-		end
+	// clientside models support
+	for _, parent in ipairs(ent:GetChildren()) do
+		if parent:EntIndex() != -1 then continue end
+		InfMap.prop_update_chunk(parent, chunk)	// update renderoverride
 	end
 
 	// when first spawning in props will attempt to render offset before client has initialized
@@ -148,7 +144,7 @@ function InfMap.prop_update_chunk(ent, chunk)
 
 	// if in same chunk, ignore
 	// set render bounds back to the value it was at when first stored, if it doesnt exist set it to the model renderbounds
-	if chunk_offset == Vector() or ent:GetOwner() == LocalPlayer() then 
+	if chunk_offset == Vector() then 
 		if ent.ValidRenderOverride != nil then
 			ent.RenderOverride = ent.OldRenderOverride
 		end

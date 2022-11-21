@@ -1,8 +1,4 @@
 // sound in source is is pretty shit
-// choosing whether to start or stop a sound is not easy
-// you may think "oh, just use the EmitSound hook"
-// unfortunately the client's ".Entity" part of the table is mostly defined to the world
-// this means we have to network server sounds to clients manually, depending if the entity is in their chunk or not
 
 if SERVER then
 	// serverside sounds need to be networked to individual clients
@@ -60,7 +56,7 @@ function CreateSound(ent, soundname, filter)
 	if SERVER then
 		if !filter then
 			filter = RecipientFilter()
-			filter:AddAllPlayers(ent:InfMap_GetPos())
+			filter:AddAllPlayers()
 		end
 
 		// remove players not in chunk
@@ -76,10 +72,12 @@ function CreateSound(ent, soundname, filter)
 	return sound_ents[ent][soundname]
 end
 
+if SERVER then return end
+
 hook.Add("PropUpdateChunk", "infmap_soundfilter", function(ent, chunk)
 	if !sound_ents[ent] then return end
 	if CLIENT and chunk == LocalPlayer().CHUNK_OFFSET then return end
-	for _, s in pairs(sound_ents[ent]) do	// not in our chunk, shut the fuck up
-		s:Stop()
+	for sndname, snd in pairs(sound_ents[ent]) do	
+		snd:Stop()	// not in our chunk, shut the fuck up
 	end
 end)
