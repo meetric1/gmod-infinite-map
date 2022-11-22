@@ -85,10 +85,12 @@ end
 
 if SERVER then return end
 
-hook.Add("PropUpdateChunk", "infmap_soundfilter", function(ent, chunk)
+hook.Add("PropUpdateChunk", "infmap_soundfilter", function(ent, chunk, oldchunk)
 	if !sound_ents[ent] then return end
-	if chunk == LocalPlayer().CHUNK_OFFSET then return end
-	for sndname, snd in pairs(sound_ents[ent]) do	
-		snd:Stop()	// not in our chunk, shut the fuck up
-	end
+	timer.Simple(0, function()	// wait for contraption to teleport
+		if ent.CHUNK_OFFSET == LocalPlayer().CHUNK_OFFSET then return end
+		for sndname, snd in pairs(sound_ents[ent]) do	
+			snd:Stop()	// not in our chunk, shut the fuck up
+		end
+	end)
 end)
