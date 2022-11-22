@@ -20,9 +20,13 @@ if SERVER then
 	end)
 else
 	// if not in our chunk, dont play sound
+	local invalid_channels = {
+		[CHAN_WEAPON] = true,
+		[CHAN_BODY] = true,
+	}
 	hook.Add("EntityEmitSound", "!infmap_sounddetour", function(data)
 		//PrintTable(data)
-		if data.Channel == CHAN_WEAPON then 
+		if invalid_channels[data.Channel] then 
 			return false 
 		end
 
