@@ -1,6 +1,6 @@
 hook.Add("ShouldCollide", "infinite_shouldcollide", function(ent1, ent2)
-	local co1, co2 = ent1.CHUNK_OFFSET, ent2.CHUNK_OFFSET
-	if co1 and co2 and co1 != co2 then return false end
+	if ent1 == game.GetWorld() or ent2 == game.GetWorld() then return end
+	if ent1.CHUNK_OFFSET != ent2.CHUNK_OFFSET then return false end
 end)
 
 if CLIENT then return end
