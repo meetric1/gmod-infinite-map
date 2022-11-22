@@ -6,6 +6,7 @@ if SERVER then
 	local invalid_channels = {
 		[CHAN_WEAPON] = true,
 		[CHAN_BODY] = true,
+		[CHAN_STATIC] = true,
 	}
 	// sounds that should be predicted on client, but arent
 	local valid_sounds = {
