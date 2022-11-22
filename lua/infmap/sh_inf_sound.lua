@@ -5,11 +5,11 @@ if SERVER then
 	util.AddNetworkString("INF_SOUND")
 	local invalid_channels = {
 		[1] = true,
-		[6] = true,
+		[4] = true,
 	}
 	hook.Add("EntityEmitSound", "infmap_sounddetour", function(data)
 		local ent = data.Entity
-		if ent == game.GetWorld() then return end	// no parent entity, ignore
+		if !ent.CHUNK_OFFSET then return end	// no parent chunk, ignore
 		data.Entity = ent:EntIndex()
 		for _, ply in ipairs(player.GetAll()) do
 			if (ent != ply or !invalid_channels[data.Channel] or game.SinglePlayer()) and ply.CHUNK_OFFSET == ent.CHUNK_OFFSET then	// only network to clients that need to hear the sound
