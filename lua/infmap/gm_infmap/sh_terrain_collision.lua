@@ -11,7 +11,7 @@ function InfMap.height_function(x, y)
     //local final = (InfMap.simplex.Noise3D(x / 15, y / 15, 0) * 150) * math.min(InfMap.simplex.Noise3D(x / 75, y / 75, 0) * 7500, 0) // small mountains
 	//final = final + (InfMap.simplex.Noise3D(x / 75 + 1, y / 75, 150)) * 350000	// big mountains
 	//x = x - offset
-	local final = ((InfMap.simplex.Noise2D(x / 25 + 1, y / 25)) * 20) ^ 4// big mountains
+	local final = ((InfMap.simplex.Noise2D(x / 25 + 1, y / 25)) * 20) ^ 4
 	
 	if (x >= 0) and (y > -0.5 and y < 0.5) then final = -15 end
 
@@ -27,11 +27,38 @@ end)
 
 if CLIENT then return end
 
-local function v_tostring(v)    // m,k jcedrf k,m jdcrfv 
+local function v_tostring(v)    // how else would you store them?
 	return v[1] .. "," .. v[2] .. "," .. v[3]
 end
 
 InfMap.chunk_table = {}
+
+local function try_invalid_chunk(chunk)
+	if !chunk then return end
+	local invalid = InfMap.chunk_table[v_tostring(chunk)]
+	for k, v in ipairs(ents.GetAll()) do
+		if InfMap.filter_entities(v) or !v:IsSolid() then continue end
+		if v.CHUNK_OFFSET == chunk then
+			invalid = nil
+		end
+	end
+	SafeRemoveEntity(invalid)
+end
+
+local function update_chunk(ent, chunk, oldchunk)
+	if IsValid(ent) and !InfMap.filter_entities(ent) and ent:IsSolid() then
+		// remove chunks that dont have anything in them
+		try_invalid_chunk(oldchunk)
+
+		// chunk already exists, dont make another
+		if IsValid(InfMap.chunk_table[v_tostring(chunk)]) then return end
+
+		local e = ents.Create("infmap_terrain_collider")
+		InfMap.prop_update_chunk(e, chunk)
+		e:Spawn()
+		InfMap.chunk_table[v_tostring(chunk)] = e
+	end
+end
 
 local function resetAll()
 	local e = ents.Create("prop_physics")
@@ -43,36 +70,21 @@ local function resetAll()
 	constraint.Weld(e, game.GetWorld(), 0, 0, 0)
 	InfMap.prop_update_chunk(e, Vector())
 
-	local e = ents.Create("infmap_terrain_collider")
-	InfMap.chunk_table[v_tostring(Vector())] = e	// storing them in a table as a string because its easy :)))))
-	InfMap.prop_update_chunk(e, Vector())
-	e:Spawn()
+	// spawn chunks
+	for k, v in ipairs(ents.GetAll()) do
+		if !v.CHUNK_OFFSET then continue end
+		update_chunk(v, v.CHUNK_OFFSET)
+	end
 end
 
+hook.Add("EntityRemoved", "infmap_infgen_terrain", function(ent)
+	try_invalid_chunk(ent.CHUNK_OFFSET)
+end)
+
 // handles generating chunk collision
-hook.Add("PropUpdateChunk", "infmap_infgen_terrain", function(ent, chunk, old_chunk)
+hook.Add("PropUpdateChunk", "infmap_infgen_terrain", function(ent, chunk, oldchunk)
 	timer.Simple(0, function()  // wait for entire contraption to teleport
-		if IsValid(ent) and !InfMap.filter_entities(ent) and ent:IsSolid() then
-			// remove chunks that dont have anything in them
-			if old_chunk then
-				local invalid = InfMap.chunk_table[v_tostring(old_chunk)]
-				for k, v in ipairs(ents.GetAll()) do
-					if InfMap.filter_entities(v) or v == ent or !v:IsSolid() then continue end
-					if v.CHUNK_OFFSET == old_chunk then
-						invalid = nil
-					end
-				end
-				SafeRemoveEntity(invalid)
-			end
-
-			// chunk already exists, dont make another
-			if IsValid(InfMap.chunk_table[v_tostring(chunk)]) then return end
-
-			local e = ents.Create("infmap_terrain_collider")
-			InfMap.prop_update_chunk(e, chunk)
-			e:Spawn()
-			InfMap.chunk_table[v_tostring(chunk)] = e
-		end
+		update_chunk(ent, chunk, oldchunk)
 	end)
 end)
 

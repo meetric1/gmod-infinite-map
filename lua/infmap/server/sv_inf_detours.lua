@@ -41,7 +41,7 @@ end
 
 EntityMT.InfMap_WorldToLocal = EntityMT.InfMap_WorldToLocal or EntityMT.WorldToLocal
 function EntityMT:WorldToLocal(pos)
-	return self:InfMap_WorldToLocal(pos - InfMap.unlocalize_vector(Vector(), self.CHUNK_OFFSET))
+	return self:InfMap_WorldToLocal(InfMap.unlocalize_vector(pos, -self.CHUNK_OFFSET))
 end
 
 EntityMT.InfMap_EyePos = EntityMT.InfMap_EyePos or EntityMT.EyePos

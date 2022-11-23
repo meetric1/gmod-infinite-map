@@ -26,6 +26,7 @@ local function unfucked_SetPos(ent, pos, filter)
 end
 
 local function unfucked_SetVelAng(ent, vel, ang)
+	if !IsValid(ent) then return end
 	local phys = ent:GetPhysicsObject()
 	
 	if phys:IsValid() then 
@@ -116,7 +117,7 @@ hook.Add("Think", "infinite_chunkmove", function()
 		if !IsValid(main_ent) then continue end
 		if !main_ent.CHUNK_OFFSET then continue end
 		
-		if !InfMap.in_chunk(main_ent:InfMap_GetPos()) then
+		if !InfMap.in_chunk(main_ent:InfMap_GetPos(), InfMap.chunk_size + 1) then // add 1 to avoid recourring teleport when prop is perfectly at chunk boundery
 			if !InfMap.constrained_status(main_ent) then continue end
 			if main_ent:IsPlayerHolding() then continue end	// physgun, gravgun, and use support
 
