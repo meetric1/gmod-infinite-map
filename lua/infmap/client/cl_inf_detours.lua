@@ -18,12 +18,6 @@ function EntityMT:LocalToWorld(pos)
 	return InfMap.unlocalize_vector(self:InfMap_LocalToWorld(pos), self.CHUNK_OFFSET - LocalPlayer().CHUNK_OFFSET)
 end
 
-EntityMT.InfMap_WorldToLocal = EntityMT.InfMap_WorldToLocal or EntityMT.WorldToLocal
-function EntityMT:WorldToLocal(pos)
-	if !self.CHUNK_OFFSET or !LocalPlayer().CHUNK_OFFSET then return self:InfMap_WorldToLocal(pos) end
-	return self:InfMap_WorldToLocal(InfMap.unlocalize_vector(pos, -self.CHUNK_OFFSET - LocalPlayer().CHUNK_OFFSET))
-end
-
 local clamp = math.Clamp
 local function clamp_vector(pos, max)
 	return Vector(clamp(pos[1], -max, max), clamp(pos[2], -max, max), clamp(pos[3], -max, max))
