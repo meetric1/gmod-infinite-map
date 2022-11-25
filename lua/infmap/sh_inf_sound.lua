@@ -31,7 +31,6 @@ else
 	// if not in our chunk, dont play sound
 	hook.Add("EntityEmitSound", "!infmap_sounddetour", function(data)
 		local co = data.Entity.CHUNK_OFFSET
-		//PrintTable(data)
 		if co and co != LocalPlayer().CHUNK_OFFSET then	
 			return false
 		end
@@ -41,7 +40,12 @@ else
 	local sound_ents = {}	// key = entity, key = soundname
 	net.Receive("INF_SOUND", function()
 		local data = net.ReadTable()
-		EmitSound(data.OriginalSoundName, data.Pos or Vector(), data.Entity, data.Channel, data.Volume, data.SoundLevel, data.Flags, data.Pitch, data.DSP)
+		//PrintTable(data)
+		if !data.Pos then 
+			data.Pos = Vector()
+			//data.Channel = -1
+		end
+		EmitSound(data.OriginalSoundName, data.Pos, data.Entity, data.Channel, data.Volume, data.SoundLevel, data.Flags, data.Pitch, data.DSP)
 		sound_ents[data.Entity] = sound_ents[data.Entity] or {}
 		sound_ents[data.Entity][data.OriginalSoundName] = true
 	end)

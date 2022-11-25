@@ -96,9 +96,3 @@ function ENT:Think()
     local phys = self:GetPhysicsObject()
     if phys:IsValid() then phys:EnableMotion(false) end
 end
-
-hook.Add("PhysgunPickup", "infinite_chunkclone_pickup", function(ply, ent)
-    if ent:IsValid() and ent:GetClass() == "infmap_clone" then 
-        return false 
-    end
-end)

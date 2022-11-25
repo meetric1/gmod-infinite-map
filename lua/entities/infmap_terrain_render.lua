@@ -105,7 +105,6 @@ function ENT:Think()
 			end
 		mesh.End()
 		table.Empty(self.TRIANGLES)
-		self.TRIANGLES = nil
 		self:SetRenderBoundsWS(-Vector(1, 1, 1) * 2^14, Vector(1, 1, 1) * 2^14)
 		self.COROUTINE = nil
 	end
@@ -139,7 +138,7 @@ end
 
 function ENT:OnRemove()
 	if SERVER then return end
-	if self.TRIANGLES then table.Empty(self.TRIANGLES) end
+	table.Empty(self.TRIANGLES)
 	self.TRIANGLES = nil
 	if self.RENDER_MESH and IsValid(self.RENDER_MESH.Mesh) then
 		self.RENDER_MESH.Mesh:Destroy()

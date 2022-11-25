@@ -45,7 +45,7 @@ end
 
 // all the classes that are useless
 InfMap.filter = {
-	infmap_clone = true ,
+	infmap_clone = true,
 	physgun_beam = true,
 	worldspawn = true,
 	gmod_hands = true,
@@ -80,6 +80,11 @@ InfMap.filter = {
 	player_pickup = true,
 	phys_spring = true,
 	crossbow_bolt = true,
+}
+
+// classes that should not be picked up by physgun
+InfMap.disable_pickup = {
+	infmap_clone = true,
 }
 
 function InfMap.filter_entities(e)

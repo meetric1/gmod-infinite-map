@@ -69,8 +69,14 @@ hook.Add("RenderScene", "!infinite_update_visbounds", function(eyePos, eyeAngles
 			end
 			ent:SetRenderBoundsWS(eyePos + prop_dir, eyePos + prop_dir)
 		else
-			local min, max = ent:GetRotatedAABB(ent.RENDER_BOUNDS[1], ent.RENDER_BOUNDS[2])
-			
+			// if entity angle is perfectly 0,0,0 GetRotatedAABB returns Vector(),Vector() for some reason
+			local min, max
+			if ent:GetAngles() != Angle() then	
+				min, max = ent:GetRotatedAABB(ent.RENDER_BOUNDS[1], ent.RENDER_BOUNDS[2])
+			else
+				min, max = ent.RENDER_BOUNDS[1], ent.RENDER_BOUNDS[2]
+			end
+
 			min = min * shrunk
 			max = max * shrunk
 			ent:SetRenderBoundsWS(eyePos + prop_dir + min, eyePos + prop_dir + max)

@@ -216,7 +216,6 @@ function ENT:Initialize()
         return 
     end
 
-    self:SetModel("models/props_c17/FurnitureCouch002a.mdl")
     self:BuildCollision(InfMap.height_function)
     self:SetSolid(SOLID_VPHYSICS)
     self:SetMoveType(MOVETYPE_NONE)

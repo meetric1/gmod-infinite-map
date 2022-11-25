@@ -2,7 +2,9 @@
 
 InfMap.simplex = include("simplex.lua")
 InfMap.chunk_resolution = 3
-InfMap.filter.infmap_terrain_collider = true	// dont pass in chunks
+InfMap.filter["infmap_terrain_collider"] = true	// dont pass in chunks
+InfMap.disable_pickup["infmap_terrain_collider"] = true	// no pickup
+InfMap.disable_pickup["infmap_planet"] = true
 
 local max = 2^28
 local offset = 23.05
@@ -18,13 +20,7 @@ function InfMap.height_function(x, y)
 	return math.Clamp(final, -max, 1000000)
 end
 
-// stops physgunning terrain because that would be absolute cancer
-hook.Add("PhysgunPickup", "infinite_chunkterrain_pickup", function(ply, ent)
-    if (ent:IsValid() and ent:GetClass() == "infmap_terrain_collider") then 
-        return false 
-    end
-end)
-
+// Server from now on
 if CLIENT then return end
 
 local function v_tostring(v)    // how else would you store them?
@@ -55,6 +51,7 @@ local function update_chunk(ent, chunk, oldchunk)
 
 		local e = ents.Create("infmap_terrain_collider")
 		InfMap.prop_update_chunk(e, chunk)
+		e:SetModel("models/props_c17/FurnitureCouch002a.mdl")
 		e:Spawn()
 		InfMap.chunk_table[v_tostring(chunk)] = e
 	end
@@ -75,6 +72,11 @@ local function resetAll()
 		if !v.CHUNK_OFFSET then continue end
 		update_chunk(v, v.CHUNK_OFFSET)
 	end
+
+	local e = ents.Create("infmap_planet")
+	InfMap.prop_update_chunk(e, Vector(0, 0, 1))
+	e:Spawn()
+	
 end
 
 hook.Add("EntityRemoved", "infmap_infgen_terrain", function(ent)
