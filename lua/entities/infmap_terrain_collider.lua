@@ -228,6 +228,7 @@ function ENT:Initialize()
     //self:AddFlags(FL_DONTTOUCH)
     local phys = self:GetPhysicsObject()
     if IsValid(phys) then
+        phys:SetMaterial(InfMap.physprop or "dirt")
         phys:EnableMotion(false)
         phys:SetMass(50000)  // max weight should help a bit with the physics solver
         phys:AddGameFlag(FVPHYSICS_CONSTRAINT_STATIC)
