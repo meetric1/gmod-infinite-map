@@ -92,10 +92,12 @@ local function modify_trace_data(orig_data, trace_func, extra)
 	end
 	local hit_data = trace_func(data, extra)
 	local hit_ent = hit_data.Entity
-	if hit_ent and hit_ent:IsValid() and hit_ent:GetClass() == "infmap_terrain_collider" then
-		hit_data.Entity = game.GetWorld()
-		hit_data.HitWorld = true
-		hit_data.NonHitWorld = false // what the fuck garry?
+	if IsValid(hit_ent) then
+		if InfMap.disable_pickup[hit_ent:GetClass()] then
+			hit_data.Entity = game.GetWorld()
+			hit_data.HitWorld = true
+			hit_data.NonHitWorld = false // what the fuck garry?
+		end
 	end
 	return hit_data
 end

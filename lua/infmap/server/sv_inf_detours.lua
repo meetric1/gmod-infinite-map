@@ -248,10 +248,14 @@ local function modify_trace_data(orig_data, trace_func, extra)
 	hit_data.HitPos = InfMap.unlocalize_vector(hit_data.HitPos, start_offset)
 	hit_data.StartPos = InfMap.unlocalize_vector(hit_data.StartPos, start_offset)
 	local hit_ent = hit_data.Entity
-	if IsValid(hit_ent) and hit_ent:GetClass() == "infmap_terrain_collider" then
-		hit_data.Entity = game.GetWorld()
-		hit_data.HitWorld = true
-		hit_data.NonHitWorld = false // what the fuck garry?
+	if IsValid(hit_ent) then
+		if hit_ent:GetClass() == "infmap_clone" and hit_data.REFERENCE_DATA then
+			hit_data.Entity = hit_data.REFERENCE_DATA[1]
+		elseif InfMap.disable_pickup[hit_ent:GetClass()] then
+			hit_data.Entity = game.GetWorld()
+			hit_data.HitWorld = true
+			hit_data.NonHitWorld = false // what the fuck garry?
+		end
 	end
 	return hit_data
 end

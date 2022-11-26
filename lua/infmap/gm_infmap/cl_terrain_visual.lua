@@ -77,7 +77,6 @@ end)
 local size = 2^31
 local uvsize = size / 10000
 local min = -1000000
-local stars = Material("skybox/starfield")
 
 local big_plane = Mesh()
 big_plane:BuildFromTriangles({
@@ -99,7 +98,7 @@ local bottom = Material("infmap/cubemap_bottom.vmt")
 hook.Add("PostDraw2DSkyBox", "infmap_terrain_skybox", function()	//draw bigass plane
 	render.OverrideDepthEnable(true, false)
 
-	local color = (InfMap.unlocalize_vector(EyePos(), LocalPlayer().CHUNK_OFFSET) / 2000000)[3]
+	local color = (InfMap.unlocalize_vector(EyePos(), LocalPlayer().CHUNK_OFFSET) / 1950000)[3]
 	local cs = InfMap.chunk_size
 	local cs_2 = cs * 2
 
