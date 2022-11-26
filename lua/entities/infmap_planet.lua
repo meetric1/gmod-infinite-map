@@ -315,7 +315,7 @@ function ENT:GetRenderMesh()
     render_SetModelLighting(3, 0.1, 0.1, 0.1)
     render_SetModelLighting(5, 0.1, 0.1, 0.1)
 
-    render.SetMaterial(Material("models/XQM/WoodPlankTexture"))
+    render.SetMaterial(Material("phoenix_storms/ps_grass"))
     render.DrawSphere(self:InfMap_GetPos(), InfMap.chunk_size, 100, 100)
     //render.DrawSphere(self:InfMap_GetPos(), -InfMap.chunk_size, 100, 100)
 

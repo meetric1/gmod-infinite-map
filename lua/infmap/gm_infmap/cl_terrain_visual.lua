@@ -90,11 +90,44 @@ big_plane:BuildFromTriangles({
 })
 
 local default_mat = Material("phoenix_storms/ps_grass")
+local top = Material("infmap/cubemap_top.vmt")
+local right = Material("infmap/cubemap_right.vmt")
+local front = Material("infmap/cubemap_front.vmt")
+local back = Material("infmap/cubemap_back.vmt")
+local left = Material("infmap/cubemap_left.vmt")
+local bottom = Material("infmap/cubemap_bottom.vmt")
 hook.Add("PostDraw2DSkyBox", "infmap_terrain_skybox", function()	//draw bigass plane
 	render.OverrideDepthEnable(true, false)
 
-	//render.SetMaterial(stars)
-	//render.DrawBox(EyePos(), Angle(), Vector(-min, -min, -min), Vector(min, min, min))
+	local color = (InfMap.unlocalize_vector(EyePos(), LocalPlayer().CHUNK_OFFSET) / 2000000)[3]
+	local cs = InfMap.chunk_size
+	local cs_2 = cs * 2
+
+	// set transparency
+	top:SetFloat("$alpha", color)
+	right:SetFloat("$alpha", color)
+	front:SetFloat("$alpha", color)
+	back:SetFloat("$alpha", color)
+	left:SetFloat("$alpha", color)
+	bottom:SetFloat("$alpha", color)
+
+	render.SetMaterial(top)
+	render.DrawQuadEasy(EyePos() + Vector(0, 0, cs), Vector(0, 0, -1), cs_2, cs_2)
+
+	render.SetMaterial(right)
+	render.DrawQuadEasy(EyePos() + Vector(0, cs, 0), Vector(0, -1, 0), cs_2, cs_2)
+
+	render.SetMaterial(front)
+	render.DrawQuadEasy(EyePos() + Vector(cs, 0, 0), Vector(-1, 0, 0), cs_2, cs_2)
+
+	render.SetMaterial(back)
+	render.DrawQuadEasy(EyePos() + Vector(-cs, 0, 0), Vector(1, 0, 0), cs_2, cs_2)
+
+	render.SetMaterial(left)
+	render.DrawQuadEasy(EyePos() + Vector(0, -cs, 0), Vector(0, 1, 0), cs_2, cs_2)
+
+	render.SetMaterial(bottom)
+	render.DrawQuadEasy(EyePos() + Vector(0, 0, -cs), Vector(0, 0, 1), cs_2, cs_2)
 
 	render.SetMaterial(default_mat)
 	big_plane:Draw()

@@ -1,0 +1,5 @@
+"UnlitGeneric"
+{
+	"$basetexture" "infmap/cubemap_front"
+	"$model" "1"
+}

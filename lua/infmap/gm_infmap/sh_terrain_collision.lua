@@ -74,7 +74,7 @@ local function resetAll()
 	end
 
 	local e = ents.Create("infmap_planet")
-	InfMap.prop_update_chunk(e, Vector(0, 0, 1))
+	InfMap.prop_update_chunk(e, Vector(0, 0, 100))
 	e:Spawn()
 	
 end
