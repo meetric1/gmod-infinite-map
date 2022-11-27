@@ -10,13 +10,17 @@ ENT.Purpose			= ""
 ENT.Instructions	= ""
 ENT.Spawnable		= false
 
-InfMap.planet_uv_scale = 5
+if !InfMap then return end
+
+InfMap.planet_uv_scale = 10
+InfMap.planet_resolution = 32
+InfMap.planet_tree_resolution = 32
 
 /**************** CLIENT *****************/
 
 local function planet_mountains(x, y)
     local x, y = x / 10000, y / 10000
-    return InfMap.simplex.Noise2D(x, y) * 1000 + InfMap.simplex.Noise3D(x, y, 10)^2 * InfMap.simplex.Noise3D(x * 10, y * 10, 0) * 10000
+    return InfMap.simplex.Noise2D(x, y) * 1000
 end
 
 local function inside_planet(x, y, size)
@@ -25,16 +29,14 @@ end
 
 /****************** SERVER *********************/
  
-function ENT:BuildCollision(heightFunction, size)
-    local chunk = self.CHUNK_OFFSET
+function ENT:BuildCollision(heightFunction, chunk, size)
+    local cox = chunk[1]
+    local coy = chunk[2]
+
     local final_mesh = {}
-    local chunk_resolution = 64
+    local chunk_resolution = InfMap.planet_resolution
     for y = 0, chunk_resolution - 1 do
         for x = 0, chunk_resolution - 1 do
-            // chunk offset in world space
-            local chunkoffsetx = chunk[1]
-            local chunkoffsety = chunk[2]
-
             local x1 = (x    ) / chunk_resolution
             local y1 = (y    ) / chunk_resolution
             local x2 = (x + 1) / chunk_resolution
@@ -55,30 +57,30 @@ function ENT:BuildCollision(heightFunction, size)
             end
 
             // vertex positions in local space
-            local vertexPos1 = Vector(min_pos_x, min_pos_y, heightFunction(min_pos_x, min_pos_y))
-            local vertexPos2 = Vector(min_pos_x, max_pos_y, heightFunction(min_pos_x, max_pos_y))
-            local vertexPos3 = Vector(max_pos_x, min_pos_y, heightFunction(max_pos_x, min_pos_y))
-            local vertexPos4 = Vector(max_pos_x, max_pos_y, heightFunction(max_pos_x, max_pos_y))
+            local vertexPos1 = Vector(min_pos_x, min_pos_y, heightFunction(min_pos_x + cox, min_pos_y + coy))
+            local vertexPos2 = Vector(min_pos_x, max_pos_y, heightFunction(min_pos_x + cox, max_pos_y + coy))
+            local vertexPos3 = Vector(max_pos_x, min_pos_y, heightFunction(max_pos_x + cox, min_pos_y + coy))
+            local vertexPos4 = Vector(max_pos_x, max_pos_y, heightFunction(max_pos_x + cox, max_pos_y + coy))
 
             // round positions to a circle if they are cut off
             if !in_a then
                 vertexPos1 = vertexPos1:GetNormalized() * size
-                vertexPos1[3] = heightFunction(vertexPos1[1], vertexPos1[2])
+                vertexPos1[3] = heightFunction(vertexPos1[1] + cox, vertexPos1[2] + coy)
             end
 
             if !in_b then
                 vertexPos2 = vertexPos2:GetNormalized() * size
-                vertexPos2[3] = heightFunction(vertexPos2[1], vertexPos2[2])
+                vertexPos2[3] = heightFunction(vertexPos2[1] + cox, vertexPos2[2] + coy)
             end
 
             if !in_c then
                 vertexPos3 = vertexPos3:GetNormalized() * size
-                vertexPos3[3] = heightFunction(vertexPos3[1], vertexPos3[2])
+                vertexPos3[3] = heightFunction(vertexPos3[1] + cox, vertexPos3[2] + coy)
             end
 
             if !in_d then
                 vertexPos4 = vertexPos4:GetNormalized() * size
-                vertexPos4[3] = heightFunction(vertexPos4[1], vertexPos4[2])
+                vertexPos4[3] = heightFunction(vertexPos4[1] + cox, vertexPos4[2] + coy)
             end
 
 
@@ -93,7 +95,6 @@ function ENT:BuildCollision(heightFunction, size)
             })
         end
     end
-
     self:PhysicsDestroy()
 	self:PhysicsFromMesh(final_mesh)
 end
@@ -103,11 +104,10 @@ function ENT:Initialize()
     if CLIENT then 
         if !self.CHUNK_OFFSET then return end
         self:GenerateMesh(planet_mountains, self.CHUNK_OFFSET, InfMap.chunk_size)
-        self:GenerateTrees(planet_mountains, InfMap.chunk_size)
+        self:GenerateTrees(planet_mountains, self.CHUNK_OFFSET, InfMap.chunk_size)
     end
 
-    self:BuildCollision(planet_mountains, InfMap.chunk_size)
-    self:PhysicsInit(SOLID_VPHYSICS)
+    self:BuildCollision(planet_mountains, self.CHUNK_OFFSET, InfMap.chunk_size)
     self:SetSolid(SOLID_VPHYSICS)
     self:SetMoveType(MOVETYPE_NONE)
     self:EnableCustomCollisions(true)
@@ -157,18 +157,19 @@ if SERVER then return end
     return smoothedNormal
 end
 
-function ENT:GenerateTrees(heightFunction, size)
+function ENT:GenerateTrees(heightFunction, chunk, size)
     self.TreeMatrices = {}
     self.TreeModels = {}
     self.TreeColors = {}
 
     local randomIndex = 0
-    local chunkIndex = tostring(self.CHUNK_OFFSET[1]) .. tostring(self.CHUNK_OFFSET[2])
-    local chunk_resolution = 32
+    local cox = chunk[1]
+    local coy = chunk[2]
+    local chunkIndex = tostring(cox) .. tostring(coy)
+    local chunk_resolution = InfMap.planet_tree_resolution
     for y = 0, chunk_resolution - 1 do
         for x = 0, chunk_resolution - 1 do
             randomIndex = randomIndex + 1
-            local m = Matrix()
 
             // generate seeded random position for tree
             local randseedx = util.SharedRandom("TerrainSeedX" .. chunkIndex, 0, 1, randomIndex)
@@ -178,7 +179,8 @@ function ENT:GenerateTrees(heightFunction, size)
             // tree is not in planet, bail
             if !inside_planet(randPos[1], randPos[2], size - 250) then continue end
 
-            local finalPos = Vector(randPos[1], randPos[2], heightFunction(randPos[1], randPos[2]) - 45)
+            local finalPos = Vector(randPos[1], randPos[2], heightFunction(randPos[1] + cox, randPos[2] + coy) - 45)
+            local m = Matrix()
             m:SetTranslation(finalPos)
             m:SetAngles(Angle(0, randseedx * 3600, 0))//smoothedNormal:Angle() + Angle(90, 0, 0) Angle(0, randseedx * 3600, 0)
             m:SetScale(Vector(2, 2, 2))
@@ -191,15 +193,13 @@ end
 
 local default_mat = Material("phoenix_storms/ps_grass")
 function ENT:GenerateMesh(heightFunction, chunk, size)
+    local cox = chunk[1]
+    local coy = chunk[2]
     // planet is a bit cursed since they are spherical, we need to cut off and round the edges of the chunk
 	local triangles = {}
-    local chunk_resolution = 64
+    local chunk_resolution = InfMap.planet_resolution
     for y = 0, chunk_resolution - 1 do
         for x = 0, chunk_resolution - 1 do
-            // chunk offset in world space
-            local chunkoffsetx = chunk[1]
-            local chunkoffsety = chunk[2]
-
             local x1 = (x    ) / chunk_resolution
             local y1 = (y    ) / chunk_resolution
             local x2 = (x + 1) / chunk_resolution
@@ -220,30 +220,30 @@ function ENT:GenerateMesh(heightFunction, chunk, size)
             end
 
             // vertex positions in local space
-            local vertexPos1 = Vector(min_pos_x, min_pos_y, heightFunction(min_pos_x, min_pos_y))
-            local vertexPos2 = Vector(min_pos_x, max_pos_y, heightFunction(min_pos_x, max_pos_y))
-            local vertexPos3 = Vector(max_pos_x, min_pos_y, heightFunction(max_pos_x, min_pos_y))
-            local vertexPos4 = Vector(max_pos_x, max_pos_y, heightFunction(max_pos_x, max_pos_y))
+            local vertexPos1 = Vector(min_pos_x, min_pos_y, heightFunction(min_pos_x + cox, min_pos_y + coy))
+            local vertexPos2 = Vector(min_pos_x, max_pos_y, heightFunction(min_pos_x + cox, max_pos_y + coy))
+            local vertexPos3 = Vector(max_pos_x, min_pos_y, heightFunction(max_pos_x + cox, min_pos_y + coy))
+            local vertexPos4 = Vector(max_pos_x, max_pos_y, heightFunction(max_pos_x + cox, max_pos_y + coy))
 
             // round positions to a circle if they are cut off
             if !in_a then
                 vertexPos1 = vertexPos1:GetNormalized() * size
-                vertexPos1[3] = heightFunction(vertexPos1[1], vertexPos1[2])
+                vertexPos1[3] = heightFunction(vertexPos1[1] + cox, vertexPos1[2] + coy)
             end
 
             if !in_b then
                 vertexPos2 = vertexPos2:GetNormalized() * size
-                vertexPos2[3] = heightFunction(vertexPos2[1], vertexPos2[2])
+                vertexPos2[3] = heightFunction(vertexPos2[1] + cox, vertexPos2[2] + coy)
             end
 
             if !in_c then
                 vertexPos3 = vertexPos3:GetNormalized() * size
-                vertexPos3[3] = heightFunction(vertexPos3[1], vertexPos3[2])
+                vertexPos3[3] = heightFunction(vertexPos3[1] + cox, vertexPos3[2] + coy)
             end
 
             if !in_d then
                 vertexPos4 = vertexPos4:GetNormalized() * size
-                vertexPos4[3] = heightFunction(vertexPos4[1], vertexPos4[2])
+                vertexPos4[3] = heightFunction(vertexPos4[1] + cox, vertexPos4[2] + coy)
             end
 
             local normal_size = size / chunk_resolution
@@ -303,6 +303,8 @@ function ENT:GetRenderMesh()
     local self = self
     if !self.RENDER_MESH then return end
 
+    if EyePos():DistToSqr(self:GetPos()) > InfMap.chunk_size * InfMap.chunk_size then return end
+
     // get local vars
     local models = self.TreeModels
     local color = self.TreeColors
@@ -314,13 +316,6 @@ function ENT:GetRenderMesh()
     render_SetModelLighting(1, 0.1, 0.1, 0.1)
     render_SetModelLighting(3, 0.1, 0.1, 0.1)
     render_SetModelLighting(5, 0.1, 0.1, 0.1)
-
-    render.SetMaterial(Material("phoenix_storms/ps_grass"))
-    render.DrawSphere(self:InfMap_GetPos(), InfMap.chunk_size, 100, 100)
-    //render.DrawSphere(self:InfMap_GetPos(), -InfMap.chunk_size, 100, 100)
-
-    if EyePos():DistToSqr(self:GetPos()) > InfMap.chunk_size * InfMap.chunk_size then return end
-
     render_SetMaterial(tree_material)
 
     // render foliage

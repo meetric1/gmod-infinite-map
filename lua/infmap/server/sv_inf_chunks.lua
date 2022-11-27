@@ -22,6 +22,21 @@ local function unfucked_SetPos(ent, pos, filter)
 	pos[2] = math.Clamp(pos[2], -source_bounds, source_bounds)
 	pos[3] = math.Clamp(pos[3], -source_bounds, source_bounds)
 
+	// ragdoll moment
+	if ent:IsRagdoll() then
+		for i = 0, ent:GetPhysicsObjectCount() - 1 do
+			local phys = ent:GetPhysicsObjectNum(i)
+			local vel = phys:GetVelocity()
+			local ang_vel = phys:GetAngleVelocity()
+			local diff = phys:InfMap_GetPos() - ent:InfMap_GetPos()
+		
+			phys:Wake()
+			phys:InfMap_SetPos(pos + diff, true)
+			phys:SetVelocityInstantaneous(vel)
+			phys:SetAngleVelocityInstantaneous(ang_vel)
+		end
+	end
+	
 	ent:InfMap_SetPos(pos)
 end
 

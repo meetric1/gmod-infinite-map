@@ -10,6 +10,8 @@ ENT.Purpose			= ""
 ENT.Instructions	= ""
 ENT.Spawnable		= false
 
+if !InfMap then return end
+
 function ENT:SetReferenceData(ent, chunk)
     self.REFERENCE_DATA = {ent, chunk, ent.CHUNK_OFFSET + chunk}    //1 = ent, 2 = world chunk, 3 = local chunk
 end
@@ -45,8 +47,6 @@ function ENT:Initialize()
         SafeRemoveEntity(self)
         return
     end
-
-    print("Clone initialized w", parent)
 
     self:SetModel(parent:GetModel())
     local points = 0

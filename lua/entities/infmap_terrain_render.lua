@@ -1,7 +1,5 @@
 AddCSLuaFile()
 
-if !InfMap then return end
-
 ENT.Type = "anim"
 ENT.Base = "base_gmodentity"
 
@@ -11,6 +9,8 @@ ENT.Author			= "Mee"
 ENT.Purpose			= ""
 ENT.Instructions	= ""
 ENT.Spawnable		= false
+
+if !InfMap then return end
 
 if SERVER then return end	// clientside only entity
 

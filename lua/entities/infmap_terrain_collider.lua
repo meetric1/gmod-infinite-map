@@ -10,6 +10,8 @@ ENT.Purpose			= ""
 ENT.Instructions	= ""
 ENT.Spawnable		= false
 
+if !InfMap then return end
+
 // tris are in the format {{pos = value}, {pos = value2}}
 local function split_convex(tris, plane_pos, plane_dir)
     if !tris then return {} end

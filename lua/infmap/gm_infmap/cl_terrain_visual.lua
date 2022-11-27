@@ -2,12 +2,13 @@
 InfMap.megachunk_size = 10
 InfMap.render_distance = 2
 InfMap.filter.infmap_terrain_render = true // dont pass in chunks
+InfMap.terrain_material = "infmap/flatgrass"
 
 // chunkloading
 local last_mega_chunk
 InfMap.client_chunks = InfMap.client_chunks or {}
 hook.Add("PropUpdateChunk", "infmap_terrain_init", function(ent, chunk, old_chunk)
-	if ent == LocalPlayer() then
+	if ent == LocalPlayer() and chunk[3] < 100 then
 		local _, mega_chunk = InfMap.localize_vector(chunk, InfMap.megachunk_size) mega_chunk[3] = 0
 		local chunk_res_scale = InfMap.chunk_size * 2 * InfMap.megachunk_size * 2
 		local chunk_scale = InfMap.chunk_size * 2
@@ -32,11 +33,11 @@ hook.Add("PropUpdateChunk", "infmap_terrain_init", function(ent, chunk, old_chun
 				if !IsValid(InfMap.client_chunks[y][x]) then 
 					local e = ents.CreateClientside("infmap_terrain_render")
 					e:Spawn()
-					e:SetMaterial("phoenix_storms/ps_grass")
-					e.CHUNK_OFFSET = Vector(x, y, 0) + mega_chunk
-					time = time + 0.01
+					e:SetMaterial(InfMap.terrain_material)
 					e:GenerateMesh(InfMap.height_function, (Vector(x, y, 0) + mega_chunk) * InfMap.megachunk_size * 2, time)
+					e.CHUNK_OFFSET = Vector(x, y, 0) + mega_chunk
 					InfMap.client_chunks[y][x] = e
+					time = time + 0.01
 				end
 
 				local e = InfMap.client_chunks[y][x]
@@ -52,23 +53,21 @@ end)
 // update renderbounds for these entities since they can appear outside of the source bounds
 local chunksize = Vector(1, 1, 0) * InfMap.chunk_size * InfMap.megachunk_size * 2
 hook.Add("RenderScene", "infmap_update_renderbounds", function(eyePos)
+	local color = math.Clamp((1 - InfMap.unlocalize_vector(EyePos(), LocalPlayer().CHUNK_OFFSET)[3] / 1950000) * 512, 0, 255)
 	for y = -InfMap.render_distance, InfMap.render_distance do
 		if !InfMap.client_chunks[y] then continue end
 		for x = -InfMap.render_distance, InfMap.render_distance do
 			local chunk = InfMap.client_chunks[y][x]
 			if !IsValid(chunk) or !chunk.RENDER_MESH then continue end
-			chunk:SetLocalRenderBounds(eyePos, chunksize)
-		end
-	end
-end)
 
-// reinitialize chunks for terrain regen
-hook.Add("PostCleanupMap", "infmap_terrain_cleanup", function()
-	local time = 0
-	for y, t in pairs(InfMap.client_chunks) do
-		for x, ent in pairs(t) do
-			time = time + 0.01
-			ent:GenerateMesh(InfMap.height_function, ent.CHUNK_OFFSET * InfMap.megachunk_size * 2, time)
+			// set transparency
+			chunk:SetRenderMode(color < 255 and RENDERMODE_TRANSCOLOR or RENDERMODE_NORMAL)
+			chunk:SetColor(Color(255, 255, 255, color))
+
+			// update render bounds when visible
+			if color > 0 then
+				chunk:SetLocalRenderBounds(eyePos, chunksize)
+			end
 		end
 	end
 end)
@@ -88,18 +87,18 @@ big_plane:BuildFromTriangles({
 	{pos = Vector(-size, size, min), normal = Vector(0, 0, 1), u = 0, v = 0, tangent = Vector(1, 0, 0), userdata = {1, 0, 0, -1}},
 })
 
-local default_mat = Material("phoenix_storms/ps_grass")
-local top = Material("infmap/cubemap_top.vmt")
-local right = Material("infmap/cubemap_right.vmt")
-local front = Material("infmap/cubemap_front.vmt")
-local back = Material("infmap/cubemap_back.vmt")
-local left = Material("infmap/cubemap_left.vmt")
-local bottom = Material("infmap/cubemap_bottom.vmt")
+local default_mat = Material(InfMap.terrain_material)
+local top = Material("infmap/cubemap_top")
+local right = Material("infmap/cubemap_right")
+local front = Material("infmap/cubemap_front")
+local back = Material("infmap/cubemap_back")
+local left = Material("infmap/cubemap_left")
+local bottom = Material("infmap/cubemap_bottom")
 hook.Add("PostDraw2DSkyBox", "infmap_terrain_skybox", function()	//draw bigass plane
 	render.OverrideDepthEnable(true, false)
 
-	local color = (InfMap.unlocalize_vector(EyePos(), LocalPlayer().CHUNK_OFFSET) / 1950000)[3]
-	local cs = InfMap.chunk_size
+	local color = InfMap.unlocalize_vector(EyePos(), LocalPlayer().CHUNK_OFFSET)[3] / 1950000
+	local cs = 100//InfMap.chunk_size
 	local cs_2 = cs * 2
 
 	// set transparency
@@ -129,6 +128,9 @@ hook.Add("PostDraw2DSkyBox", "infmap_terrain_skybox", function()	//draw bigass p
 	render.DrawQuadEasy(EyePos() + Vector(0, 0, -cs), Vector(0, 0, 1), cs_2, cs_2)
 
 	render.SetMaterial(default_mat)
+	render.ResetModelLighting(2, 2, 2)
+	render.SetLocalModelLights()
+	default_mat:SetFloat("$alpha", 1)	// make it visible
 	big_plane:Draw()
 
 	render.OverrideDepthEnable(false, false)
@@ -142,5 +144,5 @@ hook.Add("SetupWorldFog", "!infmap_fog", function()	// The Fog Is Coming
 	//render.FogColor(180, 190, 200)
 	render.FogEnd(800000)
 	render.FogMode(MATERIAL_FOG_LINEAR)
-	return true
+	//return true
 end)

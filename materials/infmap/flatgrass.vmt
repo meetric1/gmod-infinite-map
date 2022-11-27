@@ -1,0 +1,11 @@
+"VertexLitGeneric"
+{
+	"$basetexturetransform" "center .5 .5 scale .125 .125 rotate 0 translate 0 0"
+	
+	"$basetexture" "gm_construct/grass1"
+	"$surfaceprop" "grass"
+
+	"$selfillum" 0
+	"$model" 1
+	"$halflambert" 1
+}

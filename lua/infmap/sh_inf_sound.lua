@@ -11,6 +11,9 @@ if SERVER then
 	// sounds that should be predicted on client, but arent
 	local valid_sounds = {
 		["Weapon_Crossbow.BoltElectrify"] = true,
+		["Weapon_PhysCannon.TooHeavy"] = true,
+		["weapons/physcannon/hold_loop.wav"] = true,
+		["Weapon_PhysCannon.Pickup"] = true,
 	}
 	hook.Add("EntityEmitSound", "infmap_sounddetour", function(data)
 		local ent = data.Entity
@@ -20,7 +23,7 @@ if SERVER then
 			//PrintTable(data)
 			//(ent != ply or !invalid_channels[data.Channel] or game.SinglePlayer())
 			if (ent != ply or !invalid_channels[data.Channel] or game.SinglePlayer() or valid_sounds[data.OriginalSoundName]) and ply.CHUNK_OFFSET == ent.CHUNK_OFFSET then	// only network to clients that need to hear the sound
-				net.Start("INF_SOUND") 
+				net.Start("INF_SOUND", true)	// unrelaible for fast networking
 				net.WriteTable(data)	// probably the only valid place for writing a table in network
 				net.Send(ply)
 			end
