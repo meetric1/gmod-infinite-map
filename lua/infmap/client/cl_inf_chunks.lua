@@ -190,9 +190,10 @@ function InfMap.prop_update_chunk(ent, chunk)
 	end
 	
 	// lod test
-	if chunk_offset:LengthSqr() > 100 and !ent:IsPlayer() then	// make players have no lod so u can see your friends far away :)
+	local len = chunk_offset:LengthSqr()
+	if len > 100 and !ent:IsPlayer() then	// make players have no lod so u can see your friends far away :)
 		// object is so small and so far away why even bother rendering it
-		if ent:BoundingRadius() < 10 or ent:IsWeapon() then 
+		if ent:BoundingRadius() < 10 or ent:IsWeapon() or len > 150*150 then // too small or too far, dont bother rendering
 			ent.RenderOverride = empty_function
 			return 
 		end

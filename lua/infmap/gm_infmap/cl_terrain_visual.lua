@@ -94,6 +94,7 @@ local front = Material("infmap/cubemap_front")
 local back = Material("infmap/cubemap_back")
 local left = Material("infmap/cubemap_left")
 local bottom = Material("infmap/cubemap_bottom")
+local render = render
 hook.Add("PostDraw2DSkyBox", "infmap_terrain_skybox", function()	//draw bigass plane
 	render.OverrideDepthEnable(true, false)
 

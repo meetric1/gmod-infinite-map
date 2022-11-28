@@ -2,12 +2,16 @@
 local default_mat = Material("shadertest/seamless7")
 InfMap.planet_render_distance = 3
 hook.Add("PostDrawOpaqueRenderables", "infmap_planet_render", function()
+	local render = render
 	local client_offset = LocalPlayer().CHUNK_OFFSET
 	if !client_offset then return end
 
-	local prd = InfMap.planet_render_distance
-	render.SetMaterial(default_mat)
+	local color = InfMap.unlocalize_vector(EyePos(), LocalPlayer().CHUNK_OFFSET)[3] / 1950000
 
+	if color < 0.1 then return end
+
+	render.SetMaterial(default_mat)
+	default_mat:SetFloat("$alpha", color)
 	// reset lighting so planets dont do weird flashing shit
 	render.SetLocalModelLights()
 	render.SetModelLighting(1, 0.1, 0.1, 0.1)
@@ -17,9 +21,7 @@ hook.Add("PostDrawOpaqueRenderables", "infmap_planet_render", function()
     render.SetModelLighting(2, 1, 1, 1)
     render.SetModelLighting(4, 1, 1, 1)
 
-	local color = InfMap.unlocalize_vector(EyePos(), LocalPlayer().CHUNK_OFFSET)[3] / 1950000
-	default_mat:SetFloat("$alpha", color)
-	
+	local prd = InfMap.planet_render_distance
 	local _, megachunk = InfMap.localize_vector(client_offset, InfMap.planet_spacing * 0.5)
 	for y = -prd, prd do
 		for x = -prd, prd do
