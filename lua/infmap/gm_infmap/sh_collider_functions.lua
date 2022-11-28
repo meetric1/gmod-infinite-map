@@ -1,10 +1,15 @@
 InfMap.simplex = include("simplex.lua")
 InfMap.chunk_resolution = 3
-InfMap.planet_spacing = 50
+
 InfMap.filter["infmap_terrain_collider"] = true	// dont pass in chunks
 InfMap.filter["infmap_planet"] = true
 InfMap.disable_pickup["infmap_terrain_collider"] = true	// no pickup
 InfMap.disable_pickup["infmap_planet"] = true
+
+InfMap.planet_spacing = 50
+InfMap.planet_uv_scale = 10
+InfMap.planet_resolution = 32
+InfMap.planet_tree_resolution = 32
 
 local max = 2^28
 local offset = 23.05
@@ -16,4 +21,22 @@ function InfMap.height_function(x, y)
 	local final = ((InfMap.simplex.Noise2D(x / 25 + 1, y / 25)) * 20) ^ 4
 	if (x >= 0) and (y > -0.5 and y < 0.5) then final = -15 end
 	return math.Clamp(final, -max, 1000000)
+end
+
+function InfMap.planet_height_function(x, y)
+	return InfMap.simplex.Noise2D(x / 10000, y / 10000) * 1000
+end
+
+// returns local position of planet inside megachunk
+function InfMap.planet_info(x, y)
+	local spacing = InfMap.planet_spacing / 2 - 1
+	local random_x = math.floor(util.SharedRandom("X" .. x .. y, -spacing, spacing))
+	local random_y = math.floor(util.SharedRandom("Y" .. x .. y, -spacing, spacing))
+	local random_z = math.floor(util.SharedRandom("Z" .. x .. y, 0, 100))
+	
+	local planet_pos = Vector(x * InfMap.planet_spacing + random_x, y * InfMap.planet_spacing + random_y, random_z + 125)
+	local planet_radius = math.floor(util.SharedRandom("Radius" .. x .. y, InfMap.chunk_size / 10, InfMap.chunk_size))
+	local planet_type = math.Round(util.SharedRandom("Type" .. x .. y, 1, 7))
+
+	return planet_pos, planet_radius, planet_type
 end

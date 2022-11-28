@@ -71,7 +71,7 @@ end
 
 EntityMT.InfMap_Spawn = EntityMT.InfMap_Spawn or EntityMT.Spawn
 function EntityMT:Spawn()
-	if self:IsConstraint() or self:GetClass() == "phys_spring" then	// elastic isnt considered a constraint..?
+	if IsValid(self) and (self:IsConstraint() or self:GetClass() == "phys_spring") then	// elastic isnt considered a constraint..?
 		unfuck_keyvalue(self, "attachpoint")
 		unfuck_keyvalue(self, "springaxis")
 		unfuck_keyvalue(self, "slideaxis")

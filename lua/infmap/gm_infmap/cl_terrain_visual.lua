@@ -73,8 +73,8 @@ hook.Add("RenderScene", "infmap_update_renderbounds", function(eyePos)
 end)
 
 // bigass plane
-local size = 2^31
-local uvsize = size / 10000
+local size = 1000000000
+local uvsize = 100000
 local min = -1000000
 
 local big_plane = Mesh()

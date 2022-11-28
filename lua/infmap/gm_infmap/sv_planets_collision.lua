@@ -3,7 +3,7 @@ local function v_tostring(v)    // how else would you store them?
 	return v[1] .. "," .. v[2] .. "," .. v[3]
 end
 
-InfMap.planet_chunk_table = {}
+InfMap.planet_chunk_table = InfMap.planet_chunk_table or {}
 
 local function try_invalid_chunk(chunk)
 	if !chunk then return end
@@ -25,10 +25,7 @@ local function update_chunk(ent, chunk, oldchunk)
 		// is entity even going into a planet chunk?
 		local spacing = InfMap.planet_spacing / 2 - 1
 		local _, megachunk = InfMap.localize_vector(chunk, InfMap.planet_spacing / 2)
-		local random_x = math.floor(util.SharedRandom("X" .. megachunk[1] .. megachunk[2], -spacing, spacing))
-		local random_y = math.floor(util.SharedRandom("Y" .. megachunk[1] .. megachunk[2], -spacing, spacing))
-		local random_z = math.floor(util.SharedRandom("Z" .. megachunk[1] .. megachunk[2], 0, 100))
-		local planet_chunk = Vector(megachunk[1] * InfMap.planet_spacing + random_x, megachunk[2] * InfMap.planet_spacing + random_y, random_z + 125)
+		local planet_chunk, planet_radius, mat = InfMap.planet_info(megachunk[1], megachunk[2])
 		
 		// no planet here!
 		if chunk != planet_chunk then return end
@@ -39,6 +36,12 @@ local function update_chunk(ent, chunk, oldchunk)
 		local e = ents.Create("infmap_planet")
 		InfMap.prop_update_chunk(e, chunk)
 		e:SetModel("models/props_c17/FurnitureCouch002a.mdl")
+		e:SetPlanetRadius(planet_radius)
+		if mat == 6 then 
+			e:SetMaterial("phoenix_storms/ps_grass")
+		else
+			e:SetMaterial("shadertest/seamless" .. mat + 1)
+		end
 		e:Spawn()
 		InfMap.planet_chunk_table[v_tostring(chunk)] = e
 	end

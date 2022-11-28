@@ -3,7 +3,7 @@ local function v_tostring(v)    // how else would you store them?
 	return v[1] .. "," .. v[2] .. "," .. v[3]
 end
 
-InfMap.chunk_table = {}
+InfMap.chunk_table = InfMap.chunk_table or {}
 
 local function try_invalid_chunk(chunk)
 	if !chunk then return end
@@ -59,6 +59,13 @@ hook.Add("PropUpdateChunk", "infmap_infgen_terrain", function(ent, chunk, oldchu
 	timer.Simple(0, function()  // wait for entire contraption to teleport
 		update_chunk(ent, chunk, oldchunk)
 	end)
+end)
+
+// TO THE MAX
+hook.Add("InitPostEntity", "infmap_physenv_setup", function()
+	local mach = 270079	// mach 20 in hammer units
+	physenv.SetPerformanceSettings({MaxVelocity = mach, MaxAngularVelocity = mach})
+	RunConsoleCommand("sv_maxvelocity", tostring(mach))
 end)
 
 hook.Add("InitPostEntity", "infmap_terrain_init", resetAll)

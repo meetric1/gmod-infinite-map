@@ -12,26 +12,19 @@ ENT.Spawnable		= false
 
 if !InfMap then return end
 
-InfMap.planet_uv_scale = 10
-InfMap.planet_resolution = 32
-InfMap.planet_tree_resolution = 32
-
-/**************** CLIENT *****************/
-
-local function planet_mountains(x, y)
-    local x, y = x / 10000, y / 10000
-    return InfMap.simplex.Noise2D(x, y) * 1000
-end
-
 local function inside_planet(x, y, size)
     return x * x + y * y < size * size
 end
 
-/****************** SERVER *********************/
- 
+/****************** ENTITY DATA *********************/
+
+function ENT:SetupDataTables()
+	self:NetworkVar("Int", 0, "PlanetRadius")
+end
+
 function ENT:BuildCollision(heightFunction, chunk, size)
-    local cox = chunk[1]
-    local coy = chunk[2]
+    local cox = chunk[1] * InfMap.chunk_size
+    local coy = chunk[2] * InfMap.chunk_size
 
     local final_mesh = {}
     local chunk_resolution = InfMap.planet_resolution
@@ -103,11 +96,11 @@ end
 function ENT:Initialize()
     if CLIENT then 
         if !self.CHUNK_OFFSET then return end
-        self:GenerateMesh(planet_mountains, self.CHUNK_OFFSET, InfMap.chunk_size)
-        self:GenerateTrees(planet_mountains, self.CHUNK_OFFSET, InfMap.chunk_size)
+        self:GenerateMesh(InfMap.planet_height_function, self.CHUNK_OFFSET, self:GetPlanetRadius())
+        self:GenerateTrees(InfMap.planet_height_function, self.CHUNK_OFFSET, self:GetPlanetRadius())
     end
 
-    self:BuildCollision(planet_mountains, self.CHUNK_OFFSET, InfMap.chunk_size)
+    self:BuildCollision(InfMap.planet_height_function, self.CHUNK_OFFSET, self:GetPlanetRadius())
     self:SetSolid(SOLID_VPHYSICS)
     self:SetMoveType(MOVETYPE_NONE)
     self:EnableCustomCollisions(true)
@@ -157,16 +150,20 @@ if SERVER then return end
     return smoothedNormal
 end
 
+// ripped from terrain addon
 function ENT:GenerateTrees(heightFunction, chunk, size)
     self.TreeMatrices = {}
     self.TreeModels = {}
     self.TreeColors = {}
 
+    if self:GetMaterial() != "phoenix_storms/ps_grass" then return end
+
     local randomIndex = 0
-    local cox = chunk[1]
-    local coy = chunk[2]
+    local cox = chunk[1] * InfMap.chunk_size
+    local coy = chunk[2] * InfMap.chunk_size
     local chunkIndex = tostring(cox) .. tostring(coy)
     local chunk_resolution = InfMap.planet_tree_resolution
+    local tree_size = (self:GetPlanetRadius() / InfMap.chunk_size) * 2
     for y = 0, chunk_resolution - 1 do
         for x = 0, chunk_resolution - 1 do
             randomIndex = randomIndex + 1
@@ -183,18 +180,18 @@ function ENT:GenerateTrees(heightFunction, chunk, size)
             local m = Matrix()
             m:SetTranslation(finalPos)
             m:SetAngles(Angle(0, randseedx * 3600, 0))//smoothedNormal:Angle() + Angle(90, 0, 0) Angle(0, randseedx * 3600, 0)
-            m:SetScale(Vector(2, 2, 2))
+            m:SetScale(Vector(tree_size, tree_size, tree_size))
             table.insert(self.TreeMatrices, m)
-            //table.insert(self.TreeModels, 1)  // 4.1 means 1/50 chance for a rock to generate instead of a tree
             table.insert(self.TreeColors, Vector(1, 1, 1))
+            //table.insert(self.TreeModels, 1)
         end
     end
 end
 
-local default_mat = Material("phoenix_storms/ps_grass")
+local default_mat = Material("models/wireframe")
 function ENT:GenerateMesh(heightFunction, chunk, size)
-    local cox = chunk[1]
-    local coy = chunk[2]
+    local cox = chunk[1] * InfMap.chunk_size
+    local coy = chunk[2] * InfMap.chunk_size
     // planet is a bit cursed since they are spherical, we need to cut off and round the edges of the chunk
 	local triangles = {}
     local chunk_resolution = InfMap.planet_resolution
@@ -264,7 +261,7 @@ function ENT:GenerateMesh(heightFunction, chunk, size)
         end
     end
 
-    self.RENDER_MESH = {Mesh = Mesh(default_mat), Material = default_mat}
+    self.RENDER_MESH = {Mesh = Mesh(), Material = default_mat}
     local mesh = mesh
     mesh.Begin(self.RENDER_MESH.Mesh, MATERIAL_TRIANGLES, math.min(#triangles / 3, 2^13))
         for _, tri in ipairs(triangles) do
@@ -303,7 +300,8 @@ function ENT:GetRenderMesh()
     local self = self
     if !self.RENDER_MESH then return end
 
-    if EyePos():DistToSqr(self:GetPos()) > InfMap.chunk_size * InfMap.chunk_size then return end
+    local radius = self:GetPlanetRadius()
+    if EyePos():DistToSqr(self:GetPos()) > radius * radius then return end
 
     // get local vars
     local models = self.TreeModels
