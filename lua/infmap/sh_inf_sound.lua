@@ -54,16 +54,19 @@ else
 	end)
 
 	// if the entity playing the sound leaves the chunk the client is in, stop it
-	hook.Add("PropUpdateChunk", "infmap_soundstop", function(ent, chunk)
-		local ent_idx = ent:EntIndex()
-		if !sound_ents[ent_idx] or LocalPlayer().CHUNK_OFFSET == chunk then return end
-		
-		for snd, _ in pairs(sound_ents[ent_idx]) do
-			ent:StopSound(snd)
-		end
+	hook.Add("PropUpdateChunk", "infmap_soundstop", function(ent)
+		timer.Simple(0, function()	// wait for contraption to teleport
+			if !IsValid(ent) then return end
+			local ent_idx = ent:EntIndex()
+			if !sound_ents[ent_idx] or LocalPlayer().CHUNK_OFFSET == ent.CHUNK_OFFSET then return end
+			
+			for snd, _ in pairs(sound_ents[ent_idx]) do
+				ent:StopSound(snd)
+			end
 
-		table.Empty(sound_ents[ent_idx])
-		sound_ents[ent_idx] = nil
+			table.Empty(sound_ents[ent_idx])
+			sound_ents[ent_idx] = nil
+		end)
 	end)
 end
 

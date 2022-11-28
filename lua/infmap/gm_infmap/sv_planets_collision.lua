@@ -50,7 +50,5 @@ end
 
 // handles generating chunk collision
 hook.Add("PropUpdateChunk", "infmap_infgen_planets", function(ent, chunk, oldchunk)
-	timer.Simple(0, function()  // wait for entire contraption to teleport
-		update_chunk(ent, chunk, oldchunk)
-	end)
+	update_chunk(ent, chunk, oldchunk)
 end)

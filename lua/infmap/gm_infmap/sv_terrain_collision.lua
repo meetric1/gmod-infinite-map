@@ -11,7 +11,9 @@ local function try_invalid_chunk(chunk)
 	for k, v in ipairs(ents.GetAll()) do
 		if InfMap.filter_entities(v) or !v:IsSolid() then continue end
 		if v.CHUNK_OFFSET == chunk then
+			print("PROBLEM IS NOT REMOVING CHUNK",v)
 			invalid = nil
+			break
 		end
 	end
 	SafeRemoveEntity(invalid)
@@ -56,9 +58,7 @@ end)
 
 // handles generating chunk collision
 hook.Add("PropUpdateChunk", "infmap_infgen_terrain", function(ent, chunk, oldchunk)
-	timer.Simple(0, function()  // wait for entire contraption to teleport
-		update_chunk(ent, chunk, oldchunk)
-	end)
+	update_chunk(ent, chunk, oldchunk)
 end)
 
 // TO THE MAX

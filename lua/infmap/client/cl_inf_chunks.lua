@@ -116,10 +116,10 @@ end)
 // detour rendering of entities in other chunks
 local empty_function = function() end
 function InfMap.prop_update_chunk(ent, chunk)
-	hook.Run("PropUpdateChunk", ent, chunk, ent.CHUNK_OFFSET)
-
 	local prev_chunk = ent.CHUNK_OFFSET
 	ent.CHUNK_OFFSET = chunk
+
+	hook.Run("PropUpdateChunk", ent, chunk, prev_chunk)
 	
 	// loop through all ents, offset them relative to player since player has moved
 	if ent == LocalPlayer() then 
