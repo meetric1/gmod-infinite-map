@@ -25,9 +25,10 @@ This is partially inspired by gm_infiniteflatgrass (from the Gravity Hull addon)
 
 ### Stuff I am NOT doing:
 * Trees (On main terrain)
+* Editable Terrain
 * Higher poly terrain
 * Support for every addon, there WILL be conflictions!
-* Navmesh support (no nextbots)
+* NPC and Nextbot support
 * Hammer editor support
 * Particle detours
 * Optimizations reguarding large amounts of spawned objects, this is source internal and performance wont be great
