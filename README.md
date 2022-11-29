@@ -17,16 +17,14 @@ This is partially inspired by gm_infiniteflatgrass (from the Gravity Hull addon)
 * An attempt to revive the Spacebuild gamemode
 
 ### To Do:
-* Detour Bullets
-* Cross Chunk Traceline detour
 * Explosion Detour
-* Sound Detour
-* A form of Terrain menu with togglable world border (intentional farlands?)
-* (Maybe) Planets & Water System
-* (Maybe) Collision support for props larger than a chunk
+* Finish Sound Detour
+* Finish Procedural Planets
+* (Maybe) Water system
+* (Maybe) Detour Bullets
 
 ### Stuff I am NOT doing:
-* Trees
+* Trees (On main terrain)
 * Higher poly terrain
 * Support for every addon, there WILL be conflictions!
 * Navmesh support (no nextbots)
