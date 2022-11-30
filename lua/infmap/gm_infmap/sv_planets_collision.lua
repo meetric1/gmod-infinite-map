@@ -37,11 +37,7 @@ local function update_chunk(ent, chunk, oldchunk)
 		InfMap.prop_update_chunk(e, chunk)
 		e:SetModel("models/props_c17/FurnitureCouch002a.mdl")
 		e:SetPlanetRadius(planet_radius)
-		if mat == 6 then 
-			e:SetMaterial("phoenix_storms/ps_grass")
-		else
-			e:SetMaterial("shadertest/seamless" .. mat + 1)
-		end
+		e:SetMaterial(InfMap.planet_inside_materials[mat]:GetName())
 		e:Spawn()
 		InfMap.planet_chunk_table[v_tostring(chunk)] = e
 	end

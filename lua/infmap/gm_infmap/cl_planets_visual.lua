@@ -1,16 +1,5 @@
 // renders the spheres around the planets
-InfMap.planet_render_distance = 3
-
-local default_mats = {
-	Material("shadertest/seamless2"),
-	Material("shadertest/seamless3"),
-	Material("shadertest/seamless4"),
-	Material("shadertest/seamless5"),
-	Material("shadertest/seamless6"),
-	Material("shadertest/seamless7"),
-	Material("shadertest/seamless8"),
-}
-
+local atmosphere = Material("infmap/atmosphere")
 hook.Add("PostDrawOpaqueRenderables", "infmap_planet_render", function()
 	local render = render
 	local client_offset = LocalPlayer().CHUNK_OFFSET
@@ -47,9 +36,16 @@ hook.Add("PostDrawOpaqueRenderables", "infmap_planet_render", function()
 			end
 			
 			// draw planet
-			default_mats[mat]:SetFloat("$alpha", color)	// draw planets as transparent when going up
-			render.SetMaterial(default_mats[mat])
+			local texture = InfMap.planet_outside_materials[mat]
+			texture:SetFloat("$alpha", color)	// draw planets as transparent when going up
+			render.SetMaterial(texture)
 			render.DrawSphere(InfMap.unlocalize_vector(Vector(), final_offset), radius, planet_res, planet_res)
+
+			if len > 0 then continue end
+			atmosphere:SetVector("$color", Vector(0.66, 0.86, 0.95))
+			atmosphere:SetFloat("$alpha", 0.1)
+			render.SetMaterial(atmosphere)
+			render.DrawSphere(InfMap.unlocalize_vector(Vector(), final_offset), -radius, planet_res, planet_res)
 		end
 	end
 end)

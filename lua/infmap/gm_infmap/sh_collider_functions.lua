@@ -6,10 +6,29 @@ InfMap.filter["infmap_planet"] = true
 InfMap.disable_pickup["infmap_terrain_collider"] = true	// no pickup
 InfMap.disable_pickup["infmap_planet"] = true
 
+InfMap.planet_render_distance = 3
 InfMap.planet_spacing = 50
 InfMap.planet_uv_scale = 10
 InfMap.planet_resolution = 32
 InfMap.planet_tree_resolution = 32
+InfMap.planet_outside_materials = {
+	Material("shadertest/seamless2"),
+	Material("shadertest/seamless3"),
+	Material("shadertest/seamless4"),
+	Material("shadertest/seamless5"),
+	Material("shadertest/seamless6"),
+	Material("shadertest/seamless7"),
+	Material("shadertest/seamless8"),
+}
+InfMap.planet_inside_materials = {
+	Material("shadertest/seamless2"),
+	Material("shadertest/seamless3"),
+	Material("shadertest/seamless4"),
+	Material("shadertest/seamless5"),
+	Material("shadertest/seamless6"),
+	Material("phoenix_storms/ps_grass"),
+	Material("shadertest/seamless8"),
+}
 
 local max = 2^28
 local offset = 23.05

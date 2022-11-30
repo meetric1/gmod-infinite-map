@@ -97,7 +97,10 @@ function ENT:Initialize()
     if CLIENT then 
         if !self.CHUNK_OFFSET then return end
         self:GenerateMesh(InfMap.planet_height_function, self.CHUNK_OFFSET, self:GetPlanetRadius())
-        self:GenerateTrees(InfMap.planet_height_function, self.CHUNK_OFFSET, self:GetPlanetRadius())
+        // generate trees if it has grass
+        if self:GetMaterial() == "phoenix_storms/ps_grass" then
+            self:GenerateTrees(InfMap.planet_height_function, self.CHUNK_OFFSET, self:GetPlanetRadius())
+        end
     end
 
     self:BuildCollision(InfMap.planet_height_function, self.CHUNK_OFFSET, self:GetPlanetRadius())
@@ -155,8 +158,6 @@ function ENT:GenerateTrees(heightFunction, chunk, size)
     self.TreeMatrices = {}
     self.TreeModels = {}
     self.TreeColors = {}
-
-    if self:GetMaterial() != "phoenix_storms/ps_grass" then return end
 
     local randomIndex = 0
     local cox = chunk[1] * InfMap.chunk_size
@@ -302,6 +303,9 @@ function ENT:GetRenderMesh()
 
     local radius = self:GetPlanetRadius()
     if EyePos():DistToSqr(self:GetPos()) > radius * radius then return end
+
+    // No Trees?
+    if !self.TreeMatrices then return self.RENDER_MESH end
 
     // get local vars
     local models = self.TreeModels
