@@ -6,6 +6,9 @@ local PlayerMT = FindMetaTable("Player")
 local NextBotMT = FindMetaTable("NextBot")
 local CTakeDamageInfoMT = FindMetaTable("CTakeDamageInfo")
 
+// To eventually be used, when clientside detours are made for find funcs (starfall/GLua)
+//local MaxFindDistCvar = CreateClientConVar("infmap_max_find_distance_cl","65536",true,false,"Maximum distance from the first position a find function is allowed to check, but clientside (for SF)",1)
+
 EntityMT.InfMap_GetPos = EntityMT.InfMap_GetPos or EntityMT.GetPos
 function EntityMT:GetPos()
 	if !self.CHUNK_OFFSET or !LocalPlayer().CHUNK_OFFSET then return self:InfMap_GetPos(pos) end

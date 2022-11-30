@@ -7,6 +7,11 @@ local NextBotMT = FindMetaTable("NextBot")
 local CLuaLocomotionMT = FindMetaTable("CLuaLocomotion")
 local CTakeDamageInfoMT = FindMetaTable("CTakeDamageInfo")
 
+// ConVar
+//	65536 was just an arbitrary number, but still way higher than what we used to get
+//  Testing has shown that double this number is still fine, but do keep in mind other sources of lag
+local MaxFindDistCvar = CreateConVar("infmap_max_find_distance","65536",FCVAR_ARCHIVE,"Maximum distance from the first position a find function is allowed to check",1)
+
 /*********** Entity Metatable *************/
 
 EntityMT.InfMap_GetPos = EntityMT.InfMap_GetPos or EntityMT.GetPos
@@ -83,12 +88,7 @@ function EntityMT:Spawn()
 	return self:InfMap_Spawn()
 end
 
-local hardfilter = { // anything that shouldn't be given to players?
-	infmap_terrain_collider = true,
-	//infmap_planet = true, // nah, let SB have'em
-	infmap_clone = true,
-	infmap_terrain_render = true
-}
+// Find functions
 function InfMap.FindInChunk(chunk)
 	if TypeID(chunk) ~= TYPE_VECTOR then return {} end
 
@@ -101,7 +101,7 @@ function InfMap.FindInChunk(chunk)
 	for k,v in pairs(entlist) do
 		local ent = Entity(k)
 		if not IsValid(ent) then continue end
-		if hardfilter[ent:GetClass()] then continue end
+		if InfMap.disable_pickup[ent:GetClass()] then continue end
 		table.insert(Results,ent)
 	end
 
@@ -118,7 +118,7 @@ function InfMap.FindInChunkPostCoord(coord) // To be used if you already have co
 	for k,v in pairs(entlist) do
 		local ent = Entity(k)
 		if not IsValid(ent) then continue end
-		if hardfilter[ent:GetClass()] then continue end
+		if InfMap.disable_pickup[ent:GetClass()] then continue end
 		table.insert(Results,ent)
 	end
 
@@ -126,24 +126,29 @@ function InfMap.FindInChunkPostCoord(coord) // To be used if you already have co
 end
 
 function InfMap.FindInBox(v_min,v_max)
-	local v_min_pos, v_min_chunk = InfMap.localize_vector(v_min)
-	local v_max_pos, v_max_chunk = InfMap.localize_vector(v_max)
-	local diff = v_max_chunk - v_min_chunk
+	local maxdist = MaxFindDistCvar:GetInt() * 2
+	local fv_max = Vector(
+		math.Clamp(v_max[1],v_min[1] - maxdist,v_min[1] + maxdist),
+		math.Clamp(v_max[2],v_min[2] - maxdist,v_min[2] + maxdist),
+		math.Clamp(v_max[3],v_min[3] - maxdist,v_min[3] + maxdist)
+	)
 
-	//print("min chunk: " .. tostring(v_min_chunk),"max chunk: " .. tostring(v_max_chunk))
-	//print("min pos: " .. tostring(v_min_pos),"max pos: " .. tostring(v_max_pos))
+	local _, v_min_chunk = InfMap.localize_vector(v_min)
+	local _, v_max_chunk = InfMap.localize_vector(fv_max)
+	local diff = v_max_chunk - v_min_chunk
+	local dx,dy,dz = diff[1],diff[2],diff[3]
 
 	local chunklist = {}
 
 	// we'll make outer chunks get further checked, otherwise if its one of the "inner" chunks then it doesn't need position checked again
 	local checkx,checky,checkz = false,false,false
 
-	for X = 0, diff.x, 1 do
-		checkx = (X == 0) or (X == diff.x) or false
-		for Y = 0, diff.y, 1 do
-			checky = (Y == 0) or (Y == diff.y) or false
-			for Z = 0, diff.z, 1 do
-				checkz = (Z == 0) or (Z == diff.z) or false
+	for X = 0, dx, 1 do
+		checkx = (X == 0) or (X == dx) or false
+		for Y = 0, dy, 1 do
+			checky = (Y == 0) or (Y == dy) or false
+			for Z = 0, dz, 1 do
+				checkz = (Z == 0) or (Z == dz) or false
 				local chunk = v_min_chunk + Vector(X,Y,Z)
 				local coord = InfMap.ezcoord(chunk)
 				if TypeID(InfMap.ent_list[coord]) ~= TYPE_TABLE then continue end // empty or nonexistant, not adding to checklist
@@ -160,10 +165,8 @@ function InfMap.FindInBox(v_min,v_max)
 		if table.IsEmpty(chunkents) then continue end
 
 		if outerchunk then // outlying chunk
-			//print(coord .. " has stuff to check")
 			table.Add(checklist,chunkents)
 		else // inner chunk, pass straight to results
-			//print(coord .. " has stuff fo sho")
 			table.Add(results,chunkents)
 		end
 	end
@@ -181,7 +184,9 @@ function InfMap.FindInBox(v_min,v_max)
 end
 ents.FindInBox = InfMap.FindInBox
 
-function InfMap.FindInSphere(pos,radius)
+function InfMap.FindInSphere(pos,fradius)
+	local maxdist = MaxFindDistCvar:GetInt()
+	local radius = math.Clamp(fradius,0,maxdist)
 	local boxmin,boxmax = pos - Vector(radius,radius,radius), pos + Vector(radius,radius,radius)
 	local entlist = ents.FindInBox(boxmin,boxmax)
 
@@ -196,6 +201,7 @@ end
 ents.FindInSphere = InfMap.FindInSphere
 
 function InfMap.FindInCone(pos,normal,radius,angle_cos)
+	// no clamp here because it already gets clamped above
 	local entlist = ents.FindInSphere(pos,radius)
 	local results = {}
 
