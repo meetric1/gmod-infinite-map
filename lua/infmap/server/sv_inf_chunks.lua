@@ -286,6 +286,9 @@ hook.Add("OnEntityCreated", "infinite_propreset", function(ent)
 	end)
 end)
 
+hook.Add("EntityRemoved","infinite_cleanup",function(ent)
+	InfMap.cleanup_track(ent)
+end)
 
 // disable picking up weapons/items in other chunks
 local function can_pickup(ply, ent)

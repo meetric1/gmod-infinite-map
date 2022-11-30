@@ -117,6 +117,7 @@ end)
 local empty_function = function() end
 function InfMap.prop_update_chunk(ent, chunk)
 	local prev_chunk = ent.CHUNK_OFFSET
+	InfMap.update_track(ent,chunk)
 	ent.CHUNK_OFFSET = chunk
 
 	hook.Run("PropUpdateChunk", ent, chunk, prev_chunk)

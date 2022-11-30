@@ -31,7 +31,7 @@ function InfMap.localize_vector(pos, size)
 	return pos, chunk_offset
 end
 
-function InfMap.unlocalize_vector(pos, chunk) 
+function InfMap.unlocalize_vector(pos, chunk)
 	return (chunk or Vector()) * InfMap.chunk_size * 2 + pos
 end
 
@@ -155,7 +155,7 @@ local function constrained_invalid_filter(ent)
 	return InfMap.filter_entities(ent) or (!ent:IsSolid() and ent:GetNoDraw()) or ent:GetParent():IsValid() or phys_filter or (ent:IsWeapon() and ent:GetOwner():IsValid())
 end
 
-function InfMap.constrained_status(ent) 
+function InfMap.constrained_status(ent)
 	if ent.CONSTRAINED_MAIN != nil then
 		return ent.CONSTRAINED_MAIN
 	end
@@ -188,4 +188,32 @@ end
 function InfMap.reset_constrained_data(ent)
 	ent.CONSTRAINED_DATA = nil 
 	ent.CONSTRAINED_MAIN = nil
+end
+
+function InfMap.ezcoord(chunk)
+	return chunk.x .. "," .. chunk.y .. "," .. chunk.z
+end
+
+InfMap.ent_list = {}
+
+function InfMap.cleanup_track(ent)
+	if ent.CHUNK_OFFSET then
+		local oldcoord = InfMap.ezcoord(ent.CHUNK_OFFSET)
+		if not InfMap.ent_list[oldcoord] then return end // some how we made it all the way here
+		InfMap.ent_list[oldcoord][ent:EntIndex()] = nil // scrub old entry
+		if table.IsEmpty(InfMap.ent_list[oldcoord]) then InfMap.ent_list[oldcoord] = nil end // lil cleanup action here
+	end
+end
+
+function InfMap.update_track(ent,chunk)
+	if not IsValid(ent) then return end
+	if ent.CHUNK_OFFSET then InfMap.cleanup_track(ent) end
+
+	local curchunk = InfMap.ezcoord(chunk)
+
+	if not InfMap.ent_list[curchunk] then InfMap.ent_list[curchunk] = {} end
+
+	InfMap.ent_list[curchunk][ent:EntIndex()] = true
+
+	PrintTable(InfMap.ent_list)
 end
