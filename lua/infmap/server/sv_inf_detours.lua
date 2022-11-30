@@ -10,7 +10,8 @@ local CTakeDamageInfoMT = FindMetaTable("CTakeDamageInfo")
 // ConVar
 //	65536 was just an arbitrary number, but still way higher than what we used to get
 //  Testing has shown that double this number is still fine, but do keep in mind other sources of lag
-local MaxFindDistCvar = CreateConVar("infmap_max_find_distance","65536",FCVAR_ARCHIVE,"Maximum distance from the first position a find function is allowed to check",1)
+//  ** Not currently used with the alternative find functions **
+// local MaxFindDistCvar = CreateConVar("infmap_max_find_distance","65536",FCVAR_ARCHIVE,"Maximum distance from the first position a find function is allowed to check",1)
 
 /*********** Entity Metatable *************/
 
@@ -92,7 +93,7 @@ end
 function InfMap.FindInChunk(chunk)
 	if TypeID(chunk) ~= TYPE_VECTOR then return {} end
 
-	local tchunk = Vector(math.floor(chunk.x),math.floor(chunk.y),math.floor(chunk.z))
+	local tchunk = Vector(math.floor(chunk[1]),math.floor(chunk[2]),math.floor(chunk[3]))
 	local entlist = InfMap.ent_list[InfMap.ezcoord(tchunk)]
 
 	if TypeID(entlist) ~= TYPE_TABLE then return {} end // don't ask, just please don't
@@ -124,6 +125,14 @@ function InfMap.FindInChunkPostCoord(coord) // To be used if you already have co
 
 	return Results
 end
+
+/* To be continued...
+I would like to eventually change find functions to use a proper chunk-based system
+I believe if done with scaling orders of magnitude, and done right, this can be as, if not more, performant than what we've got right now for large amounts of props (both vanilla and the stand-in we have now)
+The ents.GetAll method started having performance differences at 600+ entities being iterated over, where the chunk system would only iterate what was given to it
+Right now the chunk system only does it on a chunk-by-chunk basis, but if further organized by larger and larger chunks (size^3 chunks for the next scale, and so on so forth, to a reasonable limit, with the previous size combining into the new size) then
+we'll be able to start at larger sizes and cut down deadspace we'll have to iterate through by simply checking if the megachunks even have a valid entry
+- LiddulBOFH
 
 function InfMap.FindInBox(v_min,v_max)
 	local maxdist = MaxFindDistCvar:GetInt() * 2
@@ -175,15 +184,27 @@ function InfMap.FindInBox(v_min,v_max)
 
 	local add = {}
 	for k,ent in ipairs(checklist) do
-		local inside = ent:GetPos():WithinAABox(v_min,v_max)
+		local inside = ent:WorldSpaceCenter():WithinAABox(v_min,v_max)
 		if inside then table.insert(add,ent) end
 	end
 
 	table.Add(results,add)
 	return results
+end*/
+
+function InfMap.FindInBox(v1,v2)
+	local entlist = ents.GetAll()
+	local results = {}
+
+	for i,ent in ipairs(entlist) do
+		if ent:WorldSpaceCenter():WithinAABox(v1,v2) then table.insert(results,ent) end
+	end
+
+	return results
 end
 ents.FindInBox = InfMap.FindInBox
 
+/* To be continued as well...
 function InfMap.FindInSphere(pos,fradius)
 	local maxdist = MaxFindDistCvar:GetInt()
 	local radius = math.Clamp(fradius,0,maxdist)
@@ -194,6 +215,18 @@ function InfMap.FindInSphere(pos,fradius)
 	local radiusSqr = radius ^ 2
 	for k,v in ipairs(entlist) do
 		if v:GetPos():DistToSqr(pos) <= radiusSqr then table.insert(results,v) end // nasty nasty but unfortunately necessary
+	end
+
+	return results
+end*/
+function InfMap.FindInSphere(pos,radius)
+	local entlist = ents.GetAll()
+	local results = {}
+
+	local radSqr = radius ^ 2
+
+	for k,v in ipairs(entlist) do
+		if v:WorldSpaceCenter():DistToSqr(pos) <= radSqr then table.insert(results,v) end
 	end
 
 	return results

@@ -197,6 +197,7 @@ end
 InfMap.ent_list = {}
 
 function InfMap.cleanup_track(ent)
+	if not IsValid(ent) then return end
 	if ent.CHUNK_OFFSET then
 		local oldcoord = InfMap.ezcoord(ent.CHUNK_OFFSET)
 		if not InfMap.ent_list[oldcoord] then return end // some how we made it all the way here

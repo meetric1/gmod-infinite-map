@@ -112,6 +112,10 @@ hook.Add("PostDrawOpaqueRenderables", "infinite_player_render", function()
 	
 end)
 
+hook.Add("EntityRemoved","infinite_cleanup_cl",function()
+	InfMap.cleanup_track(ent)
+end)
+
 // server tells clients when a prop has entered another chunk
 // detour rendering of entities in other chunks
 local empty_function = function() end
