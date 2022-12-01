@@ -74,5 +74,5 @@ The map isnt actually infinite, its impossible to go past the source bounds, so 
 * util.TraceEntity
 * util.IsInWorld
 * ents.FindInSphere
-* WireLib:SetPos (unclamps wiremods setpos function since it wont let objects position be set outside of the source bounderies)
+* WireLib.ClampPos (unclamps wiremods internal clamp function since it wont let objects position be set outside of the source bounderies)
 * SF.clampPos (same thing but for starfall)
