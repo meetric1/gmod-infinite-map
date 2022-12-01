@@ -83,7 +83,6 @@ function EntityMT:Spawn()
 	return self:InfMap_Spawn()
 end
 
-
 /************ Physics Object Metatable **************/
 
 PhysObjMT.InfMap_GetPos = PhysObjMT.InfMap_GetPos or PhysObjMT.GetPos
@@ -267,25 +266,24 @@ local function modify_trace_data(orig_data, trace_func, extra)
 	return hit_data
 end
 
-// traceline
+// Trace detours
 InfMap.TraceLine = InfMap.TraceLine or util.TraceLine
 function util.TraceLine(data)
 	return modify_trace_data(data, InfMap.TraceLine)
 end
-// hull traceline
+
 InfMap.TraceHull = InfMap.TraceHull or util.TraceHull
 function util.TraceHull(data)
 	return modify_trace_data(data, InfMap.TraceHull)
 end
 
-// entity traceline
 InfMap.TraceEntity = InfMap.TraceEntity or util.TraceEntity
 function util.TraceEntity(data, ent)
 	return modify_trace_data(data, InfMap.TraceEntity, ent)
 end
+
 // no need to detour GetEyeTrace or util.GetPlayerTrace as it uses already detoured functions
 
-// findinsphere
 InfMap.FindInSphere = InfMap.FindInSphere or ents.FindInSphere
 function ents.FindInSphere(pos, rad)
 	local local_pos, local_chunk = InfMap.localize_vector(pos)
@@ -315,5 +313,26 @@ hook.Add("Initialize", "infmap_wire_detour", function()
 	InfMap.ShouldSaveEntity = InfMap.ShouldSaveEntity or gmsave.ShouldSaveEntity
 	function gmsave.ShouldSaveEntity(ent, t)
 		return InfMap.ShouldSaveEntity(ent, t) and !InfMap.disable_pickup[t.classname]
+	end
+end)
+
+/********** Hooks ***********/
+// disable picking up weapons/items in other chunks
+local function can_pickup(ply, ent)
+	if !ply.CHUNK_OFFSET or !ent.CHUNK_OFFSET then return end	// when spawning, player weapons will be nil for 1 tick, allow pickup in all chunks
+	if ply.CHUNK_OFFSET != ent.CHUNK_OFFSET then
+		return false
+	end
+end
+hook.Add("PlayerCanPickupWeapon", "infmap_entdetour", can_pickup)
+hook.Add("PlayerCanPickuItem", "infmap_entdetour", can_pickup)
+hook.Add("GravGunPickupAllowed", "infmap_entdetour", can_pickup)
+// explosions should not damage things in other chunks
+hook.Add("EntityTakeDamage", "infmap_explodedetour", function(ply, dmg)
+	if !dmg:IsExplosionDamage() then return end
+	local dmg_offset = dmg:GetInflictor().CHUNK_OFFSET
+	local ply_offset = ply.CHUNK_OFFSET
+	if dmg_offset and ply_offset and dmg_offset != ply_offset then
+		return true
 	end
 end)

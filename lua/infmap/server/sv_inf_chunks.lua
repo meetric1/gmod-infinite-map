@@ -285,16 +285,3 @@ hook.Add("OnEntityCreated", "infinite_propreset", function(ent)
 		end
 	end)
 end)
-
-
-// disable picking up weapons/items in other chunks
-local function can_pickup(ply, ent)
-	if !ply.CHUNK_OFFSET or !ent.CHUNK_OFFSET then return end	// when spawning, player weapons will be nil for 1 tick, allow pickup in all chunks
-	if ply.CHUNK_OFFSET != ent.CHUNK_OFFSET then
-		return false
-	end
-end
-
-hook.Add("PlayerCanPickupWeapon", "infinite_entdetour", can_pickup)
-hook.Add("PlayerCanPickuItem", "infinite_entdetour", can_pickup)
-hook.Add("GravGunPickupAllowed", "infinite_entdetour", can_pickup)
