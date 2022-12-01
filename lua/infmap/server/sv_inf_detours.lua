@@ -121,6 +121,12 @@ function PhysObjMT:WorldToLocal(pos)
 	return self:InfMap_WorldToLocal(pos - InfMap.unlocalize_vector(Vector(), self:GetEntity().CHUNK_OFFSET))
 end
 
+PhysObjMT.InfMap_ApplyForceOffset = PhysObjMT.InfMap_ApplyForceOffset or PhysObjMT.ApplyForceOffset
+function PhysObjMT:ApplyForceOffset(impulse, pos)
+	return self:InfMap_ApplyForceOffset(impulse, InfMap.unlocalize_vector(pos, -self:GetEntity().CHUNK_OFFSET))
+end
+
+
 
 /*************** Vehicle Metatable *****************/
 
@@ -255,6 +261,7 @@ local function modify_trace_data(orig_data, trace_func, extra)
 			hit_data.Entity = game.GetWorld()
 			hit_data.HitWorld = true
 			hit_data.NonHitWorld = false // what the fuck garry?
+			hit_data.HitPos = hit_data.HitPos + hit_data.HitNormal	// spawning props sometimes clip
 		end
 	end
 	return hit_data
