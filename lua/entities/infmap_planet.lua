@@ -39,21 +39,21 @@ function ENT:BuildCollision(heightFunction, chunk, size)
             local max_pos_x = -size + x2 * size * 2
             local max_pos_y = -size + y2 * size * 2
 
-            local in_a = inside_planet(min_pos_x, min_pos_y, size)
-            local in_b = inside_planet(min_pos_x, max_pos_y, size)
-            local in_c = inside_planet(max_pos_x, min_pos_y, size)
-            local in_d = inside_planet(max_pos_x, max_pos_y, size)
-
-            // all 4 points are outside of the sphere, cut this quad off.
-            if !(in_a or in_b or in_c or in_d) then
-                continue
-            end
-
             // vertex positions in local space
             local vertexPos1 = Vector(min_pos_x, min_pos_y, heightFunction(min_pos_x + cox, min_pos_y + coy))
             local vertexPos2 = Vector(min_pos_x, max_pos_y, heightFunction(min_pos_x + cox, max_pos_y + coy))
             local vertexPos3 = Vector(max_pos_x, min_pos_y, heightFunction(max_pos_x + cox, min_pos_y + coy))
             local vertexPos4 = Vector(max_pos_x, max_pos_y, heightFunction(max_pos_x + cox, max_pos_y + coy))
+
+            local in_a = vertexPos1:LengthSqr() < size * size
+            local in_b = vertexPos2:LengthSqr() < size * size
+            local in_c = vertexPos3:LengthSqr() < size * size
+            local in_d = vertexPos4:LengthSqr() < size * size
+
+            // all 4 points are outside of the sphere, cut this quad off.
+            if !(in_a or in_b or in_c or in_d) then
+                continue
+            end
 
             // round positions to a circle if they are cut off
             if !in_a then
@@ -207,21 +207,21 @@ function ENT:GenerateMesh(heightFunction, chunk, size)
             local max_pos_x = -size + x2 * size * 2
             local max_pos_y = -size + y2 * size * 2
 
-            local in_a = inside_planet(min_pos_x, min_pos_y, size)
-            local in_b = inside_planet(min_pos_x, max_pos_y, size)
-            local in_c = inside_planet(max_pos_x, min_pos_y, size)
-            local in_d = inside_planet(max_pos_x, max_pos_y, size)
-
-            // all 4 points are outside of the sphere, cut this quad off.
-            if !(in_a or in_b or in_c or in_d) then
-                continue
-            end
-
             // vertex positions in local space
             local vertexPos1 = Vector(min_pos_x, min_pos_y, heightFunction(min_pos_x + cox, min_pos_y + coy))
             local vertexPos2 = Vector(min_pos_x, max_pos_y, heightFunction(min_pos_x + cox, max_pos_y + coy))
             local vertexPos3 = Vector(max_pos_x, min_pos_y, heightFunction(max_pos_x + cox, min_pos_y + coy))
             local vertexPos4 = Vector(max_pos_x, max_pos_y, heightFunction(max_pos_x + cox, max_pos_y + coy))
+
+            local in_a = vertexPos1:LengthSqr() < size * size
+            local in_b = vertexPos2:LengthSqr() < size * size
+            local in_c = vertexPos3:LengthSqr() < size * size
+            local in_d = vertexPos4:LengthSqr() < size * size
+
+            // all 4 points are outside of the sphere, cut this quad off.
+            if !(in_a or in_b or in_c or in_d) then
+                continue
+            end
 
             // round positions to a circle if they are cut off
             if !in_a then
