@@ -189,3 +189,31 @@ function InfMap.reset_constrained_data(ent)
 	ent.CONSTRAINED_DATA = nil 
 	ent.CONSTRAINED_MAIN = nil
 end
+
+function InfMap.ezcoord(chunk)
+	if TypeID(chunk) ~= TYPE_VECTOR then return "0,0,0" end
+	return chunk[1] .. "," .. chunk[2] .. "," .. chunk[3]
+end
+
+InfMap.ent_list = {}
+
+function InfMap.cleanup_track(ent)
+	if not IsValid(ent) then return end
+	if ent.CHUNK_OFFSET then
+		local oldcoord = InfMap.ezcoord(ent.CHUNK_OFFSET)
+		if not InfMap.ent_list[oldcoord] then return end // some how we made it all the way here
+		InfMap.ent_list[oldcoord][ent:EntIndex()] = nil // scrub old entry
+		if table.IsEmpty(InfMap.ent_list[oldcoord]) then InfMap.ent_list[oldcoord] = nil end // lil cleanup action here
+	end
+end
+
+function InfMap.update_track(ent,chunk)
+	if not IsValid(ent) then return end
+	if ent.CHUNK_OFFSET then InfMap.cleanup_track(ent) end
+
+	local curchunk = InfMap.ezcoord(chunk)
+
+	if not InfMap.ent_list[curchunk] then InfMap.ent_list[curchunk] = {} end
+
+	InfMap.ent_list[curchunk][ent:EntIndex()] = true
+end

@@ -29,6 +29,49 @@ function EntityMT:SetPos(pos)
 	return self:InfMap_SetPos(pos)
 end
 
+// Find Functions
+function InfMap.FindInBox(v1,v2)
+	local entlist = ents.GetAll()
+	local results = {}
+
+	for i,ent in ipairs(entlist) do
+		if ent:WorldSpaceCenter():WithinAABox(v1,v2) then table.insert(results,ent) end
+	end
+
+	return results
+end
+ents.FindInBox = InfMap.FindInBox
+
+function InfMap.FindInSphere(pos,radius)
+	local entlist = ents.GetAll()
+	local results = {}
+
+	local radSqr = radius ^ 2
+
+	for k,v in ipairs(entlist) do
+		if v:WorldSpaceCenter():DistToSqr(pos) <= radSqr then table.insert(results,v) end
+	end
+
+	return results
+end
+ents.FindInSphere = InfMap.FindInSphere
+
+function InfMap.FindInCone(pos,normal,radius,angle_cos)
+	// no clamp here because it already gets clamped above
+	local entlist = ents.FindInSphere(pos,radius)
+	local results = {}
+
+	for k,v in ipairs(entlist) do
+		local dot = normal:Dot((v:GetPos() - pos):GetNormalized())
+		if dot >= angle_cos then table.insert(results,v) end
+	end
+
+	return results
+end
+ents.FindInCone = InfMap.FindInCone
+
+// PhysObj
+
 PhysObjMT.InfMap_SetPos = PhysObjMT.InfMap_SetPos or PhysObjMT.SetPos
 function PhysObjMT:SetPos(pos)
 	local pos = clamp_vector(pos, 2^14)
