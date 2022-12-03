@@ -5,11 +5,11 @@ end
 
 InfMap.chunk_table = InfMap.chunk_table or {}
 
-local function try_invalid_chunk(chunk)
+local function try_invalid_chunk(chunk, filter)
 	if !chunk then return end
 	local invalid = InfMap.chunk_table[v_tostring(chunk)]
 	for k, v in ipairs(ents.GetAll()) do
-		if InfMap.filter_entities(v) or !v:IsSolid() then continue end
+		if InfMap.filter_entities(v) or !v:IsSolid() or v == filter then continue end
 		if v.CHUNK_OFFSET == chunk then
 			invalid = nil
 			break
@@ -52,19 +52,12 @@ local function resetAll()
 end
 
 hook.Add("EntityRemoved", "infmap_infgen_terrain", function(ent)
-	try_invalid_chunk(ent.CHUNK_OFFSET)
+	try_invalid_chunk(ent.CHUNK_OFFSET, ent)
 end)
 
 // handles generating chunk collision
 hook.Add("PropUpdateChunk", "infmap_infgen_terrain", function(ent, chunk, oldchunk)
 	update_chunk(ent, chunk, oldchunk)
-end)
-
-// TO THE MAX
-hook.Add("InitPostEntity", "infmap_physenv_setup", function()
-	local mach = 270079	// mach 20 in hammer units
-	physenv.SetPerformanceSettings({MaxVelocity = mach, MaxAngularVelocity = mach})
-	RunConsoleCommand("sv_maxvelocity", tostring(mach))
 end)
 
 hook.Add("InitPostEntity", "infmap_terrain_init", resetAll)

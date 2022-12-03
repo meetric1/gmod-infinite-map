@@ -12,10 +12,6 @@ ENT.Spawnable		= false
 
 if !InfMap then return end
 
-local function inside_planet(x, y, size)
-    return x * x + y * y < size * size
-end
-
 /****************** ENTITY DATA *********************/
 
 function ENT:SetupDataTables()
@@ -173,11 +169,11 @@ function ENT:GenerateTrees(heightFunction, chunk, size)
             local randseedx = util.SharedRandom("TerrainSeedX" .. chunkIndex, 0, 1, randomIndex)
             local randseedy = util.SharedRandom("TerrainSeedY" .. chunkIndex, 0, 1, randomIndex)
             local randPos = Vector(x + randseedx - chunk_resolution * 0.5, y + randseedy - chunk_resolution * 0.5) * (size / chunk_resolution) * 2
+            local finalPos = Vector(randPos[1], randPos[2], heightFunction(randPos[1] + cox, randPos[2] + coy) - 45)
 
             // tree is not in planet, bail
-            if !inside_planet(randPos[1], randPos[2], size - 250) then continue end
+            if finalPos:LengthSqr() > size * size - 2000 * 2000 then continue end
 
-            local finalPos = Vector(randPos[1], randPos[2], heightFunction(randPos[1] + cox, randPos[2] + coy) - 45)
             local m = Matrix()
             m:SetTranslation(finalPos)
             m:SetAngles(Angle(0, randseedx * 3600, 0))//smoothedNormal:Angle() + Angle(90, 0, 0) Angle(0, randseedx * 3600, 0)
@@ -291,18 +287,22 @@ local render_SetModelLighting = render.SetModelLighting
 local render_SetLocalModelLights = render.SetLocalModelLights
 local cam_PushModelMatrix = cam.PushModelMatrix
 local cam_PopModelMatrix = cam.PopModelMatrix
-local math_DistanceSqr = math.DistanceSqr
-local tree_material = Material("models/props_foliage/arbre01")
+local tree_material = Material("models/props_foliage/arbre01")  //models/props_foliage/bush models/props_foliage/arbre01
 local tree_mesh = Mesh()
-tree_mesh:BuildFromTriangles(util.GetModelMeshes("models/props_foliage/tree_pine_large.mdl", 8)[1].triangles)
+tree_mesh:BuildFromTriangles(util.GetModelMeshes("models/props_foliage/tree_pine_large.mdl", 0)[1].triangles)
+//tree_mesh:BuildFromTriangles(util.GetModelMeshes("models/props_foliage/rock_coast02b.mdl", 0)[1].triangles)
+
+function ENT:Draw()
+    local radius = self:GetPlanetRadius()
+    if EyePos():DistToSqr(self:GetPos()) < radius * radius then
+        self:DrawModel()
+    end
+end
 
 // this MUST be optimized as much as possible, it is called multiple times every frame
 function ENT:GetRenderMesh()
     local self = self
     if !self.RENDER_MESH then return end
-
-    local radius = self:GetPlanetRadius()
-    if EyePos():DistToSqr(self:GetPos()) > radius * radius then return end
 
     // No Trees?
     if !self.TreeMatrices then return self.RENDER_MESH end
@@ -323,8 +323,8 @@ function ENT:GetRenderMesh()
     // render foliage
     local lastlight
     for i = 1, #matrices do
-        local matrix = matrices[i]
-        local modelID = models[i]
+        //local matrix = matrices[i]
+        //local modelID = models[i]
            
         // give the tree its shading
         local tree_color = color[i]
@@ -337,7 +337,7 @@ function ENT:GetRenderMesh()
         end
 
         // push custom matrix generated earlier and render the tree
-        cam_PushModelMatrix(matrix)
+        cam_PushModelMatrix(matrices[i])
             tree_mesh:Draw()
             if flashlightOn then   // flashlight compatability
                 render.PushFlashlightMode(true)

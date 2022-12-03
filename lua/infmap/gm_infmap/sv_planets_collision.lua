@@ -5,11 +5,11 @@ end
 
 InfMap.planet_chunk_table = InfMap.planet_chunk_table or {}
 
-local function try_invalid_chunk(chunk)
+local function try_invalid_chunk(chunk, filter)
 	if !chunk then return end
 	local invalid = InfMap.planet_chunk_table[v_tostring(chunk)]
 	for k, v in ipairs(ents.GetAll()) do
-		if InfMap.filter_entities(v) or !v:IsSolid() then continue end
+		if InfMap.filter_entities(v) or !v:IsSolid() or v == filter then continue end
 		if v.CHUNK_OFFSET == chunk then
 			invalid = nil
 		end
@@ -47,4 +47,8 @@ end
 // handles generating chunk collision
 hook.Add("PropUpdateChunk", "infmap_infgen_planets", function(ent, chunk, oldchunk)
 	update_chunk(ent, chunk, oldchunk)
+end)
+
+hook.Add("EntityRemoved", "infmap_infgen_terrain", function(ent)
+	try_invalid_chunk(ent.CHUNK_OFFSET, ent)
 end)

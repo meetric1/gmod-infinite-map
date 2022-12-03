@@ -14,8 +14,8 @@ hook.Add("PostDrawOpaqueRenderables", "infmap_planet_render", function()
 	render.SetModelLighting(1, amb[1], amb[2], amb[3])
     render.SetModelLighting(3, amb[1], amb[2], amb[3])
     render.SetModelLighting(5, amb[1], amb[2], amb[3])
-	render.SetModelLighting(0, 2, 2, 2)
-    render.SetModelLighting(2, 2, 2, 2)
+	render.SetModelLighting(0, 0.25, 0.25, 0.25)
+    render.SetModelLighting(2, 0.25, 0.25, 0.25)
     render.SetModelLighting(4, 2, 2, 2)
 
 	local prd = InfMap.planet_render_distance

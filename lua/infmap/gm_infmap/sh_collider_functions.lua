@@ -59,3 +59,12 @@ function InfMap.planet_info(x, y)
 
 	return planet_pos, planet_radius, planet_type
 end
+
+if CLIENT then return end
+
+// TO THE MAX
+hook.Add("InitPostEntity", "infmap_physenv_setup", function()
+	local mach = 270079	// mach 20 in hammer units
+	physenv.SetPerformanceSettings({MaxVelocity = mach, MaxAngularVelocity = mach})
+	RunConsoleCommand("sv_maxvelocity", tostring(mach))
+end)
