@@ -10,7 +10,6 @@ InfMap.client_chunks = InfMap.client_chunks or {}
 hook.Add("PropUpdateChunk", "infmap_terrain_init", function(ent, chunk, old_chunk)
 	if ent == LocalPlayer() and chunk[3] < 100 then
 		local _, mega_chunk = InfMap.localize_vector(chunk, InfMap.megachunk_size) mega_chunk[3] = 0
-		local chunk_res_scale = InfMap.chunk_size * 2 * InfMap.megachunk_size * 2
 		local chunk_scale = InfMap.chunk_size * 2
 		local delta_chunk = mega_chunk - (last_mega_chunk or mega_chunk)
 		local chunk_alloc = table.Copy(InfMap.client_chunks)
@@ -42,7 +41,7 @@ hook.Add("PropUpdateChunk", "infmap_terrain_init", function(ent, chunk, old_chun
 
 				local e = InfMap.client_chunks[y][x]
 				if !e.RENDER_MESH then continue end
-				e.RENDER_MESH.Matrix:SetTranslation(e.CHUNK_OFFSET * chunk_res_scale - chunk * chunk_scale)
+				e.RENDER_MESH.Matrix:SetTranslation((e.CHUNK_OFFSET * InfMap.megachunk_size * 2 - chunk) * chunk_scale)
 			end
 		end
 

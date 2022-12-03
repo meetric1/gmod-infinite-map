@@ -91,7 +91,7 @@ function ENT:Think()
 		coroutine.resume(coro)
 	else
 		local mat = Matrix()
-		mat:SetTranslation(self.CHUNK_OFFSET * InfMap.chunk_size * 2 * InfMap.megachunk_size * 2 - LocalPlayer().CHUNK_OFFSET * InfMap.chunk_size * 2)
+		mat:SetTranslation((self.CHUNK_OFFSET * InfMap.megachunk_size * 2 - LocalPlayer().CHUNK_OFFSET) * InfMap.chunk_size * 2)
 		self.RENDER_MESH = {Mesh = Mesh(), Material = default_mat, Matrix = mat}
 
 		local mesh = mesh
