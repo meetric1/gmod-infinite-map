@@ -1,6 +1,7 @@
 UnlitGeneric
 {
 	"$basetexture"	"infmap\clouds"
+	"$nocull" "1"
 	"$translucent" "1"
 	"$model" "1"
 	"$nofog" 1
