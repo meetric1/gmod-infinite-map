@@ -51,7 +51,6 @@ end
 
 EntityMT.InfMap_NearestPoint = EntityMT.InfMap_NearestPoint or EntityMT.NearestPoint
 function EntityMT:NearestPoint(pos)
-	// shouldnt really ever be outside the map
 	local chunk_pos, chunk_offset = InfMap.localize_vector(pos)
 	return InfMap.unlocalize_vector(self:InfMap_NearestPoint(chunk_pos), chunk_offset)
 end
@@ -125,7 +124,10 @@ function PhysObjMT:ApplyForceOffset(impulse, pos)
 	return self:InfMap_ApplyForceOffset(impulse, InfMap.unlocalize_vector(pos, -self:GetEntity().CHUNK_OFFSET))
 end
 
-
+PhysObjMT.InfMap_GetVelocityAtPoint = PhysObjMT.InfMap_GetVelocityAtPoint or PhysObjMT.GetVelocityAtPoint
+function PhysObjMT:GetVelocityAtPoint(pos)
+	return self:InfMap_GetVelocityAtPoint(InfMap.unlocalize_vector(pos, -self:GetEntity().CHUNK_OFFSET))
+end
 
 /*************** Vehicle Metatable *****************/
 
@@ -281,12 +283,11 @@ InfMap.TraceEntity = InfMap.TraceEntity or util.TraceEntity
 function util.TraceEntity(data, ent)
 	return modify_trace_data(data, InfMap.TraceEntity, ent)
 end
-
 // no need to detour GetEyeTrace or util.GetPlayerTrace as it uses already detoured functions
 
-
-// Find functions (Courtesy of LiddulBOFH! Thanks bro!)
-function InfMap.FindInChunk(chunk) // This and below are potentially usable, faster than running FindInBox on a single chunk (provided the entities to search are tracked by chunk updates)
+// M: Find functions Courtesy of LiddulBOFH! Thanks bro!
+// This and below are potentially usable, faster than running FindInBox on a single chunk (provided the entities to search are tracked by chunk updates)
+function InfMap.FindInChunk(chunk) 
 	if TypeID(chunk) ~= TYPE_VECTOR then return {} end
 
 	local tchunk = Vector(math.floor(chunk[1]),math.floor(chunk[2]),math.floor(chunk[3]))
@@ -361,6 +362,10 @@ function ents.FindInCone(pos, normal, radius, angle_cos)
 	return results
 end
 
+InfMap.ShouldSaveEntity = InfMap.ShouldSaveEntity or gmsave.ShouldSaveEntity
+function gmsave.ShouldSaveEntity(ent, t)
+	return InfMap.ShouldSaveEntity(ent, t) and !InfMap.disable_pickup[t.classname]
+end
 
 // wiremod internally clamps setpos, lets unclamp it...
 hook.Add("Initialize", "infmap_wire_detour", function()
@@ -375,14 +380,10 @@ hook.Add("Initialize", "infmap_wire_detour", function()
 			return pos 
 		end
 	end
-
-	InfMap.ShouldSaveEntity = InfMap.ShouldSaveEntity or gmsave.ShouldSaveEntity
-	function gmsave.ShouldSaveEntity(ent, t)
-		return InfMap.ShouldSaveEntity(ent, t) and !InfMap.disable_pickup[t.classname]
-	end
 end)
 
 /********** Hooks ***********/
+
 // disable picking up weapons/items in other chunks
 local function can_pickup(ply, ent)
 	if !ply.CHUNK_OFFSET or !ent.CHUNK_OFFSET then return end	// when spawning, player weapons will be nil for 1 tick, allow pickup in all chunks
@@ -393,6 +394,7 @@ end
 hook.Add("PlayerCanPickupWeapon", "infmap_entdetour", can_pickup)
 hook.Add("PlayerCanPickuItem", "infmap_entdetour", can_pickup)
 hook.Add("GravGunPickupAllowed", "infmap_entdetour", can_pickup)
+
 // explosions should not damage things in other chunks
 hook.Add("EntityTakeDamage", "infmap_explodedetour", function(ply, dmg)
 	if !dmg:IsExplosionDamage() then return end
