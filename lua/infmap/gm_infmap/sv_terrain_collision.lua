@@ -1,13 +1,9 @@
 // this file handles the collision for the terrain
-local function v_tostring(v)    // how else would you store them?
-	return v[1] .. "," .. v[2] .. "," .. v[3]
-end
-
 InfMap.chunk_table = InfMap.chunk_table or {}
 
 local function try_invalid_chunk(chunk, filter)
 	if !chunk then return end
-	local invalid = InfMap.chunk_table[v_tostring(chunk)]
+	local invalid = InfMap.chunk_table[InfMap.ezcoord(chunk)]
 	for k, v in ipairs(ents.GetAll()) do
 		if InfMap.filter_entities(v) or !v:IsSolid() or v == filter then continue end
 		if v.CHUNK_OFFSET == chunk then
@@ -24,13 +20,13 @@ local function update_chunk(ent, chunk, oldchunk)
 		try_invalid_chunk(oldchunk)
 
 		// chunk already exists, dont make another
-		if IsValid(InfMap.chunk_table[v_tostring(chunk)]) then return end
+		if IsValid(InfMap.chunk_table[InfMap.ezcoord(chunk)]) then return end
 
 		local e = ents.Create("infmap_terrain_collider")
 		InfMap.prop_update_chunk(e, chunk)
 		e:SetModel("models/props_c17/FurnitureCouch002a.mdl")
 		e:Spawn()
-		InfMap.chunk_table[v_tostring(chunk)] = e
+		InfMap.chunk_table[InfMap.ezcoord(chunk)] = e
 	end
 end
 

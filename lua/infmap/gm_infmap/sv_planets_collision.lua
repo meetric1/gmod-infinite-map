@@ -1,13 +1,9 @@
 // this file handles the collision for planets
-local function v_tostring(v)    // how else would you store them?
-	return v[1] .. "," .. v[2] .. "," .. v[3]
-end
-
 InfMap.planet_chunk_table = InfMap.planet_chunk_table or {}
 
 local function try_invalid_chunk(chunk, filter)
 	if !chunk then return end
-	local invalid = InfMap.planet_chunk_table[v_tostring(chunk)]
+	local invalid = InfMap.planet_chunk_table[InfMap.ezcoord(chunk)]
 	for k, v in ipairs(ents.GetAll()) do
 		if InfMap.filter_entities(v) or !v:IsSolid() or v == filter then continue end
 		if v.CHUNK_OFFSET == chunk then
@@ -31,7 +27,7 @@ local function update_chunk(ent, chunk, oldchunk)
 		if chunk != planet_chunk then return end
 
 		// chunk already exists, dont make another
-		if IsValid(InfMap.planet_chunk_table[v_tostring(chunk)]) then return end
+		if IsValid(InfMap.planet_chunk_table[InfMap.ezcoord(chunk)]) then return end
 
 		local e = ents.Create("infmap_planet")
 		InfMap.prop_update_chunk(e, chunk)
@@ -39,7 +35,7 @@ local function update_chunk(ent, chunk, oldchunk)
 		e:SetPlanetRadius(planet_radius)
 		e:SetMaterial(InfMap.planet_inside_materials[mat]:GetName())
 		e:Spawn()
-		InfMap.planet_chunk_table[v_tostring(chunk)] = e
+		InfMap.planet_chunk_table[InfMap.ezcoord(chunk)] = e
 	end
 end
 
@@ -49,6 +45,6 @@ hook.Add("PropUpdateChunk", "infmap_infgen_planets", function(ent, chunk, oldchu
 	update_chunk(ent, chunk, oldchunk)
 end)
 
-hook.Add("EntityRemoved", "infmap_infgen_terrain", function(ent)
+hook.Add("EntityRemoved", "infmap_infgen_planets", function(ent)
 	try_invalid_chunk(ent.CHUNK_OFFSET, ent)
 end)
