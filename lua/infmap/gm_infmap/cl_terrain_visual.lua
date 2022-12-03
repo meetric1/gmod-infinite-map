@@ -75,7 +75,7 @@ end)
 // bigass plane
 local size = 1000000000
 local uvsize = 100000
-local min = -1000000
+local min = -100000
 
 local big_plane = Mesh()
 big_plane:BuildFromTriangles({
@@ -98,7 +98,8 @@ local render = render
 hook.Add("PostDraw2DSkyBox", "infmap_terrain_skybox", function()	//draw bigass plane
 	render.OverrideDepthEnable(true, false)
 
-	local color = InfMap.unlocalize_vector(EyePos(), LocalPlayer().CHUNK_OFFSET)[3] / 1950000
+	local eyepos = EyePos()
+	local color = InfMap.unlocalize_vector(eyepos, LocalPlayer().CHUNK_OFFSET)[3] / 1950000
 	local cs = 100//InfMap.chunk_size
 	local cs_2 = cs * 2
 
@@ -111,28 +112,32 @@ hook.Add("PostDraw2DSkyBox", "infmap_terrain_skybox", function()	//draw bigass p
 	bottom:SetFloat("$alpha", color)
 
 	render.SetMaterial(top)
-	render.DrawQuadEasy(EyePos() + Vector(0, 0, cs), Vector(0, 0, -1), cs_2, cs_2)
+	render.DrawQuadEasy(eyepos + Vector(0, 0, cs), Vector(0, 0, -1), cs_2, cs_2)
 
 	render.SetMaterial(right)
-	render.DrawQuadEasy(EyePos() + Vector(0, cs, 0), Vector(0, -1, 0), cs_2, cs_2)
+	render.DrawQuadEasy(eyepos + Vector(0, cs, 0), Vector(0, -1, 0), cs_2, cs_2)
 
 	render.SetMaterial(front)
-	render.DrawQuadEasy(EyePos() + Vector(cs, 0, 0), Vector(-1, 0, 0), cs_2, cs_2)
+	render.DrawQuadEasy(eyepos + Vector(cs, 0, 0), Vector(-1, 0, 0), cs_2, cs_2)
 
 	render.SetMaterial(back)
-	render.DrawQuadEasy(EyePos() + Vector(-cs, 0, 0), Vector(1, 0, 0), cs_2, cs_2)
+	render.DrawQuadEasy(eyepos + Vector(-cs, 0, 0), Vector(1, 0, 0), cs_2, cs_2)
 
 	render.SetMaterial(left)
-	render.DrawQuadEasy(EyePos() + Vector(0, -cs, 0), Vector(0, 1, 0), cs_2, cs_2)
+	render.DrawQuadEasy(eyepos + Vector(0, -cs, 0), Vector(0, 1, 0), cs_2, cs_2)
 
 	render.SetMaterial(bottom)
-	render.DrawQuadEasy(EyePos() + Vector(0, 0, -cs), Vector(0, 0, 1), cs_2, cs_2)
+	render.DrawQuadEasy(eyepos + Vector(0, 0, -cs), Vector(0, 0, 1), cs_2, cs_2)
 
 	render.SetMaterial(default_mat)
 	render.ResetModelLighting(2, 2, 2)
 	render.SetLocalModelLights()
 	default_mat:SetFloat("$alpha", 1)	// make it visible
+	local m = Matrix()
+	m:SetTranslation(InfMap.unlocalize_vector(Vector(), -LocalPlayer().CHUNK_OFFSET))
+	cam.PushModelMatrix(m)
 	big_plane:Draw()
+	cam.PopModelMatrix()
 
 	render.OverrideDepthEnable(false, false)
 end)
