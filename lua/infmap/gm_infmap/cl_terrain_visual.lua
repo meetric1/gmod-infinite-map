@@ -132,8 +132,11 @@ hook.Add("PostDraw2DSkyBox", "infmap_terrain_skybox", function()	//draw bigass p
 	render.ResetModelLighting(2, 2, 2)
 	render.SetLocalModelLights()
 	default_mat:SetFloat("$alpha", 1)	// make it visible
+	local offset = Vector(LocalPlayer().CHUNK_OFFSET)
+	offset[1] = offset[1] % 1000
+	offset[2] = offset[2] % 1000
 	local m = Matrix()
-	m:SetTranslation(InfMap.unlocalize_vector(Vector(), -LocalPlayer().CHUNK_OFFSET))
+	m:SetTranslation(InfMap.unlocalize_vector(Vector(), -offset))
 	cam.PushModelMatrix(m)
 	big_plane:Draw()
 	cam.PopModelMatrix()
