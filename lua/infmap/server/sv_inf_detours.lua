@@ -83,6 +83,83 @@ function EntityMT:Spawn()
 	return self:InfMap_Spawn()
 end
 
+// Find functions
+function InfMap.FindInChunk(chunk) // This and below are potentially usable, faster than running FindInBox on a single chunk (provided the entities to search are tracked by chunk updates)
+	if TypeID(chunk) ~= TYPE_VECTOR then return {} end
+
+	local tchunk = Vector(math.floor(chunk[1]),math.floor(chunk[2]),math.floor(chunk[3]))
+	local entlist = InfMap.ent_list[InfMap.ezcoord(tchunk)]
+
+	if TypeID(entlist) ~= TYPE_TABLE then return {} end // don't ask, just please don't
+
+	local Results = {}
+	for k,v in pairs(entlist) do
+		local ent = Entity(k)
+		if not IsValid(ent) then continue end
+		if InfMap.disable_pickup[ent:GetClass()] then continue end
+		table.insert(Results,ent)
+	end
+
+	return Results
+end
+ents.FindInChunk = InfMap.FindInChunk
+
+function InfMap.FindInChunkPostCoord(coord) // To be used if you already have coords as a string "x,y,z" (gotten by InfMap.ezcoord(chunk))
+	local entlist = InfMap.ent_list[coord]
+
+	if TypeID(entlist) ~= TYPE_TABLE then return {} end // don't ask, just please don't
+
+	local Results = {}
+	for k,v in pairs(entlist) do
+		local ent = Entity(k)
+		if not IsValid(ent) then continue end
+		if InfMap.disable_pickup[ent:GetClass()] then continue end
+		table.insert(Results,ent)
+	end
+
+	return Results
+end
+
+function InfMap.FindInBox(v1,v2)
+	local entlist = ents.GetAll()
+	local results = {}
+
+	for i,ent in ipairs(entlist) do
+		if ent:WorldSpaceCenter():WithinAABox(v1,v2) then table.insert(results,ent) end
+	end
+
+	return results
+end
+ents.FindInBox = InfMap.FindInBox
+
+function InfMap.FindInSphere(pos,radius)
+	local entlist = ents.GetAll()
+	local results = {}
+
+	local radSqr = radius ^ 2
+
+	for k,v in ipairs(entlist) do
+		if v:WorldSpaceCenter():DistToSqr(pos) <= radSqr then table.insert(results,v) end
+	end
+
+	return results
+end
+ents.FindInSphere = InfMap.FindInSphere
+
+function InfMap.FindInCone(pos,normal,radius,angle_cos)
+	// no clamp here because it already gets clamped above
+	local entlist = ents.FindInSphere(pos,radius)
+	local results = {}
+
+	for k,v in ipairs(entlist) do
+		local dot = normal:Dot((v:GetPos() - pos):GetNormalized())
+		if dot >= angle_cos then table.insert(results,v) end
+	end
+
+	return results
+end
+ents.FindInCone = InfMap.FindInCone
+
 /************ Physics Object Metatable **************/
 
 PhysObjMT.InfMap_GetPos = PhysObjMT.InfMap_GetPos or PhysObjMT.GetPos
@@ -284,18 +361,6 @@ end
 
 // no need to detour GetEyeTrace or util.GetPlayerTrace as it uses already detoured functions
 
-InfMap.FindInSphere = InfMap.FindInSphere or ents.FindInSphere
-function ents.FindInSphere(pos, rad)
-	local local_pos, local_chunk = InfMap.localize_vector(pos)
-	local data = InfMap.FindInSphere(local_pos, rad)
-	for i = #data, 1, -1 do
-		if data[i].CHUNK_OFFSET != local_chunk then
-			table.remove(data, i)
-		end
-	end
-	return data
-end
-
 // wiremod internally clamps setpos, lets unclamp it...
 hook.Add("Initialize", "infmap_wire_detour", function()
 	if WireLib then	// wiremod unclamp
@@ -305,7 +370,7 @@ hook.Add("Initialize", "infmap_wire_detour", function()
 	end
 
 	if SF then	//starfall unclamp
-		function SF.clampPos(pos) 
+		function SF.clampPos(pos)
 			return pos 
 		end
 	end

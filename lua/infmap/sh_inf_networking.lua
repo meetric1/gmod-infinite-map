@@ -3,6 +3,7 @@ if SERVER then
 		print(ent, "passed in chunk", chunk)
 		
 		local prev_chunk = ent.CHUNK_OFFSET
+		InfMap.update_track(ent,chunk)
 		ent.CHUNK_OFFSET = chunk
 		ent:SetCustomCollisionCheck(true)	// required for ShouldCollide hook
 		
