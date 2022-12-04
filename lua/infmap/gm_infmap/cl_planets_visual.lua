@@ -41,11 +41,26 @@ hook.Add("PostDrawOpaqueRenderables", "infmap_planet_render", function()
 			render.SetMaterial(texture)
 			render.DrawSphere(InfMap.unlocalize_vector(Vector(), final_offset), radius, planet_res, planet_res)
 
-			if len > 0 then continue end
-			atmosphere:SetVector("$color", Vector(0.66, 0.86, 0.95))
-			atmosphere:SetFloat("$alpha", 0.1)
-			render.SetMaterial(atmosphere)
-			render.DrawSphere(InfMap.unlocalize_vector(Vector(), final_offset), -radius, planet_res, planet_res)
+			local planetinfo = InfMap.planet_data[mat]
+			if planetinfo then
+				// clouds!!1!
+				local cloudinfo = planetinfo["Clouds"]
+				if cloudinfo then
+					local clouds = cloudinfo[1]
+					clouds:SetFloat("$alpha", cloudinfo[2])
+					render.SetMaterial(clouds)
+					render.DrawSphere(InfMap.unlocalize_vector(Vector(), final_offset), radius*1.025, planet_res, planet_res)
+					render.DrawSphere(InfMap.unlocalize_vector(Vector(), final_offset), -radius*1.025, planet_res, planet_res)
+				end
+				if len > 0 then continue end
+				local atmosphereinfo = planetinfo["Atmosphere"]
+				if atmosphereinfo then
+					atmosphere:SetVector("$color", atmosphereinfo[1])
+					atmosphere:SetFloat("$alpha", atmosphereinfo[2])
+					render.SetMaterial(atmosphere)
+					render.DrawSphere(InfMap.unlocalize_vector(Vector(), final_offset), -radius, planet_res, planet_res)
+				end
+			end
 		end
 	end
 end)

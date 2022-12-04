@@ -12,22 +12,78 @@ InfMap.planet_uv_scale = 10
 InfMap.planet_resolution = 32
 InfMap.planet_tree_resolution = 32
 InfMap.planet_outside_materials = {
-	Material("shadertest/seamless2"),
-	Material("shadertest/seamless3"),
-	Material("shadertest/seamless4"),
-	Material("shadertest/seamless5"),
-	Material("shadertest/seamless6"),
-	Material("shadertest/seamless7"),
-	Material("shadertest/seamless8"),
+	Material("infmap_planets/mercury"),
+	Material("infmap_planets/venus"),
+	Material("infmap_planets/earth"),
+	Material("infmap_planets/mars"),
+	Material("infmap_planets/jupiter"),
+	Material("infmap_planets/saturn"),
+	Material("infmap_planets/uranus"),
+	Material("infmap_planets/neptune"),
+	Material("infmap_planets/moon"),
 }
 InfMap.planet_inside_materials = {
-	Material("shadertest/seamless2"),
-	Material("shadertest/seamless3"),
-	Material("shadertest/seamless4"),
-	Material("shadertest/seamless5"),
-	Material("shadertest/seamless6"),
-	Material("phoenix_storms/ps_grass"),
-	Material("shadertest/seamless8"),
+	Material("infmap_planets/mercury_inside"),
+	Material("infmap_planets/venus_inside"),
+	Material("infmap/flatgrass"),
+	Material("infmap_planets/mars_inside"),
+	Material("infmap_planets/jupiter_inside"),
+	Material("infmap_planets/saturn_inside"),
+	Material("infmap_planets/uranus_inside"),
+	Material("infmap_planets/neptune_inside"),
+	Material("infmap_planets/moon_inside"),
+}
+InfMap.planet_data = {
+	[2] = { // venus
+		Atmosphere = {
+			Vector(0.9, 0.75, 0.4),
+			0.25
+		},
+		Clouds = {
+			Material("infmap_planets/venus_clouds"),
+			1
+		},
+	},
+	[3] = { // earth
+		Atmosphere = {
+			Vector(0.66, 0.86, 0.95),
+			0.25
+		},
+		Clouds = {
+			Material("infmap_planets/earth_clouds"),
+			1
+		},
+	},
+	[4] = { // mars
+		Atmosphere = {
+			Vector(0.9, 0.65, 0.55),
+			0.5
+		},
+	},
+	[5] = { // jupiter
+		Atmosphere = {
+			Vector(0.9, 0.9, 0.8),
+			0.6
+		},
+	},
+	[6] = { // saturn
+		Atmosphere = {
+			Vector(0.9, 0.85, 0.7),
+			0.6
+		},
+	},
+	[7] = { // uranus
+		Atmosphere = {
+			Vector(0.5, 0.65, 0.7),
+			0.8
+		},
+	},
+	[8] = { // neptune
+		Atmosphere = {
+			Vector(0.2, 0.25, 0.5),
+			0.8
+		},
+	},
 }
 
 local max = 2^28
@@ -55,7 +111,7 @@ function InfMap.planet_info(x, y)
 	
 	local planet_pos = Vector(x * InfMap.planet_spacing + random_x, y * InfMap.planet_spacing + random_y, random_z + 125)
 	local planet_radius = math.floor(util.SharedRandom("Radius" .. x .. y, InfMap.chunk_size / 10, InfMap.chunk_size))
-	local planet_type = math.Round(util.SharedRandom("Type" .. x .. y, 1, 7))
+	local planet_type = math.Round(util.SharedRandom("Type" .. x .. y, 1, #InfMap.planet_outside_materials-1))
 
 	return planet_pos, planet_radius, planet_type
 end

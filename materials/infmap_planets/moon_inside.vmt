@@ -1,0 +1,10 @@
+VertexLitGeneric
+{
+	"$basetexture" "nature/dirtfloor004a"
+	"$basetexturetransform" "center .5 .5 scale .1 .1 rotate 0 translate 0 0"
+	"$color2" "[0.95 0.95 1]"
+	"$surfaceprop" "gravel"
+	
+	"$model" 1
+	"$halflambert" 1
+}
