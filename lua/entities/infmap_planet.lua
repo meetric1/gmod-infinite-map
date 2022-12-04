@@ -120,7 +120,7 @@ end
 if SERVER then return end
 
  // ripped from my terrain addon
- local function smoothedNormal(heightFunction, vertexPos, size)
+ local function smoothedNormal(heightFunction, vertexPos, size, cox, coy)
     local smoothedNormal = Vector()
     for cornery = 0, 1 do
         for cornerx = 0, 1 do
@@ -131,13 +131,13 @@ if SERVER then return end
             // get the height of the 0x triangle
             local cornerWorldx = vertexPos[1]
             local cornerWorldy = vertexPos[2] + cornery * size
-            local cornerHeight = heightFunction(cornerWorldx, cornerWorldy) * 2
+            local cornerHeight = heightFunction(cornerWorldx + cox, cornerWorldy + coy) * 2
             local middleXPosition = Vector(cornerWorldx, cornerWorldy, cornerHeight)
 
             // get the height of the 0y triangle
             local cornerWorldx = vertexPos[1] + cornerx * size
             local cornerWorldy = vertexPos[2]
-            local cornerHeight = heightFunction(cornerWorldx, cornerWorldy) * 2
+            local cornerHeight = heightFunction(cornerWorldx + cox, cornerWorldy + coy) * 2
             local middleYPosition = Vector(cornerWorldx, cornerWorldy, cornerHeight)
 
             // we now have 3 points, construct a triangle from this and add the normal to the average normal
@@ -241,10 +241,10 @@ function ENT:GenerateMesh(heightFunction, chunk, size)
             end
 
             local normal_size = size / chunk_resolution
-            local normal1 = smoothedNormal(heightFunction, vertexPos1, normal_size)
-            local normal2 = smoothedNormal(heightFunction, vertexPos2, normal_size)
-            local normal3 = smoothedNormal(heightFunction, vertexPos3, normal_size)
-            local normal4 = smoothedNormal(heightFunction, vertexPos4, normal_size)
+            local normal1 = smoothedNormal(heightFunction, vertexPos1, normal_size, cox, coy)
+            local normal2 = smoothedNormal(heightFunction, vertexPos2, normal_size, cox, coy)
+            local normal3 = smoothedNormal(heightFunction, vertexPos3, normal_size, cox, coy)
+            local normal4 = smoothedNormal(heightFunction, vertexPos4, normal_size, cox, coy)
 
             table.Add(triangles, {
                 {vertexPos1, 0, 			         0,	  		 	         normal1},
@@ -287,9 +287,9 @@ local render_SetModelLighting = render.SetModelLighting
 local render_SetLocalModelLights = render.SetLocalModelLights
 local cam_PushModelMatrix = cam.PushModelMatrix
 local cam_PopModelMatrix = cam.PopModelMatrix
-local tree_material = Material("models/props_foliage/arbre01")  //models/props_foliage/bush models/props_foliage/arbre01
+local tree_material = Material("infmap/arbre01")  //models/props_foliage/bush models/props_foliage/arbre01
 local tree_mesh = Mesh()
-tree_mesh:BuildFromTriangles(util.GetModelMeshes("models/props_foliage/tree_pine_large.mdl", 0)[1].triangles)
+tree_mesh:BuildFromTriangles(util.GetModelMeshes("models/infmap/tree_pine_large.mdl", 0)[1].triangles)
 //tree_mesh:BuildFromTriangles(util.GetModelMeshes("models/props_foliage/rock_coast02b.mdl", 0)[1].triangles)
 
 function ENT:Draw()

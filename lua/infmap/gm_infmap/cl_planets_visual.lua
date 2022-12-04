@@ -9,13 +9,13 @@ hook.Add("PostDrawOpaqueRenderables", "infmap_planet_render", function()
 	if color < 0.1 then return end
 
 	// reset lighting so planets dont do weird flashing shit
-	local amb = render.GetAmbientLightColor()
+	local amb = render.GetAmbientLightColor() * 2
 	render.SetLocalModelLights()
 	render.SetModelLighting(1, amb[1], amb[2], amb[3])
     render.SetModelLighting(3, amb[1], amb[2], amb[3])
-    render.SetModelLighting(5, amb[1], amb[2], amb[3])
-	render.SetModelLighting(0, 0.25, 0.25, 0.25)
-    render.SetModelLighting(2, 0.25, 0.25, 0.25)
+    render.SetModelLighting(5, 0, 0, 0)
+	render.SetModelLighting(0, amb[1], amb[2], amb[3])
+    render.SetModelLighting(2, amb[1], amb[2], amb[3])
     render.SetModelLighting(4, 2, 2, 2)
 
 	local prd = InfMap.planet_render_distance
