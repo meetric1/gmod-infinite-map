@@ -1,11 +1,10 @@
-"VertexLitGeneric"
+VertexLitGeneric
 {
+	"$basetexture" "nature/sandfloor009a"
 	"$basetexturetransform" "center .5 .5 scale .1 .1 rotate 0 translate 0 0"
+	"$color2" "[1 0.75 0.5]"
+	"$surfaceprop" "sand"
 	
-	"$basetexture" "gm_construct/grass1"
-	"$surfaceprop" "grass"
-
-	"$selfillum" 0
 	"$model" 1
 	"$halflambert" 1
 }

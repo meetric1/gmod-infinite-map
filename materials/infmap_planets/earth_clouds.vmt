@@ -1,0 +1,6 @@
+VertexLitGeneric
+{
+	"$basetexture" "infmap_planets/earth_clouds"
+    "$translucent" 1
+	"$model" 1
+}

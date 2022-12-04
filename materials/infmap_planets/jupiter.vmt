@@ -1,0 +1,5 @@
+VertexLitGeneric
+{
+	"$basetexture" "infmap_planets/jupiter"
+	"$model" 1
+}
