@@ -94,7 +94,7 @@ function ENT:Initialize()
         if !self.CHUNK_OFFSET then return end
         self:GenerateMesh(InfMap.planet_height_function, self.CHUNK_OFFSET, self:GetPlanetRadius())
         // generate trees if it has grass
-        if self:GetMaterial() == "phoenix_storms/ps_grass" then
+        if self:GetMaterial() == "infmap/flatgrass" then
             self:GenerateTrees(InfMap.planet_height_function, self.CHUNK_OFFSET, self:GetPlanetRadius())
         end
     end

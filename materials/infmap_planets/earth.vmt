@@ -1,0 +1,5 @@
+VertexLitGeneric
+{
+	"$basetexture" "infmap_planets/earth"
+	"$model" 1
+}

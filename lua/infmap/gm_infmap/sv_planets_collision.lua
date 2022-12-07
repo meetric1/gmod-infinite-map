@@ -33,7 +33,7 @@ local function update_chunk(ent, chunk, oldchunk)
 		InfMap.prop_update_chunk(e, chunk)
 		e:SetModel("models/props_c17/FurnitureCouch002a.mdl")
 		e:SetPlanetRadius(planet_radius)
-		e:SetMaterial(InfMap.planet_inside_materials[mat]:GetName())
+		e:SetMaterial(InfMap.planet_data[mat].InsideMaterial:GetName())
 		e:Spawn()
 		InfMap.planet_chunk_table[InfMap.ezcoord(chunk)] = e
 	end
