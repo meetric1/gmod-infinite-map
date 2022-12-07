@@ -25,6 +25,8 @@ hook.Add("PostDrawOpaqueRenderables", "infmap_planet_render", function()
 			local x = x + megachunk[1]
 			local y = y + megachunk[2]
 			local pos, radius, mat = InfMap.planet_info(x, y)
+			local planetdata = InfMap.planet_data[mat]
+			if not planetdata then continue end
 			local final_offset = pos - client_offset
 
 			local len = final_offset:LengthSqr()
@@ -36,30 +38,28 @@ hook.Add("PostDrawOpaqueRenderables", "infmap_planet_render", function()
 			end
 			
 			// draw planet
-			local texture = InfMap.planet_outside_materials[mat]
+			local texture = planetdata["OutsideMaterial"]
 			texture:SetFloat("$alpha", color)	// draw planets as transparent when going up
 			render.SetMaterial(texture)
 			render.DrawSphere(InfMap.unlocalize_vector(Vector(), final_offset), radius, planet_res, planet_res)
 
-			local planetinfo = InfMap.planet_data[mat]
-			if planetinfo then
-				// clouds!!1!
-				local cloudinfo = planetinfo["Clouds"]
-				if cloudinfo then
-					local clouds = cloudinfo[1]
-					clouds:SetFloat("$alpha", cloudinfo[2])
-					render.SetMaterial(clouds)
-					render.DrawSphere(InfMap.unlocalize_vector(Vector(), final_offset), radius*1.025, planet_res, planet_res)
-					render.DrawSphere(InfMap.unlocalize_vector(Vector(), final_offset), -radius*1.025, planet_res, planet_res)
-				end
-				if len > 0 then continue end
-				local atmosphereinfo = planetinfo["Atmosphere"]
-				if atmosphereinfo then
-					atmosphere:SetVector("$color", atmosphereinfo[1])
-					atmosphere:SetFloat("$alpha", atmosphereinfo[2])
-					render.SetMaterial(atmosphere)
-					render.DrawSphere(InfMap.unlocalize_vector(Vector(), final_offset), -radius, planet_res, planet_res)
-				end
+			// clouds!!1!
+			local cloudinfo = planetdata["Clouds"]
+			if cloudinfo then
+				local clouds = cloudinfo[1]
+				clouds:SetFloat("$alpha", cloudinfo[2])
+				render.SetMaterial(clouds)
+				render.DrawSphere(InfMap.unlocalize_vector(Vector(), final_offset), radius*1.025, planet_res, planet_res)
+				render.DrawSphere(InfMap.unlocalize_vector(Vector(), final_offset), -radius*1.025, planet_res, planet_res)
+			end
+			
+			if len > 0 then continue end
+			local atmosphereinfo = planetdata["Atmosphere"]
+			if atmosphereinfo then
+				atmosphere:SetVector("$color", atmosphereinfo[1])
+				atmosphere:SetFloat("$alpha", atmosphereinfo[2])
+				render.SetMaterial(atmosphere)
+				render.DrawSphere(InfMap.unlocalize_vector(Vector(), final_offset), -radius, planet_res, planet_res)
 			end
 		end
 	end
