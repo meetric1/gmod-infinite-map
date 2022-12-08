@@ -138,12 +138,13 @@ hook.Add("PostDrawTranslucentRenderables", "infmap_clouds", function()
 end)
 
 hook.Add("SetupWorldFog", "!infmap_fog", function()	// The Fog Is Coming
-	if !LocalPlayer().CHUNK_OFFSET then return end
+	local co = LocalPlayer().CHUNK_OFFSET
+	if !co or co[3] > 14 then return end
 	render.FogStart(500000)
-	render.FogMaxDensity(1)
+	render.FogMaxDensity(0.5)
 	render.FogColor(153, 178, 204)
 	//render.FogColor(180, 190, 200)
-	render.FogEnd(800000)
+	render.FogEnd(1000000)
 	render.FogMode(MATERIAL_FOG_LINEAR)
-	//return true
+	return true
 end)
