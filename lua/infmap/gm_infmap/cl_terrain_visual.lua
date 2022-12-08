@@ -75,7 +75,6 @@ end)
 local size = 1000000000
 local uvsize = 100000
 local min = -100000
-
 local big_plane = Mesh()
 big_plane:BuildFromTriangles({
 	{pos = Vector(size, size, min), normal = Vector(0, 0, 1), u = uvsize, v = 0, tangent = Vector(1, 0, 0), userdata = {1, 0, 0, -1}},
@@ -89,7 +88,7 @@ big_plane:BuildFromTriangles({
 local render = render
 local default_mat = Material(InfMap.terrain_material)
 hook.Add("PostDraw2DSkyBox", "infmap_terrain_skybox", function()	//draw bigass plane
-	render.OverrideDepthEnable(true, false)
+	render.OverrideDepthEnable(true, false)	// dont write to z buffer, this is in "skybox"
 	render.SetMaterial(default_mat)
 	render.ResetModelLighting(2, 2, 2)
 	render.SetLocalModelLights()
@@ -102,8 +101,40 @@ hook.Add("PostDraw2DSkyBox", "infmap_terrain_skybox", function()	//draw bigass p
 	cam.PushModelMatrix(m)
 	big_plane:Draw()
 	cam.PopModelMatrix()
-
 	render.OverrideDepthEnable(false, false)
+end)
+
+// bigass plane part 2
+local clouds = Material("infmap/clouds")
+local size = 10000000
+local uvsize = 10
+local min = 0
+
+local cloud_plane = Mesh()
+cloud_plane:BuildFromTriangles({
+	{pos = Vector(size, size, min), normal = Vector(0, 0, 1), u = uvsize, v = 0, tangent = Vector(1, 0, 0), userdata = {1, 0, 0, -1}},
+	{pos = Vector(size, -size, min), normal = Vector(0, 0, 1), u = uvsize, v = uvsize, tangent = Vector(1, 0, 0), userdata = {1, 0, 0, -1}},
+	{pos = Vector(-size, -size, min), normal = Vector(0, 0, 1), u = 0, v = uvsize, tangent = Vector(1, 0, 0), userdata = {1, 0, 0, -1}},
+	{pos = Vector(size, size, min), normal = Vector(0, 0, 1), u = uvsize, v = 0, tangent = Vector(1, 0, 0), userdata = {1, 0, 0, -1}},
+	{pos = Vector(-size, -size, min), normal = Vector(0, 0, 1), u = 0, v = uvsize, tangent = Vector(1, 0, 0), userdata = {1, 0, 0, -1}},
+	{pos = Vector(-size, size, min), normal = Vector(0, 0, 1), u = 0, v = 0, tangent = Vector(1, 0, 0), userdata = {1, 0, 0, -1}},
+})
+
+hook.Add("PostDrawTranslucentRenderables", "infmap_clouds", function()
+	local offset = Vector(LocalPlayer().CHUNK_OFFSET)
+	offset[1] = offset[1] % 100
+	offset[2] = offset[2] % 100
+	offset[3] = offset[3] - 10
+
+	render.SetMaterial(clouds)
+
+	local m = Matrix()
+	for i = 0, 9 do	// overlay 10 planes to give amazing 3d look
+		m:SetTranslation(InfMap.unlocalize_vector(Vector(0, 0, i * 10000), -offset))
+		cam.PushModelMatrix(m)
+		cloud_plane:Draw()
+		cam.PopModelMatrix()
+	end
 end)
 
 hook.Add("SetupWorldFog", "!infmap_fog", function()	// The Fog Is Coming
