@@ -86,48 +86,10 @@ big_plane:BuildFromTriangles({
 	{pos = Vector(-size, size, min), normal = Vector(0, 0, 1), u = 0, v = 0, tangent = Vector(1, 0, 0), userdata = {1, 0, 0, -1}},
 })
 
-local default_mat = Material(InfMap.terrain_material)
-local top = Material("infmap/space/cubemap_top")
-local right = Material("infmap/space/cubemap_right")
-local front = Material("infmap/space/cubemap_front")
-local back = Material("infmap/space/cubemap_back")
-local left = Material("infmap/space/cubemap_left")
-//local bottom = Material("infmap/space/cubemap_bottom")	// does the bottom even need to be rendered?
 local render = render
+local default_mat = Material(InfMap.terrain_material)
 hook.Add("PostDraw2DSkyBox", "infmap_terrain_skybox", function()	//draw bigass plane
 	render.OverrideDepthEnable(true, false)
-
-	local eyepos = EyePos()
-	local color = InfMap.unlocalize_vector(eyepos, LocalPlayer().CHUNK_OFFSET)[3] / 1950000
-	local cs = 100//InfMap.chunk_size
-	local cs_2 = cs * 2
-
-	// set transparency
-	top:SetFloat("$alpha", color)
-	right:SetFloat("$alpha", color)
-	front:SetFloat("$alpha", color)
-	back:SetFloat("$alpha", color)
-	left:SetFloat("$alpha", color)
-	//bottom:SetFloat("$alpha", color)
-
-	render.SetMaterial(top)
-	render.DrawQuadEasy(eyepos + Vector(0, 0, cs), Vector(0, 0, -1), cs_2, cs_2)
-
-	render.SetMaterial(right)
-	render.DrawQuadEasy(eyepos + Vector(0, cs, 0), Vector(0, -1, 0), cs_2, cs_2)
-
-	render.SetMaterial(front)
-	render.DrawQuadEasy(eyepos + Vector(cs, 0, 0), Vector(-1, 0, 0), cs_2, cs_2)
-
-	render.SetMaterial(back)
-	render.DrawQuadEasy(eyepos + Vector(-cs, 0, 0), Vector(1, 0, 0), cs_2, cs_2)
-
-	render.SetMaterial(left)
-	render.DrawQuadEasy(eyepos + Vector(0, -cs, 0), Vector(0, 1, 0), cs_2, cs_2)
-
-	//render.SetMaterial(bottom)
-	//render.DrawQuadEasy(eyepos + Vector(0, 0, -cs), Vector(0, 0, 1), cs_2, cs_2)
-
 	render.SetMaterial(default_mat)
 	render.ResetModelLighting(2, 2, 2)
 	render.SetLocalModelLights()

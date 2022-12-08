@@ -8,8 +8,8 @@ InfMap.disable_pickup["infmap_planet"] = true
 
 InfMap.planet_render_distance = 3
 InfMap.planet_spacing = 50
-InfMap.planet_uv_scale = 10
-InfMap.planet_resolution = 32
+InfMap.planet_uv_scale = 40
+InfMap.planet_resolution = 20
 InfMap.planet_tree_resolution = 32
 InfMap.planet_data = {
 	[1] = { // mercury
@@ -102,8 +102,10 @@ function InfMap.height_function(x, y)
 	return math.Clamp(final, -max, 1000000)
 end
 
+local noise2d = InfMap.simplex.Noise2D
 function InfMap.planet_height_function(x, y)
-	return InfMap.simplex.Noise2D(x / 10000, y / 10000) * 1000
+	return (noise2d(x / 15000, y / 15000) * 2000) / math.max(noise2d(x / 9000, y / 9000) * 10, 1)
+	//return InfMap.simplex.Noise2D(x / 10000, y / 10000) * 1000
 end
 
 // returns local position of planet inside megachunk
