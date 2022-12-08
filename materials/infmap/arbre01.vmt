@@ -1,6 +1,6 @@
 "VertexLitGeneric"
 {
-	"$baseTexture" "procedural_terrain\foliage\arbre01"
+	"$baseTexture" "infmap/arbre01"
 
 	"$AlphaTest" "1"
 	"$AlphaTestReference" "0.5"
