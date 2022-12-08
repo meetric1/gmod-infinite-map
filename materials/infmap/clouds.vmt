@@ -16,7 +16,7 @@ UnlitGeneric
 
 			"texturescrollvar" "$baseTextureTransform"
 
-			"texturescrollrate" 0.001
+			"texturescrollrate" 0.01
 
 			"texturescrollangle" 30.00
 
