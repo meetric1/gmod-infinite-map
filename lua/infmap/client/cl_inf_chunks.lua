@@ -143,7 +143,7 @@ function InfMap.prop_update_chunk(ent, chunk)
 
 	// when first spawning in props will attempt to render offset before client has initialized
 	// after prop chunks have been networked to client we initalize them and therefore update all prop rendering
-	if !IsValid(LocalPlayer()) then return end
+	if !IsValid(LocalPlayer()) or InfMap.filter_entities(ent) then return end
 
 	// offset single prop relative to player, only the prop has moved
 	local chunk_offset = chunk - LocalPlayer().CHUNK_OFFSET

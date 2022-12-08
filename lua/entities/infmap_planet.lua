@@ -293,8 +293,9 @@ tree_mesh:BuildFromTriangles(util.GetModelMeshes("models/infmap/tree_pine_large.
 //tree_mesh:BuildFromTriangles(util.GetModelMeshes("models/props_foliage/rock_coast02b.mdl", 0)[1].triangles)
 
 function ENT:Draw()
+    if self.CHUNK_OFFSET != LocalPlayer().CHUNK_OFFSET then return end
     local radius = self:GetPlanetRadius()
-    if EyePos():DistToSqr(self:GetPos()) < radius * radius then
+    if EyePos():DistToSqr(self:InfMap_GetPos()) < radius * radius then
         self:DrawModel()
     end
 end

@@ -121,7 +121,7 @@ cloud_plane:BuildFromTriangles({
 })
 
 hook.Add("PostDrawTranslucentRenderables", "infmap_clouds", function()
-	local offset = Vector(LocalPlayer().CHUNK_OFFSET)
+	local offset = Vector(LocalPlayer().CHUNK_OFFSET)	// copy vector, dont use original memory
 	offset[1] = offset[1] % 100
 	offset[2] = offset[2] % 100
 	offset[3] = offset[3] - 10
