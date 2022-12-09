@@ -105,9 +105,8 @@ hook.Add("PostDraw2DSkyBox", "infmap_terrain_skybox", function()	//draw bigass p
 end)
 
 // bigass plane part 2
-local clouds = Material("infmap/clouds")
 local size = 10000000
-local uvsize = 10
+local uvsize = 1
 local min = 0
 
 local cloud_plane = Mesh()
@@ -120,20 +119,71 @@ cloud_plane:BuildFromTriangles({
 	{pos = Vector(-size, size, min), normal = Vector(0, 0, 1), u = 0, v = 0, tangent = Vector(1, 0, 0), userdata = {1, 0, 0, -1}},
 })
 
+InfMap.cloud_rts = {}
+InfMap.cloud_mats = {}
+
+// coroutine so clouds dont rape fps when generating
+local cloud_coro = coroutine.create(function()
+	for i = 1, 10 do
+		InfMap.cloud_rts[i] = GetRenderTarget("infmap_clouds" .. i, 512, 512)
+		InfMap.cloud_mats[i] = CreateMaterial("infmap_clouds" .. i, "UnlitGeneric", {
+			["$basetexture"] = InfMap.cloud_rts[i]:GetName(),
+			["$model"] = "1",
+			["$nocull"] = "1",
+			["$translucent"] = "1",
+		})
+
+		render.ClearRenderTarget(InfMap.cloud_rts[i], Color(127, 127, 127, 0))
+		for y = 0, 511 do
+			render.PushRenderTarget(InfMap.cloud_rts[i]) cam.Start2D()
+				for x = 0, 511 do
+					local x1 = x % (512 / 3)
+					local y1 = y % (512 / 3)
+					local col = (InfMap.simplex.Noise3D(x1 / 30, y1 / 30, i / 50) - i * 0.015) * 1024 + (InfMap.simplex.Noise2D(x1 / 7, y1 / 7) + 1) * 128
+					surface.SetDrawColor(255, 255, 255, col)
+					surface.DrawRect(x, y, 1, 1)
+				end
+			cam.End2D() render.PopRenderTarget()
+
+			//if y % 2 == 0 then
+				coroutine.yield()
+			//end
+		end
+		//render.BlurRenderTarget(InfMap.cloud_rts[i], 1, 1, 1)
+	end
+end)
+
 hook.Add("PostDrawTranslucentRenderables", "infmap_clouds", function()
 	local offset = Vector(LocalPlayer().CHUNK_OFFSET)	// copy vector, dont use original memory
-	offset[1] = offset[1] % 100
-	offset[2] = offset[2] % 100
+	offset[1] = ((offset[1] + 166 + CurTime() * 0.5) % 332) - 166
+	offset[2] = ((offset[2] + 166 + CurTime() * 0.5) % 332) - 166
 	offset[3] = offset[3] - 10
 
-	render.SetMaterial(clouds)
+	//offset[1] = offset[1] + (CurTime() * 100 - 166) % 332 - 166
 
 	local m = Matrix()
-	for i = 0, 9 do	// overlay 10 planes to give amazing 3d look
-		m:SetTranslation(InfMap.unlocalize_vector(Vector(0, 0, i * 10000), -offset))
-		cam.PushModelMatrix(m)
-		cloud_plane:Draw()
-		cam.PopModelMatrix()
+	if offset[3] > 1 then
+		for i = 0, 9 do	// overlay 10 planes to give amazing 3d look
+			if !InfMap.cloud_mats[i + 1] then break end
+			render.SetMaterial(InfMap.cloud_mats[i + 1])
+			m:SetTranslation(InfMap.unlocalize_vector(Vector(0, 0, i * 10000), -offset))
+			cam.PushModelMatrix(m)
+			cloud_plane:Draw()
+			cam.PopModelMatrix()
+		end
+	else
+		for i = 9, 0, -1 do	// do same thing but render in reverse since we are under clouds
+			if !InfMap.cloud_mats[i + 1] then continue end
+			render.SetMaterial(InfMap.cloud_mats[i + 1])
+			m:SetTranslation(InfMap.unlocalize_vector(Vector(0, 0, i * 10000), -offset))
+			cam.PushModelMatrix(m)
+			cloud_plane:Draw()
+			cam.PopModelMatrix()
+		end
+	end
+
+	if coroutine.status(cloud_coro) == "suspended" then
+		coroutine.resume(cloud_coro)
 	end
 end)
 
@@ -141,7 +191,7 @@ hook.Add("SetupWorldFog", "!infmap_fog", function()	// The Fog Is Coming
 	local co = LocalPlayer().CHUNK_OFFSET
 	if !co or co[3] > 14 then return end
 	render.FogStart(500000)
-	render.FogMaxDensity(0.5)
+	render.FogMaxDensity(math.min(0.5, 1.4 - co[3] * 0.1))
 	render.FogColor(153, 178, 204)
 	//render.FogColor(180, 190, 200)
 	render.FogEnd(1000000)
