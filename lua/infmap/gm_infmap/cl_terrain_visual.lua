@@ -156,8 +156,8 @@ end)
 
 hook.Add("PostDrawTranslucentRenderables", "infmap_clouds", function()
 	local offset = Vector(LocalPlayer().CHUNK_OFFSET)	// copy vector, dont use original memory
-	offset[1] = ((offset[1] + 166 + CurTime() * 0.5) % 332) - 166
-	offset[2] = ((offset[2] + 166 + CurTime() * 0.5) % 332) - 166
+	offset[1] = ((offset[1] + 250 + CurTime() * 0.5) % 500) - 250
+	offset[2] = ((offset[2] + 250 + CurTime() * 0.5) % 500) - 250
 	offset[3] = offset[3] - 10
 
 	if coroutine.status(cloud_coro) == "suspended" then
