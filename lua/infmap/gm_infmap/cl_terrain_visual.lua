@@ -123,8 +123,9 @@ InfMap.cloud_rts = {}
 InfMap.cloud_mats = {}
 
 // coroutine so clouds dont rape fps when generating
+local cloud_layers = 10
 local cloud_coro = coroutine.create(function()
-	for i = 1, 10 do
+	for i = 1, cloud_layers do
 		InfMap.cloud_rts[i] = GetRenderTarget("infmap_clouds" .. i, 512, 512)
 		InfMap.cloud_mats[i] = CreateMaterial("infmap_clouds" .. i, "UnlitGeneric", {
 			["$basetexture"] = InfMap.cloud_rts[i]:GetName(),
@@ -132,9 +133,11 @@ local cloud_coro = coroutine.create(function()
 			["$nocull"] = "1",
 			["$translucent"] = "1",
 		})
-
 		render.ClearRenderTarget(InfMap.cloud_rts[i], Color(127, 127, 127, 0))
-		for y = 0, 511 do
+	end
+
+	for y = 0, 511 do
+		for i = 1, cloud_layers do
 			render.PushRenderTarget(InfMap.cloud_rts[i]) cam.Start2D()
 				for x = 0, 511 do
 					local x1 = x % (512 / 3)
@@ -144,13 +147,11 @@ local cloud_coro = coroutine.create(function()
 					surface.DrawRect(x, y, 1, 1)
 				end
 			cam.End2D() render.PopRenderTarget()
-
-			//if y % 2 == 0 then
-				coroutine.yield()
-			//end
 		end
-		//render.BlurRenderTarget(InfMap.cloud_rts[i], 1, 1, 1)
+
+		coroutine.yield()
 	end
+	//render.BlurRenderTarget(InfMap.cloud_rts[i], 1, 1, 1)
 end)
 
 hook.Add("PostDrawTranslucentRenderables", "infmap_clouds", function()
@@ -159,12 +160,13 @@ hook.Add("PostDrawTranslucentRenderables", "infmap_clouds", function()
 	offset[2] = ((offset[2] + 166 + CurTime() * 0.5) % 332) - 166
 	offset[3] = offset[3] - 10
 
-	//offset[1] = offset[1] + (CurTime() * 100 - 166) % 332 - 166
+	if coroutine.status(cloud_coro) == "suspended" then
+		coroutine.resume(cloud_coro)
+	end
 
 	local m = Matrix()
 	if offset[3] > 1 then
-		for i = 0, 9 do	// overlay 10 planes to give amazing 3d look
-			if !InfMap.cloud_mats[i + 1] then break end
+		for i = 0, cloud_layers - 1 do	// overlay 10 planes to give amazing 3d look
 			render.SetMaterial(InfMap.cloud_mats[i + 1])
 			m:SetTranslation(InfMap.unlocalize_vector(Vector(0, 0, i * 10000), -offset))
 			cam.PushModelMatrix(m)
@@ -172,18 +174,13 @@ hook.Add("PostDrawTranslucentRenderables", "infmap_clouds", function()
 			cam.PopModelMatrix()
 		end
 	else
-		for i = 9, 0, -1 do	// do same thing but render in reverse since we are under clouds
-			if !InfMap.cloud_mats[i + 1] then continue end
+		for i = cloud_layers - 1, 0, -1 do	// do same thing but render in reverse since we are under clouds
 			render.SetMaterial(InfMap.cloud_mats[i + 1])
 			m:SetTranslation(InfMap.unlocalize_vector(Vector(0, 0, i * 10000), -offset))
 			cam.PushModelMatrix(m)
 			cloud_plane:Draw()
 			cam.PopModelMatrix()
 		end
-	end
-
-	if coroutine.status(cloud_coro) == "suspended" then
-		coroutine.resume(cloud_coro)
 	end
 end)
 
