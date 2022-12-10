@@ -30,13 +30,13 @@ local function update_chunk(ent, chunk, oldchunk)
 		if IsValid(InfMap.planet_chunk_table[InfMap.ezcoord(chunk)]) then return end
 
 		local e = ents.Create("infmap_planet")
+		local insidemat = InfMap.planet_data[mat].InsideMaterial
 		InfMap.prop_update_chunk(e, chunk)
 		e:SetPlanetRadius(planet_radius)
-		local insidemat = InfMap.planet_data[mat].InsideMaterial
+		e:SetModel("models/props_c17/FurnitureCouch002a.mdl")
 		e:SetMaterial(insidemat:GetName())
 		e:Spawn()
-		local p = e:GetPhysicsObject()
-		p:SetMaterial(insidemat:GetString("$surfaceprop") or "dirt")
+		e:GetPhysicsObject():SetMaterial(insidemat:GetString("$surfaceprop") or "dirt")	// only works in singleplayer but whatever
 		InfMap.planet_chunk_table[InfMap.ezcoord(chunk)] = e
 	end
 end

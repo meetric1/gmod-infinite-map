@@ -5,7 +5,7 @@ hook.Add("PostDrawOpaqueRenderables", "infmap_planet_render", function()
 	local client_offset = LocalPlayer().CHUNK_OFFSET
 	if !client_offset then return end
 
-	local color = InfMap.unlocalize_vector(EyePos(), LocalPlayer().CHUNK_OFFSET)[3] / 1950000
+	local color = InfMap.unlocalize_vector(EyePos(), LocalPlayer().CHUNK_OFFSET)[3] / 20000 / 175
 	if color < 0.1 then return end
 
 	// reset lighting so planets dont do weird flashing shit
