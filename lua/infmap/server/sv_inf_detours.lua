@@ -404,3 +404,12 @@ hook.Add("EntityTakeDamage", "infmap_explodedetour", function(ply, dmg)
 		return true
 	end
 end)
+
+// bullets may be created in world space, translate to local
+hook.Add("EntityFireBullets", "infmap_bulletdetour", function(ent, bullet)
+	local pos, chunk = InfMap.localize_vector(bullet.Src)
+	if chunk != Vector() then
+		bullet.Src = pos
+		return true
+	end
+end)

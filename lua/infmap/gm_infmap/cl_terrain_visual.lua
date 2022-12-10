@@ -122,15 +122,15 @@ local cloud_coro = coroutine.create(function()
 			["$nocull"] = "1",
 			["$translucent"] = "1",
 		})
-		render.ClearRenderTarget(InfMap.cloud_rts[i], Color(127, 127, 127, 0))
+		render.ClearRenderTarget(InfMap.cloud_rts[i], Color(127, 127, 127, 0))	// make grey so clouds have nice gray sides
 	end
 
 	for y = 0, 511 do
 		for i = 1, cloud_layers do
 			render.PushRenderTarget(InfMap.cloud_rts[i]) cam.Start2D()
 				for x = 0, 511 do
-					local x1 = x// % (512 / 3)
-					local y1 = y// % (512 / 3)
+					local x1 = x % (512 / 2)	//loop clouds in grid of 2x2 (since res is 512)
+					local y1 = y % (512 / 2)
 					local col = (InfMap.simplex.Noise3D(x1 / 30, y1 / 30, i / 50) - i * 0.015) * 1024 + (InfMap.simplex.Noise2D(x1 / 7, y1 / 7) + 1) * 128
 					surface.SetDrawColor(255, 255, 255, col)
 					surface.DrawRect(x, y, 1, 1)
@@ -144,7 +144,7 @@ local cloud_coro = coroutine.create(function()
 end)
 
 hook.Add("PreDrawTranslucentRenderables", "infmap_clouds", function(_, sky)
-	if sky then return end
+	if sky then return end	// dont render in skybox
 	local offset = Vector(LocalPlayer().CHUNK_OFFSET)	// copy vector, dont use original memory
 	offset[1] = ((offset[1] + 250 + CurTime() * 0.25) % 500) - 250
 	offset[2] = ((offset[2] + 250 + CurTime() * 0.25) % 500) - 250
@@ -154,6 +154,7 @@ hook.Add("PreDrawTranslucentRenderables", "infmap_clouds", function(_, sky)
 		coroutine.resume(cloud_coro)
 	end
 
+	// render cloud planes
 	if offset[3] > 1 then
 		for i = 0, cloud_layers - 1 do	// overlay 10 planes to give amazing 3d look
 			render.SetMaterial(InfMap.cloud_mats[i + 1])
