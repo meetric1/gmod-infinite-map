@@ -76,7 +76,7 @@ hook.Add("PostDraw2DSkyBox", "infmap_space_skybox", function()	//draw bigass pla
 	render.OverrideDepthEnable(true, false)
 
 	local eyepos = EyePos()
-	local color = InfMap.unlocalize_vector(eyepos, LocalPlayer().CHUNK_OFFSET)[3] / 1950000
+	local color = InfMap.unlocalize_vector(eyepos, LocalPlayer().CHUNK_OFFSET)[3] / (20000 * 175)// / 255
 	local cs = 100//InfMap.chunk_size
 	local cs_2 = cs * 2
 

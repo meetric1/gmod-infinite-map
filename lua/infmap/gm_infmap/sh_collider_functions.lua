@@ -115,7 +115,7 @@ function InfMap.planet_info(x, y)
 	local random_y = math.floor(util.SharedRandom("Y" .. x .. y, -spacing, spacing))
 	local random_z = math.floor(util.SharedRandom("Z" .. x .. y, 0, 100))
 	
-	local planet_pos = Vector(x * InfMap.planet_spacing + random_x, y * InfMap.planet_spacing + random_y, random_z + 125)
+	local planet_pos = Vector(x * InfMap.planet_spacing + random_x, y * InfMap.planet_spacing + random_y, random_z + 200)
 	local planet_radius = math.floor(util.SharedRandom("Radius" .. x .. y, InfMap.chunk_size / 10, InfMap.chunk_size))
 	local planet_type = math.Round(util.SharedRandom("Type" .. x .. y, 1, #InfMap.planet_data-1))
 
