@@ -32,6 +32,7 @@ This is partially inspired by gm_infiniteflatgrass (from the Gravity Hull addon)
 * Hammer editor support
 * Particle detours
 * Optimizations reguarding large amounts of spawned objects, this is source internal and performance wont be great
+* Planets bigger than 1 chunk
 
 ### How It Works
 The map isnt actually infinite, its impossible to go past the source bounds, so the entirety of the play space in the map is occupied in the same location. A hook is used to determine which props should and should not collide, and all entities are given perceived visual offsets per entity depending on which chunk (or cell) they are in, giving the illusion the map is presumably infinite (You cant do anything physical past the source boundery, but you can render things past it). The original Gravity Hull addon used this same method with "Cells" (But I call them chunks)
