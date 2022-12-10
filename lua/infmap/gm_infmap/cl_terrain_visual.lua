@@ -51,24 +51,28 @@ end)
 
 // update renderbounds for these entities since they can appear outside of the source bounds
 local chunksize = Vector(1, 1, 0) * InfMap.chunk_size * InfMap.megachunk_size * 2
+local switch = false
 hook.Add("RenderScene", "infmap_update_renderbounds", function(eyePos)
-	local color = math.Clamp((1 - InfMap.unlocalize_vector(EyePos(), LocalPlayer().CHUNK_OFFSET)[3] / 1950000) * 512, 0, 255)
+	local height = InfMap.unlocalize_vector(EyePos(), LocalPlayer().CHUNK_OFFSET)[3] / 2000000
+	local invalid = height >= 1
+	if invalid and switch then return end
+	switch = false
 	for y = -InfMap.render_distance, InfMap.render_distance do
 		if !InfMap.client_chunks[y] then continue end
 		for x = -InfMap.render_distance, InfMap.render_distance do
 			local chunk = InfMap.client_chunks[y][x]
 			if !IsValid(chunk) or !chunk.RENDER_MESH then continue end
 
-			// set transparency
-			chunk:SetRenderMode(color < 255 and RENDERMODE_TRANSCOLOR or RENDERMODE_NORMAL)
-			chunk:SetColor(Color(255, 255, 255, color))
-
 			// update render bounds when visible
-			if color > 0 then
-				chunk:SetLocalRenderBounds(eyePos, chunksize)
+			chunk:SetLocalRenderBounds(eyePos, chunksize)
+			if invalid then 
+				chunk:SetMaterial("NULL") // invisible
+			else
+				chunk:SetMaterial(InfMap.terrain_material)
 			end
 		end
 	end
+	if invalid then switch = true end
 end)
 
 // bigass plane
@@ -103,21 +107,6 @@ hook.Add("PostDraw2DSkyBox", "infmap_terrain_skybox", function()	//draw bigass p
 	cam.PopModelMatrix()
 	render.OverrideDepthEnable(false, false)
 end)
-
-// bigass plane part 2
-local size = 10000000
-local uvsize = 1
-local min = 0
-
-local cloud_plane = Mesh()
-cloud_plane:BuildFromTriangles({
-	{pos = Vector(size, size, min), normal = Vector(0, 0, 1), u = uvsize, v = 0, tangent = Vector(1, 0, 0), userdata = {1, 0, 0, -1}},
-	{pos = Vector(size, -size, min), normal = Vector(0, 0, 1), u = uvsize, v = uvsize, tangent = Vector(1, 0, 0), userdata = {1, 0, 0, -1}},
-	{pos = Vector(-size, -size, min), normal = Vector(0, 0, 1), u = 0, v = uvsize, tangent = Vector(1, 0, 0), userdata = {1, 0, 0, -1}},
-	{pos = Vector(size, size, min), normal = Vector(0, 0, 1), u = uvsize, v = 0, tangent = Vector(1, 0, 0), userdata = {1, 0, 0, -1}},
-	{pos = Vector(-size, -size, min), normal = Vector(0, 0, 1), u = 0, v = uvsize, tangent = Vector(1, 0, 0), userdata = {1, 0, 0, -1}},
-	{pos = Vector(-size, size, min), normal = Vector(0, 0, 1), u = 0, v = 0, tangent = Vector(1, 0, 0), userdata = {1, 0, 0, -1}},
-})
 
 InfMap.cloud_rts = {}
 InfMap.cloud_mats = {}
@@ -154,7 +143,8 @@ local cloud_coro = coroutine.create(function()
 	//render.BlurRenderTarget(InfMap.cloud_rts[i], 1, 1, 1)
 end)
 
-hook.Add("PostDrawTranslucentRenderables", "infmap_clouds", function()
+hook.Add("PreDrawTranslucentRenderables", "infmap_clouds", function(_, sky)
+	if sky then return end
 	local offset = Vector(LocalPlayer().CHUNK_OFFSET)	// copy vector, dont use original memory
 	offset[1] = ((offset[1] + 250 + CurTime() * 0.25) % 500) - 250
 	offset[2] = ((offset[2] + 250 + CurTime() * 0.25) % 500) - 250
@@ -164,22 +154,15 @@ hook.Add("PostDrawTranslucentRenderables", "infmap_clouds", function()
 		coroutine.resume(cloud_coro)
 	end
 
-	local m = Matrix()
 	if offset[3] > 1 then
 		for i = 0, cloud_layers - 1 do	// overlay 10 planes to give amazing 3d look
 			render.SetMaterial(InfMap.cloud_mats[i + 1])
-			m:SetTranslation(InfMap.unlocalize_vector(Vector(0, 0, i * 10000), -offset))
-			cam.PushModelMatrix(m)
-			cloud_plane:Draw()
-			cam.PopModelMatrix()
+			render.DrawQuadEasy(InfMap.unlocalize_vector(Vector(0, 0, i * 10000), -offset), Vector(0, 0, 1), 20000000, 20000000)
 		end
 	else
 		for i = cloud_layers - 1, 0, -1 do	// do same thing but render in reverse since we are under clouds
 			render.SetMaterial(InfMap.cloud_mats[i + 1])
-			m:SetTranslation(InfMap.unlocalize_vector(Vector(0, 0, i * 10000), -offset))
-			cam.PushModelMatrix(m)
-			cloud_plane:Draw()
-			cam.PopModelMatrix()
+			render.DrawQuadEasy(InfMap.unlocalize_vector(Vector(0, 0, i * 10000), -offset), Vector(0, 0, 1), 20000000, 20000000)
 		end
 	end
 end)

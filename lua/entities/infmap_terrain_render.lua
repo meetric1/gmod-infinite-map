@@ -10,9 +10,7 @@ ENT.Purpose			= ""
 ENT.Instructions	= ""
 ENT.Spawnable		= false
 
-if !InfMap then return end
-
-if SERVER then return end	// clientside only entity
+if !InfMap or SERVER then return end
 
 InfMap.uv_scale = 100
 local function add_quad(tab, p1, p2, p3, p4, n1, n2)
@@ -133,6 +131,7 @@ function ENT:Initialize()
     self:SetModel("models/Combine_Helicopter/helicopter_bomb01.mdl")
     self:SetSolid(SOLID_NONE)
     self:SetMoveType(MOVETYPE_NONE)
+	self:SetRenderMode(RENDERMODE_NORMAL)
     self:DrawShadow(false)
 end
 
