@@ -31,10 +31,12 @@ local function update_chunk(ent, chunk, oldchunk)
 
 		local e = ents.Create("infmap_planet")
 		InfMap.prop_update_chunk(e, chunk)
-		e:SetModel("models/props_c17/FurnitureCouch002a.mdl")
 		e:SetPlanetRadius(planet_radius)
-		e:SetMaterial(InfMap.planet_data[mat].InsideMaterial:GetName())
+		local insidemat = InfMap.planet_data[mat].InsideMaterial
+		e:SetMaterial(insidemat:GetName())
 		e:Spawn()
+		local p = e:GetPhysicsObject()
+		p:SetMaterial(insidemat:GetString("$surfaceprop") or "dirt")
 		InfMap.planet_chunk_table[InfMap.ezcoord(chunk)] = e
 	end
 end
