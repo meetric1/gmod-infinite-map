@@ -3,6 +3,8 @@ hook.Add("InitPostEntity", "inf_init", function()
 	LocalPlayer():ConCommand("cl_drawspawneffect 0")
 end)
 
+local too_far = 100 * 100	// how far away before you just stop rendering entirely ^2
+
 // detour render bounds of entities in other chunks
 // needs to be updated every tick since the offset is not local to the prop
 // which entities should be checked per frame
@@ -15,9 +17,9 @@ local function update_ents(all)
 		local ent = InfMap.all_ents[i]
 		local invalid = !ent.CHUNK_OFFSET
 		invalid = invalid or InfMap.filter_entities(ent)
-		//invalid = invalid or ent:GetVelocity() + LocalPlayer():GetVelocity() == Vector()
 		invalid = invalid or !ent.RenderOverride
 		invalid = invalid or ent:GetNoDraw()
+		invalid = invalid or ent.CHUNK_OFFSET:LengthSqr() > too_far
 		
 		if invalid then
 			table.remove(InfMap.all_ents, i)	// remove invalid entity
@@ -46,6 +48,7 @@ hook.Add("RenderScene", "!infinite_update_visbounds", function(eyePos, eyeAngles
 		// to combat this we locally "shrink" the bounds so they are right infront of the players eyes
 		local world_chunk_offset = ent.CHUNK_OFFSET - lp_chunk_offset
 		if world_chunk_offset == Vector() then continue end
+		if world_chunk_offset:LengthSqr() > too_far then continue end	// too far, dont render
 
 		local prop_dir = (InfMap.unlocalize_vector(ent:InfMap_GetPos(), world_chunk_offset) - eyePos)
 
@@ -64,7 +67,7 @@ hook.Add("RenderScene", "!infinite_update_visbounds", function(eyePos, eyeAngles
 		end
 
 		if world_chunk_offset:LengthSqr() > 16 then
-			if prop_dir:LengthSqr() > 100000000 then
+			if prop_dir:LengthSqr() > too_far then	// to avoid normalizing
 				prop_dir = prop_dir * 0.01
 			end
 			ent:SetRenderBoundsWS(eyePos + prop_dir, eyePos + prop_dir)
@@ -193,7 +196,7 @@ function InfMap.prop_update_chunk(ent, chunk)
 	local len = chunk_offset:LengthSqr()
 	if len > 100 and !ent:IsPlayer() then	// make players have no lod so u can see your friends far away :)
 		// object is so small and so far away why even bother rendering it
-		if ent:BoundingRadius() < 10 or ent:IsWeapon() or len > 150*150 then // too small or too far, dont bother rendering
+		if ent:BoundingRadius() < 10 or ent:IsWeapon() or len > too_far then // too small or too far, dont bother rendering
 			ent.RenderOverride = empty_function
 			return 
 		end
@@ -201,10 +204,16 @@ function InfMap.prop_update_chunk(ent, chunk)
 		local render_SetMaterial = render.SetMaterial
 		local render_ResetModelLighting = render.ResetModelLighting
 
+		local mat = Material("models/wireframe")
 		local mat_str = ent:GetMaterial()
 		if mat_str == "" then mat_str = ent:GetMaterials()[1] end
-		if !mat_str then mat_str = "models/wireframe" end
-		local mat = Material(mat_str)
+
+		// materials arent valid for the first tick sometimes?
+		timer.Simple(0, function()
+			mat = Material(ent:GetMaterials()[1] or "models/wireframe")
+		end)
+
+		if mat_str then mat = Material(mat_str) end
 		ent.RenderOverride = function(self)	// high lod
 			render_SetMaterial(mat)
 			render_DrawBox(self:InfMap_GetPos() + visual_offset, self:GetAngles(), self:OBBMins(), self:OBBMaxs())

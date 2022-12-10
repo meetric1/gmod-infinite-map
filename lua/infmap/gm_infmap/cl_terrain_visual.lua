@@ -131,7 +131,9 @@ local cloud_coro = coroutine.create(function()
 				for x = 0, 511 do
 					local x1 = x % (512 / 2)	//loop clouds in grid of 2x2 (since res is 512)
 					local y1 = y % (512 / 2)
+
 					local col = (InfMap.simplex.Noise3D(x1 / 30, y1 / 30, i / 50) - i * 0.015) * 1024 + (InfMap.simplex.Noise2D(x1 / 7, y1 / 7) + 1) * 128
+
 					surface.SetDrawColor(255, 255, 255, col)
 					surface.DrawRect(x, y, 1, 1)
 				end
@@ -140,7 +142,6 @@ local cloud_coro = coroutine.create(function()
 
 		coroutine.yield()
 	end
-	//render.BlurRenderTarget(InfMap.cloud_rts[i], 1, 1, 1)
 end)
 
 hook.Add("PreDrawTranslucentRenderables", "infmap_clouds", function(_, sky)
