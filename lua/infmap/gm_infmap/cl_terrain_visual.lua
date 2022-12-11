@@ -147,8 +147,8 @@ end)
 hook.Add("PreDrawTranslucentRenderables", "infmap_clouds", function(_, sky)
 	if sky then return end	// dont render in skybox
 	local offset = Vector(LocalPlayer().CHUNK_OFFSET)	// copy vector, dont use original memory
-	offset[1] = ((offset[1] + 250 + CurTime() * 0.25) % 500) - 250
-	offset[2] = ((offset[2] + 250 + CurTime() * 0.25) % 500) - 250
+	offset[1] = ((offset[1] + 250 + CurTime() * 0.1) % 500) - 250
+	offset[2] = ((offset[2] + 250 + CurTime() * 0.1) % 500) - 250
 	offset[3] = offset[3] - 10
 
 	if coroutine.status(cloud_coro) == "suspended" then

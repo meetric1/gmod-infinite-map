@@ -39,6 +39,13 @@ local function update_chunk(ent, chunk, oldchunk)
 	end
 end
 
+// spawn planets after cleanup
+hook.Add("PostCleanupMap", "infmap_planet_regen", function()
+	for k, v in ipairs(ents.GetAll()) do
+		if !v.CHUNK_OFFSET then continue end
+		update_chunk(v, v.CHUNK_OFFSET)
+	end
+end)
 
 // handles generating chunk collision
 hook.Add("PropUpdateChunk", "infmap_infgen_planets", function(ent, chunk, oldchunk)
