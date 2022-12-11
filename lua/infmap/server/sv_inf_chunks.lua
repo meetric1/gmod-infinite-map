@@ -94,7 +94,7 @@ timer.Create("infinite_chunkmove_update", 0.1, 0, function()
 		local ent = all_ents[i]
 		local invalid = !ent.CHUNK_OFFSET
 		invalid = invalid or InfMap.filter_entities(ent)
-		invalid = invalid or (IsValid(ent:GetPhysicsObject()) and !ent:GetPhysicsObject():IsMoveable())
+		invalid = invalid or ent:GetVelocity() == Vector()
 		invalid = invalid or IsValid(ent:GetParent())
 		invalid = invalid or ent:IsPlayer() and !ent:Alive()
 		
