@@ -169,7 +169,13 @@ function ENT:GenerateTrees(heightFunction, chunk, size)
             local randseedx = util.SharedRandom("TerrainSeedX" .. chunkIndex, 0, 1, randomIndex)
             local randseedy = util.SharedRandom("TerrainSeedY" .. chunkIndex, 0, 1, randomIndex)
             local randPos = Vector(x + randseedx - chunk_resolution * 0.5, y + randseedy - chunk_resolution * 0.5) * (size / chunk_resolution) * 2
-            local finalPos = Vector(randPos[1], randPos[2], heightFunction(randPos[1] + cox, randPos[2] + coy) - 45)
+
+            // if too steep dont place tree
+            if smoothedNormal(heightFunction, randPos, chunk_resolution * (size / chunk_resolution) * 0.1, cox, coy):GetNormalized()[3] < 0.8 then
+                continue
+            end
+
+            local finalPos = Vector(randPos[1], randPos[2], heightFunction(randPos[1] + cox, randPos[2] + coy) - 40)
 
             // tree is not in planet, bail
             if finalPos:LengthSqr() > size * size - 2000 * 2000 then continue end

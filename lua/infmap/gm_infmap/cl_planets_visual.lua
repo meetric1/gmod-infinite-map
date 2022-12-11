@@ -50,7 +50,6 @@ hook.Add("PostDrawOpaqueRenderables", "infmap_planet_render", function()
 				clouds:SetFloat("$alpha", cloudinfo[2])
 				render.SetMaterial(clouds)
 				render.DrawSphere(InfMap.unlocalize_vector(Vector(), final_offset), radius*1.025, planet_res, planet_res)
-				render.DrawSphere(InfMap.unlocalize_vector(Vector(), final_offset), -radius*1.025, planet_res, planet_res)
 			end
 			
 			if len > 0 then continue end

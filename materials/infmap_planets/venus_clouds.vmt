@@ -2,4 +2,5 @@ VertexLitGeneric
 {
 	"$basetexture" "infmap_planets/venus_clouds"
 	"$model" 1
+	"$nocull" 1
 }
