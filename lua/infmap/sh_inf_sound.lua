@@ -16,6 +16,7 @@ end
 
 local function IsLoop( data )
 	local a,b = string.find(string.lower(data.OriginalSoundName),"loop")
+	if !data.Flags then return false end
 	return (a and b) or data.Flags % 2 ~= 0 //is loop sound?
 end
 
