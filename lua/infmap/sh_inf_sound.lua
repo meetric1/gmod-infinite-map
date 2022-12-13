@@ -177,7 +177,7 @@ else
 			end
 		end
 		for k, v in pairs(inf_csounds) do
-			if !IsValid(k) then table.RemoveByValue(inf_csounds,k) continue end
+			if !IsValid(v) or !IsValid(k) then table.RemoveByValue(inf_csounds,k) continue end
 			if (CheckDistance(LocalPlayer(), v, 4) or CheckDistance(LocalPlayer(), k, 4)) and v.Position ~= k:GetPos() then //if within chunk_size and moving, update pos
 				local pos = k:GetPos()
 				pos[1] = math.Clamp(pos[1],-100000,100000) //clamp client prop pos to avoid out of bounds errors
