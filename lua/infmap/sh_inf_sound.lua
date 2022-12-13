@@ -23,6 +23,7 @@ end
 local sqrdist = InfMap.chunk_size * InfMap.chunk_size
 
 local function CheckDistance( ent1, ent2, num )
+	if !IsValid(ent1) or !IsValid(ent2) then return 0 end
 	return ent1:GetPos():DistToSqr(ent2:GetPos()) < sqrdist*num //get distance, disttosqr faster
 end	
 
