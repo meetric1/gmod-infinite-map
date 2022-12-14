@@ -156,19 +156,18 @@ else
 	//receive sounds from server, either plays on client ent or ent itself (for awkward looping sounds)
 	net.Receive( "inf_ent_networksound", function()
 		local data = net.ReadTable()
-		if IsValid(data.Entity) then
-			if IsLoop(data) and !IsValidLoop(data) then //check if sound is awkward looping sound
-				inf_sounds[data.Entity] = data //attach sound to looping monitor
-				data.Entity:EmitSound(data.OriginalSoundName,data.SoundLevel,data.Pitch,data.Volume,data.Channel,data.Flags,data.DSP) //play sound directly on entity
-			else
-				if game.SinglePlayer() or data.Entity ~= LocalPlayer() or valid_sounds[data.OriginalSoundName] then //exception for players, sounds seem to duplicate for them
-					if !IsValid(inf_csounds[data.Entity]) then
-						inf_csounds[data.Entity] = SoundObject(data.Entity) //create clientside prop
-						inf_csounds[data.Entity].Position = data.Entity:GetPos() //store client prop position
-					end
-					inf_csounds[data.Entity]:EmitSound(data.OriginalSoundName,data.SoundLevel,data.Pitch,data.Volume,data.Channel,data.Flags,data.DSP) //play sound on client prop
-					data.Entity:CallOnRemove("stopsound_"..data.OriginalSoundName,function(ent) pcall(function() inf_csounds[ent]:StopSound( data.OriginalSoundName ) inf_csounds[ent]:Remove() end) end) //Remove client prop on entity deletion
+		if !IsValid(data.Entity) then data.Entity = LocalPlayer() end
+		if IsLoop(data) and !IsValidLoop(data) then //check if sound is awkward looping sound
+			inf_sounds[data.Entity] = data //attach sound to looping monitor
+			data.Entity:EmitSound(data.OriginalSoundName,data.SoundLevel,data.Pitch,data.Volume,data.Channel,data.Flags,data.DSP) //play sound directly on entity
+		else
+			if game.SinglePlayer() or data.Entity ~= LocalPlayer() or valid_sounds[data.OriginalSoundName] then //exception for players, sounds seem to duplicate for them
+				if !IsValid(inf_csounds[data.Entity]) then
+					inf_csounds[data.Entity] = SoundObject(data.Entity) //create clientside prop
+					inf_csounds[data.Entity].Position = data.Entity:GetPos() //store client prop position
 				end
+				inf_csounds[data.Entity]:EmitSound(data.OriginalSoundName,data.SoundLevel,data.Pitch,data.Volume,data.Channel,data.Flags,data.DSP) //play sound on client prop
+				data.Entity:CallOnRemove("stopsound_"..data.OriginalSoundName,function(ent) pcall(function() inf_csounds[ent]:StopSound( data.OriginalSoundName ) inf_csounds[ent]:Remove() end) end) //Remove client prop on entity deletion
 			end
 		end
 	end)
