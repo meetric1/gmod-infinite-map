@@ -6,6 +6,8 @@
 // looping sounds are sorted into two types, valid and non-valid (scraping physics sounds)
 // if valid, then looping sounds are stored by the server and distributed when needed.
 // CSoundPatches are bound directly to client props as their behaviour is already controlled by their respective entities.
+
+// Made by WFL
  
 local function IsValidLoop( data )
 	if data.Entity:GetBoneSurfaceProp( 0 ) == 0 then return false end
