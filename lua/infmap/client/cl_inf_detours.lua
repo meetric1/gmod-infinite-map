@@ -5,11 +5,37 @@ local PhysObjMT = FindMetaTable("PhysObj")
 local PlayerMT = FindMetaTable("Player")
 local NextBotMT = FindMetaTable("NextBot")
 local CTakeDamageInfoMT = FindMetaTable("CTakeDamageInfo")
+local ParticleEmitterMT = FindMetaTable("ParticleEmitter")
 
 EntityMT.InfMap_GetPos = EntityMT.InfMap_GetPos or EntityMT.GetPos
 function EntityMT:GetPos()
 	if !self.CHUNK_OFFSET or !LocalPlayer().CHUNK_OFFSET then return self:InfMap_GetPos(pos) end
 	return InfMap.unlocalize_vector(self:InfMap_GetPos(), self.CHUNK_OFFSET - LocalPlayer().CHUNK_OFFSET)
+end
+
+EntityMT.InfMap_StartParticleEffect = EntityMT.InfMap_StartParticleEffect or EntityMT.StartParticleEffect
+function EntityMT:StartParticleEffect(effectName, attachType, entity, attachName)
+	local attachType, entity, attachName = attachType, entity, attachName
+	if entity and IsValid(entity) then
+		local chunk_pos, chunk_offset = InfMap.localize_vector(entity:GetPos())
+		entity = InfMap.unlocalize_vector(chunk_pos, chunk_offset)
+	end
+	return self:InfMap_StartParticleEffect(effectName, attachType, entity, attachName)
+end
+
+EntityMT.InfMap_StopParticleEffect = EntityMT.InfMap_StopParticleEffect or EntityMT.StopParticleEffect
+function EntityMT:StopParticleEffect(effectName, bDestroyImmediately)
+	return self:InfMap_StopParticleEffect(effectName, bDestroyImmediately)
+end
+
+EntityMT.InfMap_GetParticleEmitter = EntityMT.InfMap_GetParticleEmitter or EntityMT.GetParticleEmitter
+function EntityMT:GetParticleEmitter(nSlot)
+	return self:InfMap_GetParticleEmitter(nSlot)
+end
+
+EntityMT.InfMap_ParticleEmitter = EntityMT.InfMap_ParticleEmitter or EntityMT.ParticleEmitter
+function EntityMT:ParticleEmitter(nSlot)
+	return self:InfMap_ParticleEmitter(nSlot)
 end
 
 EntityMT.InfMap_LocalToWorld = EntityMT.InfMap_LocalToWorld or EntityMT.LocalToWorld
