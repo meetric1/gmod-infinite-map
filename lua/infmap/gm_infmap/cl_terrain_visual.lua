@@ -1,7 +1,7 @@
 // this file controls visual chunkloading and rendering
-InfMap.megachunk_size = 10
-InfMap.render_distance = 2
-InfMap.render_max_height = 100
+InfMap.megachunk_size = 10	// in chunks
+InfMap.render_distance = 2	// ^
+InfMap.render_max_height = 100	// ^
 InfMap.filter.infmap_terrain_render = true // dont pass in chunks
 InfMap.terrain_material = "infmap/flatgrass"
 
@@ -9,7 +9,7 @@ InfMap.terrain_material = "infmap/flatgrass"
 local last_mega_chunk
 InfMap.client_chunks = InfMap.client_chunks or {}
 hook.Add("PropUpdateChunk", "infmap_terrain_init", function(ent, chunk, old_chunk)
-	if ent == LocalPlayer() and chunk[3] < InfMap.render_max_height then
+	if ent == LocalPlayer() and chunk[3] <= InfMap.render_max_height then
 		local _, mega_chunk = InfMap.localize_vector(chunk, InfMap.megachunk_size) mega_chunk[3] = 0
 		local chunk_scale = InfMap.chunk_size * 2
 		local delta_chunk = mega_chunk - (last_mega_chunk or mega_chunk)
@@ -54,7 +54,7 @@ end)
 local chunksize = Vector(1, 1, 0) * InfMap.chunk_size * InfMap.megachunk_size * 2
 local switch = false
 hook.Add("RenderScene", "infmap_update_renderbounds", function(eyePos)
-	local invalid = (LocalPlayer().CHUNK_OFFSET or Vector())[3] >= InfMap.render_max_height
+	local invalid = (LocalPlayer().CHUNK_OFFSET or Vector())[3] > InfMap.render_max_height
 	if invalid and switch then return end
 	switch = false
 	for y = -InfMap.render_distance, InfMap.render_distance do
@@ -118,7 +118,7 @@ local cloud_coro = coroutine.create(function()
 			["$nocull"] = "1",
 			["$translucent"] = "1",
 		})
-		render.ClearRenderTarget(InfMap.cloud_rts[i], Color(127, 127, 127, 0))	// make grey so clouds have nice gray sides
+		render.ClearRenderTarget(InfMap.cloud_rts[i], Color(127, 127, 127, 0))	// make gray so clouds have nice gray sides
 	end
 
 	for y = 0, 511 do
@@ -153,14 +153,14 @@ hook.Add("PreDrawTranslucentRenderables", "infmap_clouds", function(_, sky)
 
 	// render cloud planes
 	if offset[3] > 1 then
-		for i = 0, cloud_layers - 1 do	// overlay 10 planes to give amazing 3d look
-			render.SetMaterial(InfMap.cloud_mats[i + 1])
-			render.DrawQuadEasy(InfMap.unlocalize_vector(Vector(0, 0, i * 10000), -offset), Vector(0, 0, 1), 20000000, 20000000)
+		for i = 1, cloud_layers do	// overlay 10 planes to give amazing 3d look
+			render.SetMaterial(InfMap.cloud_mats[i])
+			render.DrawQuadEasy(InfMap.unlocalize_vector(Vector(0, 0, (i - 1) * 10000), -offset), Vector(0, 0, 1), 20000000, 20000000)
 		end
 	else
-		for i = cloud_layers - 1, 0, -1 do	// do same thing but render in reverse since we are under clouds
-			render.SetMaterial(InfMap.cloud_mats[i + 1])
-			render.DrawQuadEasy(InfMap.unlocalize_vector(Vector(0, 0, i * 10000), -offset), Vector(0, 0, 1), 20000000, 20000000)
+		for i = cloud_layers, 1, -1 do	// do same thing but render in reverse since we are under clouds
+			render.SetMaterial(InfMap.cloud_mats[i])
+			render.DrawQuadEasy(InfMap.unlocalize_vector(Vector(0, 0, (i - 1) * 10000), -offset), Vector(0, 0, 1), 20000000, 20000000)
 		end
 	end
 end)
@@ -169,7 +169,7 @@ hook.Add("SetupWorldFog", "!infmap_fog", function()	// The Fog Is Coming
 	local co = LocalPlayer().CHUNK_OFFSET
 	if !co or co[3] > 14 then return end
 	render.FogStart(500000)
-	render.FogMaxDensity(math.min(0.5, 1.4 - co[3] * 0.1))
+	render.FogMaxDensity(math.min(0.5, 1.4 - co[3] * 0.1))	// magic numbers that look good
 	render.FogColor(153, 178, 204)
 	//render.FogColor(180, 190, 200)
 	render.FogEnd(1000000)
