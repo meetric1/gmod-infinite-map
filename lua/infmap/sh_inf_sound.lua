@@ -151,7 +151,9 @@ else
 		["Weapon_PhysCannon.Pickup"] = true,
 		["Player.FallDamage"] = true,
 		["Player.Death"] = true,
-		["Grenade.Blip"] = true
+		["Grenade.Blip"] = true,
+		["HL2Player.FlashlightOn"] = true,
+		["HL2Player.FlashlightOff"] = true
 	}
 
 	//receive sounds from server, either plays on client ent or ent itself (for awkward looping sounds)
