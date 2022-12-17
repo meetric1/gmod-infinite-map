@@ -223,7 +223,7 @@ function ENT:Initialize()
     self:SetMoveType(MOVETYPE_NONE)
     self:EnableCustomCollisions(true)
     self:DrawShadow(false)
-    self:SetMaterial("NULL")
+    self:SetRenderMode(RENDERMODE_NONE) // dont render, but do network
     self:AddSolidFlags(FSOLID_FORCE_WORLD_ALIGNED)
     self:AddFlags(FL_STATICPROP)
     //self:AddFlags(FL_DONTTOUCH)

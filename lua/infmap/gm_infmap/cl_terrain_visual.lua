@@ -1,6 +1,7 @@
 // this file controls visual chunkloading and rendering
 InfMap.megachunk_size = 10
 InfMap.render_distance = 2
+InfMap.render_max_height = 100
 InfMap.filter.infmap_terrain_render = true // dont pass in chunks
 InfMap.terrain_material = "infmap/flatgrass"
 
@@ -8,7 +9,7 @@ InfMap.terrain_material = "infmap/flatgrass"
 local last_mega_chunk
 InfMap.client_chunks = InfMap.client_chunks or {}
 hook.Add("PropUpdateChunk", "infmap_terrain_init", function(ent, chunk, old_chunk)
-	if ent == LocalPlayer() and chunk[3] < 100 then
+	if ent == LocalPlayer() and chunk[3] < InfMap.render_max_height then
 		local _, mega_chunk = InfMap.localize_vector(chunk, InfMap.megachunk_size) mega_chunk[3] = 0
 		local chunk_scale = InfMap.chunk_size * 2
 		local delta_chunk = mega_chunk - (last_mega_chunk or mega_chunk)
@@ -53,8 +54,7 @@ end)
 local chunksize = Vector(1, 1, 0) * InfMap.chunk_size * InfMap.megachunk_size * 2
 local switch = false
 hook.Add("RenderScene", "infmap_update_renderbounds", function(eyePos)
-	local height = InfMap.unlocalize_vector(EyePos(), LocalPlayer().CHUNK_OFFSET)[3] / 2000000
-	local invalid = height >= 1
+	local invalid = (LocalPlayer().CHUNK_OFFSET or Vector())[3] >= InfMap.render_max_height
 	if invalid and switch then return end
 	switch = false
 	for y = -InfMap.render_distance, InfMap.render_distance do
@@ -65,11 +65,7 @@ hook.Add("RenderScene", "infmap_update_renderbounds", function(eyePos)
 
 			// update render bounds when visible
 			chunk:SetLocalRenderBounds(eyePos, chunksize)
-			if invalid then 
-				chunk:SetMaterial("NULL") // invisible
-			else
-				chunk:SetMaterial(InfMap.terrain_material)
-			end
+			chunk:SetNoDraw(invalid)
 		end
 	end
 	if invalid then switch = true end
