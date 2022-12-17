@@ -12,8 +12,13 @@ ENT.Spawnable		= false
 
 if !InfMap then return end
 
+function ENT:SetupDataTables()
+	self:NetworkVar("Entity", 0, "ReferenceParent")
+end
+
 function ENT:SetReferenceData(ent, chunk)
-    self.REFERENCE_DATA = {ent, chunk, ent.CHUNK_OFFSET + chunk}    //1 = ent, 2 = world chunk, 3 = local chunk
+    self:SetReferenceParent(ent)
+    self.REFERENCE_DATA = {parent = ent, chunk = chunk, chunk_offset = ent.CHUNK_OFFSET + chunk}    //1 = ent, 2 = world chunk, 3 = local chunk
 end
 
 local function unfuck_table(verts)
@@ -27,17 +32,62 @@ local function unfuck_table(verts)
     return actually_useful_data
 end
 
-function ENT:Initialize()
-    if CLIENT then 
-        self:SetSolid(SOLID_VPHYSICS) // init physics object on client
-        self:SetMoveType(MOVETYPE_VPHYSICS)
+function ENT:InitializePhysics(convexes)
+    local points = 0
+    for i = 1, #convexes do points = points + #convexes[i] end
+    if points < 1024 then // lags a lot when generating more than this
+        self:PhysicsInitMultiConvex(unfuck_table(convexes))
+    else
+        self:PhysicsInit(SOLID_VPHYSICS)
+    end
+
+    self:EnableCustomCollisions(true)
+    
+    if self:GetPhysicsObject():IsValid() then
+        self:GetPhysicsObject():EnableMotion(false)
+    end
+end
+
+function ENT:InitializeClient(parent)
+    if !IsValid(parent) then
+        print("Failed to initialize clone", self)
+        return
+    end
+
+    self:SetSolid(SOLID_VPHYSICS) 
+    self:SetMoveType(MOVETYPE_VPHYSICS)
+    self:SetModel(parent:GetModel())
+    self:SetCollisionGroup(parent:GetCollisionGroup())
+
+    local phys = parent:GetPhysicsObject()
+    if !phys:IsValid() then // no custom physmesh, bail
         self:PhysicsInit(SOLID_VPHYSICS)
         return 
     end
+    
+    local convexes = phys:GetMeshConvexes()
+    if !convexes then   // no convexes, bail
+        self:PhysicsInit(SOLID_VPHYSICS)
+        return
+    end
+    
+    self:InitializePhysics(convexes)
+end
 
-    local parent = self.REFERENCE_DATA[1]
+function ENT:Initialize()
+    local parent = self:GetReferenceParent()
+    if CLIENT then
+        self:InitializeClient(parent)
+        return
+    end
+    
+    self:SetModel(parent:GetModel())
+    self:SetCollisionGroup(parent:GetCollisionGroup())
+    self:SetSolid(SOLID_VPHYSICS)
+    self:SetMoveType(MOVETYPE_VPHYSICS)
+
     local phys = parent:GetPhysicsObject()
-    if !phys:IsValid() then     
+    if !phys:IsValid() then
         SafeRemoveEntity(self)
         return 
     end
@@ -48,24 +98,9 @@ function ENT:Initialize()
         return
     end
 
-    self:SetModel(parent:GetModel())
-    local points = 0
-    for i = 1, #convexes do points = points + #convexes[i] end
-    if points < 1024 then // lags a lot when more than this
-        self:PhysicsInitMultiConvex(unfuck_table(convexes))
-    else
-        self:PhysicsInit(SOLID_VPHYSICS)
-    end
-    self:SetSolid(SOLID_VPHYSICS) 
-    self:SetMoveType(MOVETYPE_VPHYSICS)
-    self:EnableCustomCollisions(true)
-    self:PhysWake()
-    self:SetCollisionGroup(parent:GetCollisionGroup())
-    if self:GetPhysicsObject():IsValid() then
-        self:GetPhysicsObject():EnableMotion(false)
-    end
+    self:InitializePhysics(convexes)
 
-    InfMap.prop_update_chunk(self, self.REFERENCE_DATA[3])
+    InfMap.prop_update_chunk(self, self.REFERENCE_DATA.chunk_offset)
 end
 
 function ENT:Think()
@@ -76,6 +111,9 @@ function ENT:Think()
             phys:EnableMotion(false)
             phys:SetPos(self:GetPos())
             phys:SetAngles(self:GetAngles())
+        else
+            print("Regenerating Physics For Clone", self)
+            self:Initialize()
         end
         return 
     end
@@ -84,14 +122,15 @@ function ENT:Think()
     if !data then 
         SafeRemoveEntity(self)
     end
-    local parent = data[1]
-    if !parent or !parent:IsValid() or data[3] != parent.CHUNK_OFFSET + data[2] then
+    
+    local parent = data.parent
+    if !IsValid(parent) or data.chunk_offset != parent.CHUNK_OFFSET + data.chunk then
         SafeRemoveEntity(self)
         return
     end
 
-    self:InfMap_SetPos(data[1]:InfMap_GetPos() - data[2] * InfMap.chunk_size * 2)
-    self:SetAngles(data[1]:GetAngles())
+    self:InfMap_SetPos(data.parent:InfMap_GetPos() - data.chunk * InfMap.chunk_size * 2)
+    self:SetAngles(data.parent:GetAngles())
     
     local phys = self:GetPhysicsObject()
     if phys:IsValid() then phys:EnableMotion(false) end
