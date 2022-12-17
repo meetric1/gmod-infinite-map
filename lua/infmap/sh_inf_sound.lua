@@ -11,9 +11,10 @@
  
 local function IsValidLoop( data )
 	if data.Entity:GetBoneSurfaceProp( 0 ) == 0 then return false end
-	local a = sound.GetProperties(util.GetSurfaceData(util.GetSurfaceIndex(data.Entity:GetBoneSurfaceProp( 0 ))).scrapeRoughSound).sound
-	local b = sound.GetProperties(util.GetSurfaceData(util.GetSurfaceIndex(data.Entity:GetBoneSurfaceProp( 0 ))).scrapeSmoothSound).sound
-	return a ~= data.OriginalSoundName and b ~= data.OriginalSoundName //is valid loop sound?
+	local a = string.gsub(sound.GetProperties(util.GetSurfaceData(util.GetSurfaceIndex(data.Entity:GetBoneSurfaceProp( 0 ))).scrapeRoughSound).sound,"%d+","")
+	local b = string.gsub(sound.GetProperties(util.GetSurfaceData(util.GetSurfaceIndex(data.Entity:GetBoneSurfaceProp( 0 ))).scrapeSmoothSound).sound,"%d+","")
+	local c = string.gsub(data.OriginalSoundName,"%d+","")
+	return a ~= c and b ~= c //is valid loop sound?
 end
 
 local function IsLoop( data )
