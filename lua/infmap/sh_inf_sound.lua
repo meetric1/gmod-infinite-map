@@ -11,9 +11,10 @@
  
 local function IsValidLoop( data )
 	if data.Entity:GetBoneSurfaceProp( 0 ) == 0 then return false end
-	local a = sound.GetProperties(util.GetSurfaceData(util.GetSurfaceIndex(data.Entity:GetBoneSurfaceProp( 0 ))).scrapeRoughSound).sound
-	local b = sound.GetProperties(util.GetSurfaceData(util.GetSurfaceIndex(data.Entity:GetBoneSurfaceProp( 0 ))).scrapeSmoothSound).sound
-	return a ~= data.OriginalSoundName and b ~= data.OriginalSoundName //is valid loop sound?
+	local a = string.gsub(sound.GetProperties(util.GetSurfaceData(util.GetSurfaceIndex(data.Entity:GetBoneSurfaceProp( 0 ))).scrapeRoughSound).sound,"%d+","")
+	local b = string.gsub(sound.GetProperties(util.GetSurfaceData(util.GetSurfaceIndex(data.Entity:GetBoneSurfaceProp( 0 ))).scrapeSmoothSound).sound,"%d+","")
+	local c = string.gsub(data.OriginalSoundName,"%d+","")
+	return a ~= c and b ~= c //is valid loop sound?
 end
 
 local function IsLoop( data )
@@ -142,16 +143,32 @@ else
 		s_Model:Spawn()
 		return s_Model
 	end
+								
+	local valid_sounds = {
+		["Weapon_Crossbow.BoltElectrify"] = true,
+		["Weapon_PhysCannon.TooHeavy"] = true,
+		["weapons/physcannon/hold_loop.wav"] = true,
+		["Weapon_PhysCannon.Pickup"] = true,
+		["Weapon_PhysCannon.Drop"] = true,
+		["Weapon_PhysCannon.OpenClaws"] = true,
+		["Weapon_PhysCannon.CloseClaws"] = true,
+		["Player.FallDamage"] = true,
+		["Player.Death"] = true,
+		["Grenade.Blip"] = true,
+		["HL2Player.FlashlightOn"] = true,
+		["HL2Player.FlashlightOff"] = true
+	}
 
 	//receive sounds from server, either plays on client ent or ent itself (for awkward looping sounds)
 	net.Receive( "inf_ent_networksound", function()
 		local data = net.ReadTable()
+		if !IsValid(data.Entity) and valid_sounds[data.OriginalSoundName] then data.Entity = LocalPlayer() end
 		if IsValid(data.Entity) then
-			if IsLoop(data) and !IsValidLoop(data) then //check if sound is awkward looping sound
+			if IsLoop(data) and !IsValidLoop(data) and data.Entity:GetParent() ~= LocalPlayer() then //check if sound is awkward looping sound
 				inf_sounds[data.Entity] = data //attach sound to looping monitor
 				data.Entity:EmitSound(data.OriginalSoundName,data.SoundLevel,data.Pitch,data.Volume,data.Channel,data.Flags,data.DSP) //play sound directly on entity
 			else
-				if game.SinglePlayer() or data.Entity ~= LocalPlayer() or !LocalPlayer():Alive() then //exception for players, sounds seem to duplicate for them
+				if game.SinglePlayer() or data.Entity ~= LocalPlayer() or valid_sounds[data.OriginalSoundName] then //exception for players, sounds seem to duplicate for them
 					if !IsValid(inf_csounds[data.Entity]) then
 						inf_csounds[data.Entity] = SoundObject(data.Entity) //create clientside prop
 						inf_csounds[data.Entity].Position = data.Entity:GetPos() //store client prop position
