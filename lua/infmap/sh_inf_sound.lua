@@ -159,7 +159,7 @@ else
 				inf_sounds[data.Entity] = data //attach sound to looping monitor
 				data.Entity:EmitSound(data.OriginalSoundName,data.SoundLevel,data.Pitch,data.Volume,data.Channel,data.Flags,data.DSP) //play sound directly on entity
 			else
-				if game.SinglePlayer() or !IsPlayerSound(data) then //exception for players, sounds seem to duplicate for them
+				if game.SinglePlayer() or !(data.Entity == LocalPlayer() and IsPlayerSound(data)) then //exception for players, sounds seem to duplicate for them
 					if !IsValid(inf_csounds[data.Entity]) then
 						inf_csounds[data.Entity] = SoundObject(data.Entity) //create clientside prop
 						inf_csounds[data.Entity].Position = data.Entity:GetPos() //store client prop position
