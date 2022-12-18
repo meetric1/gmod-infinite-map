@@ -77,9 +77,9 @@ end)
 // serverside stuff now
 if CLIENT then
     local waterMatrix = Matrix()
-    waterMatrix:SetScale(Vector(300000, 300000, 1))
+    waterMatrix:SetScale(Vector(500000, 500000, 1))
 
-    local uvscale = 3000
+    local uvscale = 5000
     local waterMesh = Mesh()
     waterMesh:BuildFromTriangles({
         {pos = Vector(-1, -1, 0), u = 0, v = uvscale},
