@@ -153,7 +153,7 @@ else
 	//receive sounds from server, either plays on client ent or ent itself (for awkward looping sounds)
 	net.Receive( "inf_ent_networksound", function()
 		local data = net.ReadTable()
-		if !IsValid(data.Entity) and valid_sounds[data.OriginalSoundName] then data.Entity = LocalPlayer() end
+		if !IsValid(data.Entity) and IsValid(data.OriginalSoundName) and valid_sounds[data.OriginalSoundName] then data.Entity = LocalPlayer() end
 		if IsValid(data.Entity) then
 			if IsLoop(data) and !IsValidLoop(data) and data.Entity:GetParent() ~= LocalPlayer() then //check if sound is awkward looping sound
 				inf_sounds[data.Entity] = data //attach sound to looping monitor
