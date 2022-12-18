@@ -149,6 +149,21 @@ else
 		local c,d = string.find(string.lower(data.SoundName),"weapon")
 		return (a and b) or (c and d) or data.OriginalSoundName == "Airboat.FireGunRevDown"
 	end
+    
+    local valid_sounds = {
+		["Weapon_Crossbow.BoltElectrify"] = true,
+		["Weapon_PhysCannon.TooHeavy"] = true,
+		["weapons/physcannon/hold_loop.wav"] = true,
+		["Weapon_PhysCannon.Pickup"] = true,
+		["Weapon_PhysCannon.Drop"] = true,
+		["Weapon_PhysCannon.OpenClaws"] = true,
+		["Weapon_PhysCannon.CloseClaws"] = true,
+		["Player.FallDamage"] = true,
+		["Player.Death"] = true,
+		["Grenade.Blip"] = true,
+		["HL2Player.FlashlightOn"] = true,
+		["HL2Player.FlashlightOff"] = true
+	}
 
 	//receive sounds from server, either plays on client ent or ent itself (for awkward looping sounds)
 	net.Receive( "inf_ent_networksound", function()
@@ -159,7 +174,7 @@ else
 				inf_sounds[data.Entity] = data //attach sound to looping monitor
 				data.Entity:EmitSound(data.OriginalSoundName,data.SoundLevel,data.Pitch,data.Volume,data.Channel,data.Flags,data.DSP) //play sound directly on entity
 			else
-				if game.SinglePlayer() or !(data.Entity == LocalPlayer() and IsPlayerSound(data)) then //exception for players, sounds seem to duplicate for them
+				if game.SinglePlayer() or !(data.Entity == LocalPlayer() and IsPlayerSound(data)) or valid_sounds[data.OriginalSoundName] then //exception for players, sounds seem to duplicate for them
 					if !IsValid(inf_csounds[data.Entity]) then
 						inf_csounds[data.Entity] = SoundObject(data.Entity) //create clientside prop
 						inf_csounds[data.Entity].Position = data.Entity:GetPos() //store client prop position
