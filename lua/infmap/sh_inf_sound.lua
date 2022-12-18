@@ -146,7 +146,8 @@ else
 								
 	local function IsPlayerSound(data)
 		local a,b = string.find(string.lower(data.OriginalSoundName),"footsteps")
-		return (a and b) or data.OriginalSoundName == "Airboat.FireGunRevDown"
+		local c,d = string.find(string.lower(data.SoundName),"weapon")
+		return (a and b) or (c and d) or data.OriginalSoundName == "Airboat.FireGunRevDown"
 	end
 
 	//receive sounds from server, either plays on client ent or ent itself (for awkward looping sounds)
