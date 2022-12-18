@@ -44,7 +44,7 @@ function InfMap.intersect_box(min_a, max_a, min_b, max_b)
 end
 
 // all the classes that are useless
-InfMap.filter = {
+InfMap.filter = InfMap.filter or {
 	infmap_clone = true,
 	physgun_beam = true,
 	worldspawn = true,
@@ -83,7 +83,7 @@ InfMap.filter = {
 }
 
 // classes that should not be picked up by physgun
-InfMap.disable_pickup = {
+InfMap.disable_pickup = InfMap.disable_pickup or {
 	infmap_clone = true,
 }
 
@@ -166,7 +166,7 @@ function InfMap.constrained_status(ent)
 		return ent.CONSTRAINED_MAIN
 	end
 
-	ent.CONSTRAINED_DATA = InfMap.get_all_constrained(ent)	// expensive function
+	ent.CONSTRAINED_DATA = ent.CONSTRAINED_DATA or InfMap.get_all_constrained(ent)	// expensive function
 
 	local ent_index = ent:EntIndex()
 	for _, constrained_ent in ipairs(ent.CONSTRAINED_DATA) do
@@ -179,6 +179,8 @@ function InfMap.constrained_status(ent)
 			ent.CONSTRAINED_MAIN = false
 			return ent.CONSTRAINED_MAIN
 		end
+
+		constrained_ent.CONSTRAINED_DATA = ent.CONSTRAINED_DATA
 	end
 
 	ent.CONSTRAINED_MAIN = true
@@ -191,11 +193,10 @@ function InfMap.reset_constrained_data(ent)
 end
 
 function InfMap.ezcoord(chunk)
-	if TypeID(chunk) ~= TYPE_VECTOR then return "0,0,0" end
 	return chunk[1] .. "," .. chunk[2] .. "," .. chunk[3]
 end
 
-InfMap.ent_list = {}
+InfMap.ent_list = InfMap.ent_list or {}
 
 function InfMap.cleanup_track(ent)
 	if not IsValid(ent) then return end

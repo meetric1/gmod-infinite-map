@@ -261,8 +261,17 @@ hook.Add("Think", "infinite_ccc", function()
 end)
 
 // when players spawn reset them to 0,0,0 chunk
-hook.Add("PlayerSpawn", "infinite_plyreset", function(ply, trans)
+hook.Add("PlayerSpawn", "infmap_plyreset", function(ply, trans)
 	InfMap.prop_update_chunk(ply, Vector())
+end)
+
+// if player enters seat from another chunk set them to that chunk
+hook.Add("PlayerEnteredVehicle", "infmap_seatreset", function(ply, veh, role)
+	local co1 = ply.CHUNK_OFFSET
+	local co2 = veh.CHUNK_OFFSET
+	if co1 and co2 and co1 != co2 then
+		InfMap.prop_update_chunk(ply, co2)
+	end
 end)
 
 // when entities are spawned, put them in designated chunks
