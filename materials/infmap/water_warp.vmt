@@ -1,0 +1,31 @@
+"Refract"
+{
+	"$refractamount" "0.25"
+	"$refracttint" "{205 225 255}"
+	"$refractblur" "1"
+
+	"$model" "1"
+
+	"$scale" "[1 1]"
+
+	"$bumpmap" "dev/water_dudv"
+	"$normalmap" "infmap/dx80_tfwater001_normal"
+	"$bumpframe" "0"
+
+
+	"Proxies"
+	{
+		"AnimatedTexture"
+		{
+			"animatedtexturevar" "$normalmap"
+			"animatedtextureframenumvar" "$bumpframe"
+			"animatedtextureframerate" 30.00
+		}
+		"TextureScroll"
+		{
+			"texturescrollvar" "$bumptransform"
+			"texturescrollrate" .1
+			"texturescrollangle" 45.00
+		}
+	}
+}
