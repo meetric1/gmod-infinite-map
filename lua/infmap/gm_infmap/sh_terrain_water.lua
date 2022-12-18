@@ -102,10 +102,11 @@ if CLIENT then
     local water = Material(InfMap.water_material)
     hook.Add("PreDrawTranslucentRenderables", "infmap_water_draw", function(_, sky)
         if sky then return end
-        local co = -Vector(LocalPlayer().CHUNK_OFFSET)
+        local co = Vector(LocalPlayer().CHUNK_OFFSET)
         co[1] = 0
         co[2] = 0
-        waterMatrix:SetTranslation(InfMap.unlocalize_vector(Vector(0, 0, InfMap.water_height), co))
+        if co[3] > InfMap.render_max_height then return end
+        waterMatrix:SetTranslation(InfMap.unlocalize_vector(Vector(0, 0, InfMap.water_height), -co))
         render.SetMaterial(water)
         cam.PushModelMatrix(waterMatrix)
             waterMesh:Draw()
