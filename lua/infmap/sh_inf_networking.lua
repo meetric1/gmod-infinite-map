@@ -1,4 +1,5 @@
 if SERVER then
+	util.AddNetworkString("infmap_particle")
 	function InfMap.prop_update_chunk(ent, chunk)
 		print(ent, "passed in chunk", chunk)
 		

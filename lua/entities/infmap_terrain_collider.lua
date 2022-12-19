@@ -158,7 +158,6 @@ local function split_convex(tris, plane_pos, plane_dir)
 end
 
 local bounds = 2^14
-local max_radius = math.floor(math.sqrt(bounds^2 + bounds^2))
 function ENT:BuildCollision(heightFunction)
     local chunk_offset = self.CHUNK_OFFSET
     local x = chunk_offset[1]

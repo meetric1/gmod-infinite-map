@@ -131,7 +131,7 @@ end
 
 /*************** Vehicle Metatable *****************/
 
-// causes stack overflow
+// causes stack overflow since vehicle is dirived from entity
 //VehicleMT.InfMap_GetPos = VehicleMT.InfMap_GetPos or VehicleMT.GetPos
 //function VehicleMT:GetPos()
 //	return InfMap.unlocalize_vector(self:InfMap_GetPos(), self.CHUNK_OFFSET)
@@ -268,7 +268,7 @@ local function modify_trace_data(orig_data, trace_func, extra)
 	return hit_data
 end
 
-// Trace detours
+// no need to detour GetEyeTrace or util.GetPlayerTrace as it uses the already detoured functions
 InfMap.TraceLine = InfMap.TraceLine or util.TraceLine
 function util.TraceLine(data)
 	return modify_trace_data(data, InfMap.TraceLine)
@@ -283,7 +283,13 @@ InfMap.TraceEntity = InfMap.TraceEntity or util.TraceEntity
 function util.TraceEntity(data, ent)
 	return modify_trace_data(data, InfMap.TraceEntity, ent)
 end
-// no need to detour GetEyeTrace or util.GetPlayerTrace as it uses already detoured functions
+
+// blast damage is internal to C++, convert to local space
+InfMap.BlastDamage = InfMap.BlastDamage or util.BlastDamage
+function util.BlastDamage(inflictor, attacker, damageOrigin, ...)
+	local chunk_pos, chunk_offset = InfMap.localize_vector(damageOrigin)
+	return InfMap.BlastDamage(inflictor, attacker, chunk_pos, ...)
+end
 
 // M: Find functions Courtesy of LiddulBOFH! Thanks bro!
 // This and below are potentially usable, faster than running FindInBox on a single chunk (provided the entities to search are tracked by chunk updates)
@@ -365,6 +371,23 @@ end
 InfMap.ShouldSaveEntity = InfMap.ShouldSaveEntity or gmsave.ShouldSaveEntity
 function gmsave.ShouldSaveEntity(ent, t)
 	return InfMap.ShouldSaveEntity(ent, t) and !InfMap.disable_pickup[t.classname]
+end
+
+// network serverside particle effects to client
+InfMap.ParticleEffect = InfMap.ParticleEffect or ParticleEffect
+function ParticleEffect(name, pos, ang, parent)
+	InfMap.ParticleEffect(name, Vector(math.huge), ang, parent)	// cache the particle (this is stupid)
+	for _, ply in ipairs(player.GetAll()) do
+		local localpos = InfMap.unlocalize_vector(pos, -ply.CHUNK_OFFSET) //convert world to client local
+		net.Start("infmap_particle")
+			net.WriteString(name)
+			net.WriteFloat(localpos[1])	// networking vectors are stupid and have overflow issues
+			net.WriteFloat(localpos[2])
+			net.WriteFloat(localpos[3])
+			net.WriteAngle(ang)
+			net.WriteEntity(parent)
+		net.Send(ply)
+	end
 end
 
 // wiremod internally clamps setpos, lets unclamp it...
