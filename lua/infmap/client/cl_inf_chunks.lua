@@ -112,7 +112,6 @@ hook.Add("PostDrawOpaqueRenderables", "infinite_player_render", function()
 	local co =  chunk_offset * InfMap.chunk_size * 2
 	debugoverlay.Box(Vector(), -cs - co, cs - co, 0, Color(0, 0, 0, 0))
 	debugoverlay.Box(Vector(), -Vector(2^14, 2^14, 2^14) - co, Vector(2^14, 2^14, 2^14) - co, 0, Color(0, 0, 255, 0))
-	
 end)
 
 // server tells clients when a prop has entered another chunk
