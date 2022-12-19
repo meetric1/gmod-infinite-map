@@ -76,10 +76,13 @@ end)
 
 // serverside stuff now
 if CLIENT then
-    local waterMatrix = Matrix()
-    waterMatrix:SetScale(Vector(500000, 500000, 1))
+    local waterMatrix1 = Matrix()
+    waterMatrix1:SetScale(Vector(100000, 100000, 1))
 
-    local uvscale = 5000
+    local waterMatrix2 = Matrix()
+    waterMatrix2:SetScale(Vector(1000000, 1000000, 1))
+
+    local uvscale = 1000
     local waterMesh = Mesh()
     waterMesh:BuildFromTriangles({
         {pos = Vector(-1, -1, 0), u = 0, v = uvscale},
@@ -106,9 +109,20 @@ if CLIENT then
         co[1] = 0
         co[2] = 0
         if co[3] > InfMap.render_max_height then return end
-        waterMatrix:SetTranslation(InfMap.unlocalize_vector(Vector(0, 0, InfMap.water_height), -co))
+
+        local zfighting_offset = math.max(LocalPlayer().CHUNK_OFFSET[3] - 20, 0) * 900
+        local water_height = Vector(0, 0, InfMap.water_height - zfighting_offset)
+        waterMatrix1:SetTranslation(InfMap.unlocalize_vector(water_height, -co))
+        waterMatrix2:SetTranslation(InfMap.unlocalize_vector(water_height * 1.1, -co))
         render.SetMaterial(water)
-        cam.PushModelMatrix(waterMatrix)
+
+        cam.PushModelMatrix(waterMatrix1)
+            waterMesh:Draw()
+        cam.PopModelMatrix()
+
+        if InfMap.unlocalize_vector(EyePos(), LocalPlayer().CHUNK_OFFSET)[3] < water_height[3] then return end
+
+        cam.PushModelMatrix(waterMatrix2)
             waterMesh:Draw()
         cam.PopModelMatrix()
     end)

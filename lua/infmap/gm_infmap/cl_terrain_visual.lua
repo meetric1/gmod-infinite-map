@@ -87,18 +87,20 @@ big_plane:BuildFromTriangles({
 
 local render = render
 local default_mat = Material(InfMap.terrain_material)
+local plane_matrix = Matrix()
 hook.Add("PostDraw2DSkyBox", "infmap_terrain_skybox", function()	//draw bigass plane
 	render.OverrideDepthEnable(true, false)	// dont write to z buffer, this is in "skybox"
 	render.SetMaterial(default_mat)
 	render.ResetModelLighting(2, 2, 2)
 	render.SetLocalModelLights()
-	default_mat:SetFloat("$alpha", 1)	// make it visible
+
 	local offset = Vector(LocalPlayer().CHUNK_OFFSET)
 	offset[1] = offset[1] % 1000
 	offset[2] = offset[2] % 1000
-	local m = Matrix()
-	m:SetTranslation(InfMap.unlocalize_vector(Vector(), -offset))
-	cam.PushModelMatrix(m)
+
+	default_mat:SetFloat("$alpha", 1)	// make it visible
+	plane_matrix:SetTranslation(InfMap.unlocalize_vector(Vector(), -offset))
+	cam.PushModelMatrix(plane_matrix)
 	big_plane:Draw()
 	cam.PopModelMatrix()
 	render.OverrideDepthEnable(false, false)
@@ -166,13 +168,18 @@ hook.Add("PreDrawTranslucentRenderables", "infmap_clouds", function(_, sky)
 end)
 
 hook.Add("SetupWorldFog", "!infmap_fog", function()	// The Fog Is Coming
-	local co = LocalPlayer().CHUNK_OFFSET
-	if !co or co[3] > 14 then return end
+	local co = LocalPlayer().CHUNK_OFFSET[3]
 	render.FogStart(500000)
-	render.FogMaxDensity(math.min(0.5, 1.4 - co[3] * 0.1))	// magic numbers that look good
+	render.FogMaxDensity(0.5 + (co / 400))	// magic numbers that look good
 	render.FogColor(153, 178, 204)
 	//render.FogColor(180, 190, 200)
-	render.FogEnd(1000000)
+	render.FogEnd(1000000 + math.max((co - 14) * 1000000, 0))
 	render.FogMode(MATERIAL_FOG_LINEAR)
+
+	//render.FogStart(50000000)
+	//render.FogMaxDensity(0.9)	// magic numbers that look good
+	//render.FogColor(153, 178, 204)
+	//render.FogEnd(500000000)
+	//render.FogMode(MATERIAL_FOG_LINEAR)
 	return true
 end)
