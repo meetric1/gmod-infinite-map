@@ -30,7 +30,6 @@ local function unfucked_SetPos(ent, pos, filter)
 			local ang_vel = phys:GetAngleVelocity()
 			local diff = phys:InfMap_GetPos() - ent:InfMap_GetPos()
 		
-			phys:Wake()
 			phys:InfMap_SetPos(pos + diff, true)
 			phys:SetVelocityInstantaneous(vel)
 			phys:SetAngleVelocityInstantaneous(ang_vel)
@@ -51,7 +50,6 @@ local function unfucked_SetVelAng(ent, vel, ang)
 		if ang then ent:SetAngles(ang) end
 		ent:SetVelocity(vel)
 	end
-
 end
 
 local function update_entity(ent, pos, chunk)
