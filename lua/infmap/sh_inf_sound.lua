@@ -14,7 +14,7 @@ local function IsValidLoop( data )
 	local a = string.gsub(tostring(sound.GetProperties(util.GetSurfaceData(util.GetSurfaceIndex(data.Entity:GetBoneSurfaceProp( 0 ))).scrapeRoughSound).sound),"%d+","")
 	local b = string.gsub(tostring(sound.GetProperties(util.GetSurfaceData(util.GetSurfaceIndex(data.Entity:GetBoneSurfaceProp( 0 ))).scrapeSmoothSound).sound),"%d+","")
 	local c = string.gsub(data.OriginalSoundName,"%d+","")
-	local e,f = string.find(string.lower(tostring(data.Entity:GetClass())),"wheel")
+	local e,f = string.find(string.lower(data.Entity:GetClass()),"wheel")
 	return a ~= c and b ~= c and !(e and f) and !data.Entity:IsVehicle() //is valid loop sound?
 end
 
