@@ -8,20 +8,19 @@ This is partially inspired by gm_infiniteflatgrass (from the Gravity Hull addon)
 * Generally less buggy
 * Generally better addon support
 * Ability to see over 2 billion hammer units in real time
-* ACF Support (May need help from ACF devs on this one)
-* WAC (Maybe LFS) Support
+* ACF Support
+* WAC & some LFS Support
 * Simphys car support
 * Basic terrain including a ocean / lake system
 * Ability to "Go to space"
-* (Maybe) Procedural Planets^
+* Procedural Planets
+* Water / Lake System
 * An attempt to revive the Spacebuild gamemode
 
 ### To Do:
-* Explosion Detour
 * Finish Sound Detour
-* Finish Procedural Planets
-* (Maybe) Water system
 * (Maybe) Detour Bullets
+* Bugfixes
 
 ### Stuff I am NOT doing:
 * Trees (On main terrain)
@@ -30,7 +29,7 @@ This is partially inspired by gm_infiniteflatgrass (from the Gravity Hull addon)
 * Support for every addon, there WILL be conflictions!
 * NPC and Nextbot support
 * Hammer editor support
-* Particle detours
+* Perfect particle detours
 * Optimizations reguarding large amounts of spawned objects, this is source internal and performance wont be great
 * Planets bigger than 1 chunk
 
