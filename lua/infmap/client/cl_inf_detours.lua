@@ -159,3 +159,12 @@ InfMap.TraceEntity = InfMap.TraceEntity or util.TraceEntity
 function util.TraceEntity(data, ent)
 	return modify_trace_data(data, InfMap.TraceEntity, ent)
 end
+
+// particle detour
+net.Receive("infmap_particle", function()
+	local name = net.ReadString()
+	local pos = Vector(net.ReadFloat(), net.ReadFloat(), net.ReadFloat())
+	local ang = net.ReadAngle()
+	local ent = net.ReadEntity()
+	ParticleEffect(name, pos, ang, ent)
+end)

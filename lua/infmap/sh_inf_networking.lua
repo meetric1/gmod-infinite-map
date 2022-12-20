@@ -1,4 +1,5 @@
 if SERVER then
+	util.AddNetworkString("infmap_particle")
 	function InfMap.prop_update_chunk(ent, chunk)
 		print(ent, "passed in chunk", chunk)
 		
@@ -24,7 +25,7 @@ if SERVER then
 		end
 
 		// dont network bad ents to client, they may not even be able to see them
-		if ent:GetNoDraw() or ent:IsConstraint() then return end
+		if ent:IsEFlagSet(EFL_SERVER_ONLY) or ent:IsConstraint() then return end
 
 		ent:SetNW2Vector("CHUNK_OFFSET", chunk)
 
