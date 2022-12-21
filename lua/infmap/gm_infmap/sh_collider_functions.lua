@@ -87,6 +87,7 @@ InfMap.planet_data = {
 }
 
 local max = 2^28
+local noise2d = InfMap.simplex.Noise2D
 function InfMap.height_function(x, y) 
 	if (x > -0.5 and x < 0.5) or (y > -0.5 and y < 0.5) then return -15 end
 
@@ -97,16 +98,15 @@ function InfMap.height_function(x, y)
 
 	// new generation
 	x = x - 3
-	local final = (InfMap.simplex.Noise2D(x / 25, y / 25 + 100000)) * 75000
-	final = final / math.max((InfMap.simplex.Noise2D(x / 100, y / 100) * 15) ^ 3, 1)
+	local final = (noise2d(x / 25, y / 25 + 100000)) * 75000
+	final = final / math.max((noise2d(x / 100, y / 100) * 15) ^ 3, 1)
 
 	return final
 end
 
-local noise2d = InfMap.simplex.Noise2D
 function InfMap.planet_height_function(x, y)
 	return (noise2d(x / 15000, y / 15000) * 2000) / math.max(noise2d(x / 9000, y / 9000) * 10, 1)
-	//return InfMap.simplex.Noise2D(x / 10000, y / 10000) * 1000
+	//return noise2d(x / 10000, y / 10000) * 1000
 end
 
 // returns local position of planet inside megachunk

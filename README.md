@@ -2,9 +2,9 @@
 
 ### Overview
 This is a garrys mod addon that adds a map to the game called gm_infinite, as the title suggests this map visually appears infinite
-This is partially inspired by gm_infiniteflatgrass (from the Gravity Hull addon), but the map was very buggy and mostly impractical for use, especially when it comes to planes and ACF cars. Since the original creator of Gravity Hull is (presumably) dead, I am attempting to recreate it (Only the infinite map aspect).
+This is partially inspired by gm_infiniteflatgrass (from the Gravity Hull addon), but the map was very buggy and mostly impractical for use, especially when it comes to planes and ACF cars. Since the original creator of Gravity Hull is (presumably) dead, I am attempting to recreate it (Only the infinite map).
 
-### This mod attempts (or is planning) to recreate gm_infiniteflatgrass with more features including:
+### This mod attempts to recreate gm_infiniteflatgrass with more features including:
 * Generally less buggy
 * Generally better addon support
 * Ability to see over 2 billion hammer units in real time
@@ -16,11 +16,6 @@ This is partially inspired by gm_infiniteflatgrass (from the Gravity Hull addon)
 * Procedural Planets
 * Water / Lake System
 * An attempt to revive the Spacebuild gamemode
-
-### To Do:
-* Finish Sound Detour
-* (Maybe) Detour Bullets
-* Bugfixes
 
 ### Stuff I am NOT doing:
 * Trees (On main terrain)
@@ -36,16 +31,17 @@ This is partially inspired by gm_infiniteflatgrass (from the Gravity Hull addon)
 ### How It Works
 The map isnt actually infinite, its impossible to go past the source bounds, so the entirety of the play space in the map is occupied in the same location. A hook is used to determine which props should and should not collide, and all entities are given perceived visual offsets per entity depending on which chunk (or cell) they are in, giving the illusion the map is presumably infinite (You cant do anything physical past the source boundery, but you can render things past it). The original Gravity Hull addon used this same method with "Cells" (But I call them chunks)
 
-### For better addon support this mod currently detours the following functions (ONLY ON THE SERVER!):
+## For better addon support this mod currently detours the following functions:
+### SERVER:
 * Entity:GetPos
+* Entity:WorldSpaceCenter
+* Entity:WorldSpaceAABB
 * Entity:SetPos
 * Entity:LocalToWorld
 * Entity:WorldToLocal
 * Entity:EyePos
 * Entity:NearestPoint
-* Entity:GetAttachment
-* Entity:WorldSpaceCenter
-* Entity:WorldSpaceAABB
+* Entity:GetAttatchment
 * Entity:Spawn (for constraints)
 
 * PhysObj:GetPos
@@ -54,25 +50,57 @@ The map isnt actually infinite, its impossible to go past the source bounds, so 
 * PhysObj:LocalToWorld
 * PhysObj:WorldToLocal
 * PhysObj:CalculateVelocityOffset
+* PhysObj:GetVelocityAtPoint
 
 * Vehicle:SetPos
-* Vehicle:LocalToWorld
-* Vehicle:WorldToLocal
 
 * CTakeDamageInfo:GetDamagePosition
+
+* Player:GetShootPos
 
 * NextBot:GetRangeSquaredTo
 * NextBot:GetRangeTo
 
-* CLuaLocomotionMT:Approach
-* CLuaLocomotionMT:FaceTowards
+* CLuaLocomotion:FaceTowards
 
-* Player:GetShootPos
+* util.IsInWorld
+* util.TraceLine
+* util.TraceHull
+* util.BlastDamage
+
+* ents.FindInBox
+* ents.FindInSphere
+* ents.FindInCone
+
+* gmsave.ShouldSaveEntity
+
+* ParticleEffect
+
+* WireLib.clampPos	(unclamp wiremod and starfall setpos functions)
+* SF.clampPos
+
+* Explosions
+* Bullets
+* PlayerCanPickupWeapon
+* PlayerCanPickupItem
+* GravGunPickupAllowed
+
+### CLIENT
+* Entity:GetPos
+* Entity:SetPos
+* Entity:LocalToWorld
+* Entity:WorldSpaceCenter
+* Entity:WorldSpaceAABB
+* Entity:SetRenderBounds
+
+* PhysObj:SetPos
 
 * util.TraceLine
 * util.TraceHull
 * util.TraceEntity
-* util.IsInWorld
+
+* ents.FindInBox
 * ents.FindInSphere
-* WireLib.ClampPos (unclamps wiremods internal clamp function since it wont let objects position be set outside of the source bounderies)
-* SF.clampPos (same thing but for starfall^)
+* ents.FindInCone
+
+* Bullets
