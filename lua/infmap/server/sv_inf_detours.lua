@@ -131,12 +131,23 @@ end
 
 /*************** Vehicle Metatable *****************/
 
-// causes stack overflow since vehicle is dirived from entity
+// these 3 functions cause stack overflow since vehicle is dirived from the entity metatable
 //VehicleMT.InfMap_GetPos = VehicleMT.InfMap_GetPos or VehicleMT.GetPos
 //function VehicleMT:GetPos()
 //	return InfMap.unlocalize_vector(self:InfMap_GetPos(), self.CHUNK_OFFSET)
 //end
 
+//VehicleMT.InfMap_LocalToWorld = VehicleMT.InfMap_LocalToWorld or VehicleMT.LocalToWorld
+//function VehicleMT:LocalToWorld(pos)
+//	return InfMap.unlocalize_vector(self:InfMap_LocalToWorld(pos), self.CHUNK_OFFSET)
+//end
+//
+//VehicleMT.InfMap_WorldToLocal = VehicleMT.InfMap_WorldToLocal or VehicleMT.WorldToLocal
+//function VehicleMT:WorldToLocal(pos)
+//	return self:InfMap_WorldToLocal(pos - InfMap.unlocalize_vector(Vector(), self.CHUNK_OFFSET))
+//end
+
+// im unsure why this is the only exception
 VehicleMT.InfMap_SetPos = VehicleMT.InfMap_SetPos or VehicleMT.SetPos
 function VehicleMT:SetPos(pos)
 	local chunk_pos, chunk_offset = InfMap.localize_vector(pos)
@@ -144,16 +155,6 @@ function VehicleMT:SetPos(pos)
 		InfMap.prop_update_chunk(self, chunk_offset)
 	end
 	return self:InfMap_SetPos(chunk_pos)
-end
-
-VehicleMT.InfMap_LocalToWorld = VehicleMT.InfMap_LocalToWorld or VehicleMT.LocalToWorld
-function VehicleMT:LocalToWorld(pos)
-	return InfMap.unlocalize_vector(self:InfMap_LocalToWorld(pos), self.CHUNK_OFFSET)
-end
-
-VehicleMT.InfMap_WorldToLocal = VehicleMT.InfMap_WorldToLocal or VehicleMT.WorldToLocal
-function VehicleMT:WorldToLocal(pos)
-	return self:InfMap_WorldToLocal(pos - InfMap.unlocalize_vector(Vector(), self.CHUNK_OFFSET))
 end
 
 /**************** CTakeDamageInfo Metatable *****************/
@@ -376,18 +377,21 @@ end
 // network serverside particle effects to client
 InfMap.ParticleEffect = InfMap.ParticleEffect or ParticleEffect
 function ParticleEffect(name, pos, ang, parent)
-	InfMap.ParticleEffect(name, Vector(math.huge), ang, parent)	// cache the particle (this is stupid)
-	for _, ply in ipairs(player.GetAll()) do
-		local localpos = InfMap.unlocalize_vector(pos, -ply.CHUNK_OFFSET) //convert world to client local
-		net.Start("infmap_particle")
-			net.WriteString(name)
-			net.WriteFloat(localpos[1])	// networking vectors are stupid and have overflow issues
-			net.WriteFloat(localpos[2])
-			net.WriteFloat(localpos[3])
-			net.WriteAngle(ang)
-			net.WriteEntity(parent)
-		net.Send(ply)
-	end
+	InfMap.ParticleEffect(name, Vector(0, 0, -math.huge), ang, parent)	// cache the particle (this is stupid)
+	// send particle to client after cached
+	timer.Simple(0, function()
+		for _, ply in ipairs(player.GetAll()) do
+			local localpos = InfMap.unlocalize_vector(pos, -ply.CHUNK_OFFSET) //convert world to client local
+			net.Start("infmap_particle", true)
+				net.WriteString(name)
+				net.WriteFloat(localpos[1])	// networking vectors are stupid and have overflow issues
+				net.WriteFloat(localpos[2])
+				net.WriteFloat(localpos[3])
+				net.WriteAngle(ang)
+				net.WriteEntity(parent)
+			net.Send(ply)
+		end
+	end)
 end
 
 // wiremod internally clamps setpos, lets unclamp it...
