@@ -166,6 +166,7 @@ if SERVER then
         ["cardboard"] = true,
         ["paper"] = true,
         ["popcan"] = true,
+        ["plastic_barrel"] = true,
     }
     hook.Add("Think", "infmap_water_buoyancy", function()
         local waterHeight = InfMap.water_height
@@ -212,7 +213,7 @@ if SERVER then
                             phys:ApplyForceOffset(Vector(0, 0, phys:GetMass() * math.min(((waterHeight - world_pos[3]) * 0.75), 2)), world_pos)
                             phys:ApplyForceCenter(phys:GetMass() * phys:GetVelocity() * -0.001)   //dampen very small bit for airboats
                         else
-                            phys:ApplyForceOffset(Vector(0, 0, phys:GetMass() * (math.min(((waterHeight - world_pos[3]) * 0.1), 3))), world_pos)
+                            phys:ApplyForceOffset(Vector(0, 0, phys:GetMass() * (math.min(((waterHeight - world_pos[3]) * 0.2), 3))), world_pos)
                             phys:ApplyForceCenter(phys:GetMass() * phys:GetVelocity() * -0.003)   //dampen a bit
                         end
                         phys:AddAngleVelocity(phys:GetAngleVelocity() * -0.01)
