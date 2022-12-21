@@ -11,10 +11,11 @@
  
 local function IsValidLoop( data )
 	if data.Entity:GetBoneSurfaceProp( 0 ) == 0 then return false end
-	local a = string.gsub(sound.GetProperties(util.GetSurfaceData(util.GetSurfaceIndex(data.Entity:GetBoneSurfaceProp( 0 ))).scrapeRoughSound).sound,"%d+","")
-	local b = string.gsub(sound.GetProperties(util.GetSurfaceData(util.GetSurfaceIndex(data.Entity:GetBoneSurfaceProp( 0 ))).scrapeSmoothSound).sound,"%d+","")
+	local a = string.gsub(tostring(sound.GetProperties(util.GetSurfaceData(util.GetSurfaceIndex(data.Entity:GetBoneSurfaceProp( 0 ))).scrapeRoughSound).sound),"%d+","")
+	local b = string.gsub(tostring(sound.GetProperties(util.GetSurfaceData(util.GetSurfaceIndex(data.Entity:GetBoneSurfaceProp( 0 ))).scrapeSmoothSound).sound),"%d+","")
 	local c = string.gsub(data.OriginalSoundName,"%d+","")
-	return a ~= c and b ~= c //is valid loop sound?
+	local e,f = string.find(string.lower(data.Entity:GetClass()),"wheel")
+	return a ~= c and b ~= c and !(e and f) and !data.Entity:IsVehicle() //is valid loop sound?
 end
 
 local function IsLoop( data )
@@ -144,7 +145,13 @@ else
 		return s_Model
 	end
 								
-	local valid_sounds = {
+	local function IsPlayerSound(data)
+		local a,b = string.find(string.lower(data.OriginalSoundName),"footsteps")
+		local c,d = string.find(string.lower(data.SoundName),"weapon")
+		return (a and b) or (c and d) or data.OriginalSoundName == "Airboat.FireGunRevDown"
+	end
+    
+    local valid_sounds = {
 		["Weapon_Crossbow.BoltElectrify"] = true,
 		["Weapon_PhysCannon.TooHeavy"] = true,
 		["weapons/physcannon/hold_loop.wav"] = true,
@@ -168,7 +175,7 @@ else
 				inf_sounds[data.Entity] = data //attach sound to looping monitor
 				data.Entity:EmitSound(data.OriginalSoundName,data.SoundLevel,data.Pitch,data.Volume,data.Channel,data.Flags,data.DSP) //play sound directly on entity
 			else
-				if game.SinglePlayer() or data.Entity ~= LocalPlayer() or valid_sounds[data.OriginalSoundName] then //exception for players, sounds seem to duplicate for them
+				if game.SinglePlayer() or !(data.Entity == LocalPlayer() and IsPlayerSound(data)) or valid_sounds[data.OriginalSoundName] then //exception for players, sounds seem to duplicate for them
 					if !IsValid(inf_csounds[data.Entity]) then
 						inf_csounds[data.Entity] = SoundObject(data.Entity) //create clientside prop
 						inf_csounds[data.Entity].Position = data.Entity:GetPos() //store client prop position
