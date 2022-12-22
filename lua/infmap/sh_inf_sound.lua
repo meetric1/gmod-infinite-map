@@ -183,7 +183,7 @@ else
 		
 		local message = util.Decompress( net.ReadData( net.ReadUInt( 16 ) ) )
 		local data = {} local str = {}
-		for s in string.gmatch(message, "[^;]+") do str[#str+1] = s end
+		for s in string.gmatch(message, "[^;]+") do table.insert(str,s) end
 		data.Entity = ents.GetByIndex( str[1] ) data.OriginalSoundName = str[2] data.SoundName = str[3] data.Channel = str[4] data.Flags = str[5] data.Pitch = str[6] data.Volume = str[7] data.SoundLevel = str[8] data.DSP = str[8]
 
 		if !IsValid(data.Entity) and valid_sounds[data.OriginalSoundName] then data.Entity = LocalPlayer() end
