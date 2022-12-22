@@ -44,19 +44,26 @@ if SERVER then
 	local inf_sounds_store = {}
 	local csoundpatch_store = {}
 
-	local function CompressMsg(data)
-		local msg = util.Compress(data.Entity:EntIndex()..";"..data.OriginalSoundName..";"..data.SoundName..";"..data.Channel..";"..data.Flags..";"..data.Pitch..";"..data.Volume..";"..data.SoundLevel..";"..data.DSP)
-		return msg
-	end
-
 	//sends sounds to players, or stores the sound for sending later
-	local function SendToPlayers( data )
+	local function SendToPlayers( data ) PrintTable(data)
 		for _, ply in ipairs(player.GetAll()) do
 			if CheckDistance( ply, data.Entity, 1 ) then //if client can hear then send immediately
-				if data.End then net.Start("inf_ent_stopsound") else net.Start("inf_ent_networksound") end
-				local msg = CompressMsg(data)
-				net.WriteUInt( #msg, 16 )
-				net.WriteData(msg,#msg)
+				if data.End then 
+					net.Start("inf_ent_stopsound")
+					net.WriteEntity(data.Entity)
+					net.WriteString(data.OriginalSoundName)
+				else 
+					net.Start("inf_ent_networksound") 
+					net.WriteEntity(data.Entity)
+					net.WriteString(data.OriginalSoundName)
+					net.WriteString(data.SoundName)
+					net.WriteUInt(data.Channel,8)
+					net.WriteUInt(data.SoundLevel,16)
+					net.WriteUInt(data.Pitch,8)
+					net.WriteUInt(data.Flags,8)
+					net.WriteUInt(data.DSP,8)
+					net.WriteFloat(data.Volume)
+				end
 				net.Send(ply) //send sound to player
 			else
 				if IsLoop(data) and IsValidLoop(data) then //check if is looping sound 
@@ -96,10 +103,22 @@ if SERVER then
 				for e, f in pairs( d ) do
 					if !IsValid(c) then table.RemoveByValue(b,d) continue end
 					if CheckDistance( a, c, 1 ) then
-						if f.End then net.Start("inf_ent_stopsound") else net.Start("inf_ent_networksound") end //looping sound support
-						local msg = CompressMsg(f)
-						net.WriteUInt( #msg, 16 )
-						net.WriteData(msg,#msg) --data.Entity:EmitSound(data.OriginalSoundName,data.SoundLevel,data.Pitch,data.Volume,data.Channel,data.Flags,data.DSP)
+						if f.End then 
+							net.Start("inf_ent_stopsound") //looping sound support
+							net.WriteEntity(f.Entity)
+							net.WriteString(f.OriginalSoundName)
+						else 
+							net.Start("inf_ent_networksound")
+							net.WriteEntity(f.Entity)
+							net.WriteString(f.OriginalSoundName)
+							net.WriteString(f.SoundName)
+							net.WriteUInt(f.Channel,8)
+							net.WriteUInt(f.SoundLevel,16)
+							net.WriteUInt(f.Pitch,8)
+							net.WriteUInt(f.Flags,8)
+							net.WriteUInt(f.DSP,8)
+							net.WriteFloat(f.Volume)
+						end 
 						net.Send(a)
 						table.RemoveByValue(b,d) //only send sound once!
 					end
@@ -180,11 +199,16 @@ else
 
 	//receive sounds from server, either plays on client ent or ent itself (for awkward looping sounds)
 	net.Receive( "inf_ent_networksound", function()
-		
-		local message = util.Decompress( net.ReadData( net.ReadUInt( 16 ) ) )
-		local data = {} local str = {}
-		for s in string.gmatch(message, "[^;]+") do table.insert(str,s) end
-		data.Entity = ents.GetByIndex( str[1] ) data.OriginalSoundName = str[2] data.SoundName = str[3] data.Channel = str[4] data.Flags = str[5] data.Pitch = str[6] data.Volume = str[7] data.SoundLevel = str[8] data.DSP = str[8]
+		local data = {}
+		data.Entity = net.ReadEntity()
+		data.OriginalSoundName = net.ReadString()
+		data.SoundName = net.ReadString()
+		data.Channel = net.ReadUInt(8)
+		data.SoundLevel = net.ReadUInt(16)
+		data.Pitch = net.ReadUInt(8)
+		data.Flags = net.ReadUInt(8)
+		data.DSP = net.ReadUInt(8)
+		data.Volume = net.ReadFloat()
 
 		if !IsValid(data.Entity) and valid_sounds[data.OriginalSoundName] then data.Entity = LocalPlayer() end
 		if IsValid(data.Entity) then
@@ -206,7 +230,9 @@ else
 
 	//stop sound
 	net.Receive( "inf_ent_stopsound", function()
-		local data = net.ReadTable()
+		local data = {}
+		data.Entity = net.ReadEntity()
+		data.OriginalSoundName = net.ReadString()
 		if IsValid(data.Entity) then data.Entity:StopSound(data.OriginalSoundName) end //stop sound on ent
 		if IsValid(inf_csounds[data.Entity]) then inf_csounds[data.Entity]:StopSound(data.OriginalSoundName) end //stop sound on client ent
 	end)
