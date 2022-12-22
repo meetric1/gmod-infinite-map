@@ -51,6 +51,7 @@ The map isnt actually infinite, its impossible to go past the source bounds, so 
 * PhysObj:WorldToLocal
 * PhysObj:CalculateVelocityOffset
 * PhysObj:GetVelocityAtPoint
+* PhysObj:SetMaterial (I dont want to have to explain why this is detoured)
 
 * Vehicle:SetPos
 
