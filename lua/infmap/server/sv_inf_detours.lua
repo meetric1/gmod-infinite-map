@@ -410,7 +410,7 @@ hook.Add("GravGunPickupAllowed", "infmap_entdetour", can_pickup)
 
 // explosions should not damage things in other chunks
 hook.Add("EntityTakeDamage", "infmap_explodedetour", function(ply, dmg)
-	if !dmg:IsExplosionDamage() and !dmg:IsDamageType(DMG_BURN) then return end
+	if !(dmg:IsExplosionDamage() or dmg:IsDamageType(DMG_BURN)) then return end
 	local dmg_offset = dmg:GetInflictor().CHUNK_OFFSET
 	local ply_offset = ply.CHUNK_OFFSET
 	if dmg_offset and ply_offset and dmg_offset != ply_offset then

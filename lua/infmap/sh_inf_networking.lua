@@ -8,10 +8,12 @@ if SERVER then
 		ent.CHUNK_OFFSET = chunk
 		ent:SetCustomCollisionCheck(true)	// required for ShouldCollide hook
 		
-		hook.Run("PropUpdateChunk", ent, chunk, prev_chunk)
+		// addons may error when calling this
+		local err, str = pcall(function() hook.Run("PropUpdateChunk", ent, chunk, prev_chunk) end)
+		if !err then ErrorNoHalt(str) end
 
 		// make sure to teleport things in chairs too
-		pcall(function()	// vehicles when initialized arent actually initialized and dont actually have their datatables set up
+		pcall(function()	// IsValid returns true even when the vehicle isnt actually valid, unsure how to properly check this
 			if ent.GetDriver and IsValid(ent:GetDriver()) then
 				InfMap.prop_update_chunk(ent:GetDriver(), chunk)
 			end

@@ -7,9 +7,13 @@ local function clamp_vector(pos, max)
 	return Vector(clamp(pos[1], -max, max), clamp(pos[2], -max, max), clamp(pos[3], -max, max))
 end
 
+local function invalid_chunk(e1, e2)
+	return !e1.CHUNK_OFFSET or !e2.CHUNK_OFFSET
+end
+
 EntityMT.InfMap_GetPos = EntityMT.InfMap_GetPos or EntityMT.GetPos
 function EntityMT:GetPos()
-	if !self.CHUNK_OFFSET or !LocalPlayer().CHUNK_OFFSET then return self:InfMap_GetPos(pos) end
+	if invalid_chunk(self, LocalPlayer()) then return self:InfMap_GetPos(pos) end
 	return InfMap.unlocalize_vector(self:InfMap_GetPos(), self.CHUNK_OFFSET - LocalPlayer().CHUNK_OFFSET)
 end
 
@@ -22,18 +26,20 @@ end
 
 EntityMT.InfMap_LocalToWorld = EntityMT.InfMap_LocalToWorld or EntityMT.LocalToWorld
 function EntityMT:LocalToWorld(pos)
-	if !self.CHUNK_OFFSET or !LocalPlayer().CHUNK_OFFSET then return self:InfMap_LocalToWorld(pos) end
+	if invalid_chunk(self, LocalPlayer()) then return self:InfMap_LocalToWorld(pos) end
 	return InfMap.unlocalize_vector(self:InfMap_LocalToWorld(pos), self.CHUNK_OFFSET - LocalPlayer().CHUNK_OFFSET)
 end
 
 EntityMT.InfMap_WorldSpaceCenter = EntityMT.InfMap_WorldSpaceCenter or EntityMT.WorldSpaceCenter
 function EntityMT:WorldSpaceCenter()
+	if invalid_chunk(self, LocalPlayer()) then return self:InfMap_WorldSpaceCenter() end
 	return InfMap.unlocalize_vector(self:InfMap_WorldSpaceCenter(), self.CHUNK_OFFSET - LocalPlayer().CHUNK_OFFSET)
 end
 
 EntityMT.InfMap_WorldSpaceAABB = EntityMT.InfMap_WorldSpaceAABB or EntityMT.WorldSpaceAABB
 function EntityMT:WorldSpaceAABB()
 	local v1, v2 = self:InfMap_WorldSpaceAABB()
+	if invalid_chunk(self, LocalPlayer()) then return v1, v2 end
 	return InfMap.unlocalize_vector(v1, self.CHUNK_OFFSET - LocalPlayer().CHUNK_OFFSET), InfMap.unlocalize_vector(v2, self.CHUNK_OFFSET - LocalPlayer().CHUNK_OFFSET)
 end
 

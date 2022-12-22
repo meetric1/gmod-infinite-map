@@ -121,7 +121,9 @@ function InfMap.prop_update_chunk(ent, chunk)
 	local prev_chunk = ent.CHUNK_OFFSET
 	ent.CHUNK_OFFSET = chunk
 
-	hook.Run("PropUpdateChunk", ent, chunk, prev_chunk)
+	// addons may error when calling this
+	local err, str = pcall(function() hook.Run("PropUpdateChunk", ent, chunk, prev_chunk) end)
+	if !err then ErrorNoHalt(str) end
 	
 	// loop through all ents, offset them relative to player since player has moved
 	if ent == LocalPlayer() then 
