@@ -45,7 +45,7 @@ if SERVER then
 	local csoundpatch_store = {}
 
 	//sends sounds to players, or stores the sound for sending later
-	local function SendToPlayers( data ) PrintTable(data)
+	local function SendToPlayers( data )
 		for _, ply in ipairs(player.GetAll()) do
 			if CheckDistance( ply, data.Entity, 1 ) then //if client can hear then send immediately
 				if data.End then 
