@@ -173,6 +173,9 @@ if SERVER then
         local entities = ents.FindByClass("prop_*")
         for _, prop in ipairs(entities) do
             local phys = prop:GetPhysicsObject()
+            // extinguish if in water
+            if inWater(prop:GetPos()) and prop:IsOnFire() then prop:Extinguish() end
+
             if !phys:IsValid() or phys:IsAsleep() then continue end
 
             local is_airboat = prop:GetClass() == "prop_vehicle_airboat"

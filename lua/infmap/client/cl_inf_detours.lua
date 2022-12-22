@@ -1,93 +1,47 @@
 // metatable fuckery
 local EntityMT = FindMetaTable("Entity")
-local VehicleMT = FindMetaTable("Vehicle")
 local PhysObjMT = FindMetaTable("PhysObj")
-local PlayerMT = FindMetaTable("Player")
-local NextBotMT = FindMetaTable("NextBot")
-local CTakeDamageInfoMT = FindMetaTable("CTakeDamageInfo")
-
-EntityMT.InfMap_GetPos = EntityMT.InfMap_GetPos or EntityMT.GetPos
-function EntityMT:GetPos()
-	if !self.CHUNK_OFFSET or !LocalPlayer().CHUNK_OFFSET then return self:InfMap_GetPos(pos) end
-	return InfMap.unlocalize_vector(self:InfMap_GetPos(), self.CHUNK_OFFSET - LocalPlayer().CHUNK_OFFSET)
-end
-
-EntityMT.InfMap_LocalToWorld = EntityMT.InfMap_LocalToWorld or EntityMT.LocalToWorld
-function EntityMT:LocalToWorld(pos)
-	if !self.CHUNK_OFFSET or !LocalPlayer().CHUNK_OFFSET then return self:InfMap_LocalToWorld(pos) end
-	return InfMap.unlocalize_vector(self:InfMap_LocalToWorld(pos), self.CHUNK_OFFSET - LocalPlayer().CHUNK_OFFSET)
-end
 
 local clamp = math.Clamp
 local function clamp_vector(pos, max)
 	return Vector(clamp(pos[1], -max, max), clamp(pos[2], -max, max), clamp(pos[3], -max, max))
 end
 
+local function invalid_chunk(e1, e2)
+	return !e1.CHUNK_OFFSET or !e2.CHUNK_OFFSET
+end
+
+EntityMT.InfMap_GetPos = EntityMT.InfMap_GetPos or EntityMT.GetPos
+function EntityMT:GetPos()
+	if invalid_chunk(self, LocalPlayer()) then return self:InfMap_GetPos(pos) end
+	return InfMap.unlocalize_vector(self:InfMap_GetPos(), self.CHUNK_OFFSET - LocalPlayer().CHUNK_OFFSET)
+end
+
+// clamp setpos or it spams console
 EntityMT.InfMap_SetPos = EntityMT.InfMap_SetPos or EntityMT.SetPos
 function EntityMT:SetPos(pos)
 	local pos = clamp_vector(pos, 2^14)
 	return self:InfMap_SetPos(pos)
 end
 
-// Find Functions
-function InfMap.FindInBox(v1,v2)
-	local entlist = ents.GetAll()
-	local results = {}
-
-	for i,ent in ipairs(entlist) do
-		if ent:WorldSpaceCenter():WithinAABox(v1,v2) then table.insert(results,ent) end
-	end
-
-	return results
-end
-ents.FindInBox = InfMap.FindInBox
-
-function InfMap.FindInSphere(pos,radius)
-	local entlist = ents.GetAll()
-	local results = {}
-
-	local radSqr = radius ^ 2
-
-	for k,v in ipairs(entlist) do
-		if v:WorldSpaceCenter():DistToSqr(pos) <= radSqr then table.insert(results,v) end
-	end
-
-	return results
-end
-ents.FindInSphere = InfMap.FindInSphere
-
-function InfMap.FindInCone(pos,normal,radius,angle_cos)
-	// no clamp here because it already gets clamped above
-	local entlist = ents.FindInSphere(pos,radius)
-	local results = {}
-
-	for k,v in ipairs(entlist) do
-		local dot = normal:Dot((v:GetPos() - pos):GetNormalized())
-		if dot >= angle_cos then table.insert(results,v) end
-	end
-
-	return results
-end
-ents.FindInCone = InfMap.FindInCone
-
-// PhysObj
-
-PhysObjMT.InfMap_SetPos = PhysObjMT.InfMap_SetPos or PhysObjMT.SetPos
-function PhysObjMT:SetPos(pos)
-	local pos = clamp_vector(pos, 2^14)
-	return self:InfMap_SetPos(pos)
+EntityMT.InfMap_LocalToWorld = EntityMT.InfMap_LocalToWorld or EntityMT.LocalToWorld
+function EntityMT:LocalToWorld(pos)
+	if invalid_chunk(self, LocalPlayer()) then return self:InfMap_LocalToWorld(pos) end
+	return InfMap.unlocalize_vector(self:InfMap_LocalToWorld(pos), self.CHUNK_OFFSET - LocalPlayer().CHUNK_OFFSET)
 end
 
+EntityMT.InfMap_WorldSpaceCenter = EntityMT.InfMap_WorldSpaceCenter or EntityMT.WorldSpaceCenter
+function EntityMT:WorldSpaceCenter()
+	if invalid_chunk(self, LocalPlayer()) then return self:InfMap_WorldSpaceCenter() end
+	return InfMap.unlocalize_vector(self:InfMap_WorldSpaceCenter(), self.CHUNK_OFFSET - LocalPlayer().CHUNK_OFFSET)
+end
 
-// traces shouldnt appear when shot from other chunks
-hook.Add("EntityFireBullets", "infmap_detour", function(ent, data)
-	if ent.CHUNK_OFFSET != LocalPlayer().CHUNK_OFFSET then
-		data.Tracer = 0
-		return true
-	end
-end)
-
-/*********** Client Entity Metatable *************/
+EntityMT.InfMap_WorldSpaceAABB = EntityMT.InfMap_WorldSpaceAABB or EntityMT.WorldSpaceAABB
+function EntityMT:WorldSpaceAABB()
+	local v1, v2 = self:InfMap_WorldSpaceAABB()
+	if invalid_chunk(self, LocalPlayer()) then return v1, v2 end
+	return InfMap.unlocalize_vector(v1, self.CHUNK_OFFSET - LocalPlayer().CHUNK_OFFSET), InfMap.unlocalize_vector(v2, self.CHUNK_OFFSET - LocalPlayer().CHUNK_OFFSET)
+end
 
 EntityMT.InfMap_SetRenderBounds = EntityMT.InfMap_SetRenderBounds or EntityMT.SetRenderBounds
 function EntityMT:SetRenderBounds(min, max, add)
@@ -97,7 +51,53 @@ function EntityMT:SetRenderBounds(min, max, add)
 	return self:InfMap_SetRenderBounds(min, max, add)
 end
 
-/*********** Client Other *************/
+InfMap.FindInBox = InfMap.FindInBox or ents.FindInBox
+function ents.FindInBox(v1, v2)
+	local entlist = ents.GetAll()
+	local results = {}
+	for _, ent in ipairs(entlist) do
+		if ent:WorldSpaceCenter():WithinAABox(v1,v2) then table.insert(results,ent) end
+	end
+	return results
+end
+
+InfMap.FindInSphere = InfMap.FindInSphere or ents.FindInSphere
+function ents.FindInSphere(pos, radius)
+	local entlist = ents.GetAll()
+	local results = {}
+	local radSqr = radius * radius
+	for k, v in ipairs(entlist) do
+		if v:WorldSpaceCenter():DistToSqr(pos) <= radSqr then table.insert(results,v) end
+	end
+	return results
+end
+
+InfMap.FindInCone = InfMap.FindInCone or ents.FindInCone
+function ents.FindInCone(pos, normal, radius, angle_cos)
+	// not sure why, but findincone uses a box instead of sphere
+	local entlist = ents.FindInBox(pos - Vector(radius, radius, radius), pos + Vector(radius, radius, radius))
+	local results = {}
+	for k,v in ipairs(entlist) do
+		local dot = normal:Dot((v:GetPos() - pos):GetNormalized())
+		if dot >= angle_cos then table.insert(results, v) end
+	end
+	return results
+end
+
+// clamp setpos or it spams console
+PhysObjMT.InfMap_SetPos = PhysObjMT.InfMap_SetPos or PhysObjMT.SetPos
+function PhysObjMT:SetPos(pos)
+	local pos = clamp_vector(pos, 2^14)
+	return self:InfMap_SetPos(pos)
+end
+
+// traces shouldnt appear when shot from other chunks
+hook.Add("EntityFireBullets", "infmap_detour", function(ent, data)
+	if ent.CHUNK_OFFSET != LocalPlayer().CHUNK_OFFSET then
+		data.Tracer = 0
+		return true
+	end
+end)
 
 // traceline
 // faster lookup

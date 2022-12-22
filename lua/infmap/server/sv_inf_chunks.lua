@@ -285,6 +285,7 @@ hook.Add("OnEntityCreated", "infinite_propreset", function(ent)
 
 			local pos = Vector()
 			local owner = ent:GetOwner()
+			if !IsValid(owner) then owner = ent:GetParent() end
 			if IsValid(owner) and owner.CHUNK_OFFSET then
 				pos = owner.CHUNK_OFFSET
 			end

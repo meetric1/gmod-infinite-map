@@ -294,7 +294,7 @@ end
 
 // M: Find functions Courtesy of LiddulBOFH! Thanks bro!
 // This and below are potentially usable, faster than running FindInBox on a single chunk (provided the entities to search are tracked by chunk updates)
-function InfMap.FindInChunk(chunk) 
+function InfMap.find_in_chunk(chunk) 
 	if TypeID(chunk) ~= TYPE_VECTOR then return {} end
 
 	local tchunk = Vector(math.floor(chunk[1]),math.floor(chunk[2]),math.floor(chunk[3]))
@@ -304,22 +304,6 @@ function InfMap.FindInChunk(chunk)
 
 	local Results = {}
 	for k,v in pairs(entlist) do
-		local ent = Entity(k)
-		if not IsValid(ent) then continue end
-		if InfMap.disable_pickup[ent:GetClass()] then continue end
-		table.insert(Results,ent)
-	end
-
-	return Results
-end
-
-function InfMap.FindInChunkPostCoord(coord) // To be used if you already have coords as a string "x,y,z" (gotten by InfMap.ezcoord(chunk))
-	local entlist = InfMap.ent_list[coord]
-
-	if TypeID(entlist) ~= TYPE_TABLE then return {} end // don't ask, just please don't
-
-	local Results = {}
-	for k, v in pairs(entlist) do
 		local ent = Entity(k)
 		if not IsValid(ent) then continue end
 		if InfMap.disable_pickup[ent:GetClass()] then continue end
@@ -411,20 +395,22 @@ end)
 
 /********** Hooks ***********/
 
-// disable picking up weapons/items in other chunks
+// disable picking up weapons/items in other 
 local function can_pickup(ply, ent)
-	if !ply.CHUNK_OFFSET or !ent.CHUNK_OFFSET then return end	// when spawning, player weapons will be nil for 1 tick, allow pickup in all chunks
-	if ply.CHUNK_OFFSET != ent.CHUNK_OFFSET then
+	// when spawning, player weapons will be nil for 1 tick, allow pickup in all chunks
+	local co1, co2 = ply.CHUNK_OFFSET, ent.CHUNK_OFFSET
+	if (co1 and co2 and co1 != co2) or InfMap.disable_pickup[ent:GetClass()] then
 		return false
 	end
 end
+
 hook.Add("PlayerCanPickupWeapon", "infmap_entdetour", can_pickup)
 hook.Add("PlayerCanPickuItem", "infmap_entdetour", can_pickup)
 hook.Add("GravGunPickupAllowed", "infmap_entdetour", can_pickup)
 
 // explosions should not damage things in other chunks
 hook.Add("EntityTakeDamage", "infmap_explodedetour", function(ply, dmg)
-	if !dmg:IsExplosionDamage() then return end
+	if !(dmg:IsExplosionDamage() or dmg:IsDamageType(DMG_BURN)) then return end
 	local dmg_offset = dmg:GetInflictor().CHUNK_OFFSET
 	local ply_offset = ply.CHUNK_OFFSET
 	if dmg_offset and ply_offset and dmg_offset != ply_offset then
