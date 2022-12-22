@@ -11,13 +11,13 @@
  
 local function IsValidLoop( data )
 	if data.Entity:GetBoneSurfaceProp( 0 ) == 0 then return false end
-        local a,b,c,d,e,f
-        pcall(function()
-	a = string.gsub(tostring(sound.GetProperties(util.GetSurfaceData(util.GetSurfaceIndex(data.Entity:GetBoneSurfaceProp( 0 ))).scrapeRoughSound).sound),"%d+","")
-	b = string.gsub(tostring(sound.GetProperties(util.GetSurfaceData(util.GetSurfaceIndex(data.Entity:GetBoneSurfaceProp( 0 ))).scrapeSmoothSound).sound),"%d+","")
-	c = string.gsub(data.OriginalSoundName,"%d+","")
-	e,f = string.find(string.lower(data.Entity:GetClass()),"wheel")
-        end)
+	local a,b,c,d,e,f
+	pcall(function()
+		a = string.gsub(tostring(sound.GetProperties(util.GetSurfaceData(util.GetSurfaceIndex(data.Entity:GetBoneSurfaceProp( 0 ))).scrapeRoughSound).sound),"%d+","")
+		b = string.gsub(tostring(sound.GetProperties(util.GetSurfaceData(util.GetSurfaceIndex(data.Entity:GetBoneSurfaceProp( 0 ))).scrapeSmoothSound).sound),"%d+","")
+		c = string.gsub(data.OriginalSoundName,"%d+","")
+		e,f = string.find(string.lower(data.Entity:GetClass()),"wheel")
+	end)
 	return a ~= c and b ~= c and !(e and f) and !data.Entity:IsVehicle() //is valid loop sound?
 end
 
@@ -44,12 +44,19 @@ if SERVER then
 	local inf_sounds_store = {}
 	local csoundpatch_store = {}
 
+	local function CompressMsg(data)
+		local msg = util.Compress(data.Entity:EntIndex()..";"..data.OriginalSoundName..";"..data.SoundName..";"..data.Channel..";"..data.Flags..";"..data.Pitch..";"..data.Volume..";"..data.SoundLevel..";"..data.DSP)
+		return msg
+	end
+
 	//sends sounds to players, or stores the sound for sending later
 	local function SendToPlayers( data )
 		for _, ply in ipairs(player.GetAll()) do
 			if CheckDistance( ply, data.Entity, 1 ) then //if client can hear then send immediately
 				if data.End then net.Start("inf_ent_stopsound") else net.Start("inf_ent_networksound") end
-				net.WriteTable(data)
+				local msg = CompressMsg(data)
+				net.WriteUInt( #msg, 16 )
+				net.WriteData(msg,#msg)
 				net.Send(ply) //send sound to player
 			else
 				if IsLoop(data) and IsValidLoop(data) then //check if is looping sound 
@@ -90,7 +97,9 @@ if SERVER then
 					if !IsValid(c) then table.RemoveByValue(b,d) continue end
 					if CheckDistance( a, c, 1 ) then
 						if f.End then net.Start("inf_ent_stopsound") else net.Start("inf_ent_networksound") end //looping sound support
-						net.WriteTable(f)
+						local msg = CompressMsg(f)
+						net.WriteUInt( #msg, 16 )
+						net.WriteData(msg,#msg) --data.Entity:EmitSound(data.OriginalSoundName,data.SoundLevel,data.Pitch,data.Volume,data.Channel,data.Flags,data.DSP)
 						net.Send(a)
 						table.RemoveByValue(b,d) //only send sound once!
 					end
@@ -171,7 +180,12 @@ else
 
 	//receive sounds from server, either plays on client ent or ent itself (for awkward looping sounds)
 	net.Receive( "inf_ent_networksound", function()
-		local data = net.ReadTable()
+		
+		local message = util.Decompress( net.ReadData( net.ReadUInt( 16 ) ) )
+		local data = {} local str = {}
+		for s in string.gmatch(message, "[^;]+") do str[#str+1] = s end
+		data.Entity = ents.GetByIndex( str[1] ) data.OriginalSoundName = str[2] data.SoundName = str[3] data.Channel = str[4] data.Flags = str[5] data.Pitch = str[6] data.Volume = str[7] data.SoundLevel = str[8] data.DSP = str[8]
+
 		if !IsValid(data.Entity) and valid_sounds[data.OriginalSoundName] then data.Entity = LocalPlayer() end
 		if IsValid(data.Entity) then
 			if IsLoop(data) and !IsValidLoop(data) and data.Entity:GetParent() ~= LocalPlayer() then //check if sound is awkward looping sound
