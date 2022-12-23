@@ -411,7 +411,7 @@ local function can_pickup(ply, ent)
 end
 
 hook.Add("PlayerCanPickupWeapon", "infmap_entdetour", can_pickup)
-hook.Add("PlayerCanPickuItem", "infmap_entdetour", can_pickup)
+hook.Add("PlayerCanPickupItem", "infmap_entdetour", can_pickup)
 hook.Add("GravGunPickupAllowed", "infmap_entdetour", can_pickup)
 
 // explosions should not damage things in other chunks

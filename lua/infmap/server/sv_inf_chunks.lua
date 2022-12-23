@@ -189,8 +189,7 @@ local co = coroutine.create(function()
 			/////////////////////////////////
 
 			if !ent.CHUNK_OFFSET then continue end
-			if !ent:IsSolid() then continue end
-			if !ent:GetModel() then continue end
+			if !ent:IsSolid() or !ent:GetModel() then continue end
 			if IsValid(ent:GetParent()) then continue end
 
 			//if ent:GetVelocity() == Vector() then continue end
@@ -265,13 +264,15 @@ hook.Add("PlayerSpawn", "infmap_plyreset", function(ply, trans)
 end)
 
 // if player enters seat from another chunk set them to that chunk
-hook.Add("PlayerEnteredVehicle", "infmap_seatreset", function(ply, veh, role)
+local function vehicle_edit(ply, veh)
 	local co1 = ply.CHUNK_OFFSET
 	local co2 = veh.CHUNK_OFFSET
 	if co1 and co2 and co1 != co2 then
 		InfMap.prop_update_chunk(ply, co2)
 	end
-end)
+end
+hook.Add("PlayerEnteredVehicle", "infmap_seatreset", vehicle_edit)
+hook.Add("PlayerLeaveVehicle", "infmap_seatreset", vehicle_edit)
 
 // when entities are spawned, put them in designated chunks
 local ent_unfilter = {
