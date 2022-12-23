@@ -93,9 +93,17 @@ hook.Add("RenderScene", "!infinite_update_visbounds", function(eyePos, eyeAngles
 	end
 end)
 
+// debug cache
+local debug_enabled = CreateClientConVar("infmap_debug", "0", true, false)
+local maxsize = Vector(1, 1, 1) * 2^14
+local black = Color(0, 0, 0, 0)
+local red = Color(255, 0, 0, 255)
+local blue = Color(0, 0, 255, 255)
+
 // players just.. dont want to render? force rendering..
 hook.Add("PostDrawOpaqueRenderables", "infinite_player_render", function()
-	local chunk_offset = (LocalPlayer().CHUNK_OFFSET or Vector())
+	if !LocalPlayer().CHUNK_OFFSET then return end
+	local chunk_offset = LocalPlayer().CHUNK_OFFSET
 	for k, v in ipairs(player.GetAll()) do
 		if v.CHUNK_OFFSET != chunk_offset and v:Alive() then
 			v:DrawModel()
@@ -104,14 +112,16 @@ hook.Add("PostDrawOpaqueRenderables", "infinite_player_render", function()
 	end
 
 	// debug lines
-	local cs = Vector(1, 1, 1) * InfMap.chunk_size
+	if !debug_enabled:GetBool() then return end
 
-	debugoverlay.Sphere(Vector(), 100, 0, Color(255, 0, 0, 0))
-	debugoverlay.Box(Vector(), -cs, cs, 0, Color(0, 0, 0, 0))
-	
+	local cs = Vector(1, 1, 1) * InfMap.chunk_size
 	local co =  chunk_offset * InfMap.chunk_size * 2
-	debugoverlay.Box(Vector(), -cs - co, cs - co, 0, Color(0, 0, 0, 0))
-	debugoverlay.Box(Vector(), -Vector(2^14, 2^14, 2^14) - co, Vector(2^14, 2^14, 2^14) - co, 0, Color(0, 0, 255, 0))
+	
+	render.DrawWireframeSphere(Vector(), 10, 10, 10, red, true)
+	render.DrawWireframeBox(Vector(), Angle(), -cs, cs, black, true)
+	
+	render.DrawWireframeBox(Vector(), Angle(), -cs - co, cs - co, black, true)
+	render.DrawWireframeBox(Vector(), Angle(), -maxsize - co, maxsize - co, blue, true)
 end)
 
 // server tells clients when a prop has entered another chunk

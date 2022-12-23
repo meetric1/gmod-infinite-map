@@ -1,8 +1,6 @@
 if SERVER then
 	util.AddNetworkString("infmap_particle")
 	function InfMap.prop_update_chunk(ent, chunk)
-		print(ent, "passed in chunk", chunk)
-		
 		local prev_chunk = ent.CHUNK_OFFSET
 		InfMap.update_track(ent,chunk)
 		ent.CHUNK_OFFSET = chunk
@@ -45,14 +43,12 @@ if SERVER then
 			for _, parent in ipairs(InfMap.get_all_parents(ent)) do
 				if parent == ent then continue end
 				InfMap.prop_update_chunk(parent, chunk)
-				print("parent passed", parent)
 			end
 		end
 	end
 else
 	hook.Add("EntityNetworkedVarChanged", "infmap_networkchanged", function(ent, name, oldval, newval)
 		if name != "CHUNK_OFFSET" then return end	// not our variable, ignore
-		print(ent, " passed in chunk ", newval) 
 		InfMap.prop_update_chunk(ent, newval)
 	end)
 

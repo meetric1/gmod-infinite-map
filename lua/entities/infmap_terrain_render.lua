@@ -118,7 +118,6 @@ function ENT:SetLocalRenderBounds(eyePos, size)
 	local prop_dir = self.RENDER_MESH.Matrix:GetTranslation() - eyePos
 	local shrunk = sub_size / prop_dir:Length()
 	
-	debugoverlay.Box(eyePos + prop_dir, min, max, 0, Color(255, 0, 255, 0))
 	self:SetRenderBounds(eyePos + prop_dir * shrunk + min * shrunk, eyePos + prop_dir * shrunk + max * shrunk)
 end
 
