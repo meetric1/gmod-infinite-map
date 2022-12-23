@@ -190,6 +190,7 @@ local co = coroutine.create(function()
 
 			if !ent.CHUNK_OFFSET then continue end
 			if !ent:IsSolid() then continue end
+			if !ent:GetModel() then continue end
 			if IsValid(ent:GetParent()) then continue end
 
 			//if ent:GetVelocity() == Vector() then continue end
