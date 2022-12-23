@@ -7,6 +7,8 @@ InfMap.chunk_size = 10000
 
 // Add required files for clients
 if SERVER then
+	resource.AddWorkshop("2905327911")
+
 	// Load the files
 	local function loadfolder(dir)
 		local files, dirs = file.Find(dir .. "*","LUA")

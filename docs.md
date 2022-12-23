@@ -1,4 +1,4 @@
-# Documentation of how to create an infinite map using this api
+# How to create an infinite map
 * I apologize in advance for the shitty documentation, ive never written any before
 * Feel free to contact me on the [Discord](https://discord.gg/cmQvg2AHgP) if you need help or have any questions implementing this API
 
