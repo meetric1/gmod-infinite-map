@@ -17,6 +17,16 @@ function EntityMT:GetPos()
 	return InfMap.unlocalize_vector(self:InfMap_GetPos(), self.CHUNK_OFFSET - LocalPlayer().CHUNK_OFFSET)
 end
 
+EntityMT.InfMap_IsWorld = EntityMT.InfMap_IsWorld or EntityMT.IsWorld
+function EntityMT:IsWorld(...)
+	if ( self:GetClass() == "infmap_terrain_collider" or
+		self:GetClass() == "infmap_planet" ) then
+		return true
+	end
+
+	return EntityMT.InfMap_IsWorld(self, ...)
+end
+
 // clamp setpos or it spams console
 EntityMT.InfMap_SetPos = EntityMT.InfMap_SetPos or EntityMT.SetPos
 function EntityMT:SetPos(pos)

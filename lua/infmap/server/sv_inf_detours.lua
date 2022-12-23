@@ -63,6 +63,16 @@ function EntityMT:GetAttachment(num)
 	return data
 end
 
+EntityMT.InfMap_IsWorld = EntityMT.InfMap_IsWorld or EntityMT.IsWorld
+function EntityMT:IsWorld(...)
+	if ( self:GetClass() == "infmap_terrain_collider" or
+		self:GetClass() == "infmap_planet" ) then
+		return true
+	end
+
+	return EntityMT.InfMap_IsWorld(self, ...)
+end
+
 local function unfuck_keyvalue(self, value)
 	if !self:GetKeyValues()[value] then return end
 	self:SetKeyValue(value, tostring(InfMap.unlocalize_vector(Vector(self:GetKeyValues()[value]), -self.CHUNK_OFFSET)))
