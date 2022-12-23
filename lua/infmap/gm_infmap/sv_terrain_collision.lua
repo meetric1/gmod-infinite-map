@@ -54,6 +54,11 @@ end)
 // handles generating chunk collision
 hook.Add("PropUpdateChunk", "infmap_infgen_terrain", function(ent, chunk, oldchunk)
 	update_chunk(ent, chunk, oldchunk)
+	// remove ents too far below
+	if chunk[3] <= -100 then
+		print("Force removing stray", ent)
+		SafeRemoveEntity(ent)
+	end
 end)
 
 hook.Add("InitPostEntity", "infmap_terrain_init", resetAll)
