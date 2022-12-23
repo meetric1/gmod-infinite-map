@@ -39,6 +39,16 @@ if SERVER then
 	loadfolder("infmap/")
 end
 
+local MetaEntity = FindMetaTable('Entity')
+local _IsWorld = MetaEntity.IsWorld
+
+function MetaEntity:IsWorld(...)
+    if self:GetClass() == "infmap_terrain_collider" or self:GetClass() == "infmap_planet" then
+		return true
+	end
+    return _IsWorld(self, ...)
+end
+
 // Load the files
 local function openfolder(dir)
 	local files, dirs = file.Find(dir .. "*","LUA")
