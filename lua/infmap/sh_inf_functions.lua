@@ -146,7 +146,10 @@ function InfMap.get_all_parents(main_ent)
 	return entity_table
 end
 
-local function constrained_invalid_filter(ent) 
+local function constrained_invalid_filter(ent)
+	if ent:IsPlayerHolding() then 
+		return false 
+	end
 	local phys_filter = false
 	local phys = ent:GetPhysicsObject()
 	if phys:IsValid() then

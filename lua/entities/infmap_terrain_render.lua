@@ -89,7 +89,10 @@ function ENT:Think()
 		coroutine.resume(coro)
 	else
 		local mat = Matrix()
+		local _, rotation = util.GetModelMeshes(self:GetModel())
+		if rotation and rotation.matrix then mat:SetAngles(-rotation.matrix:GetAngles()) end
 		mat:SetTranslation((self.CHUNK_OFFSET * InfMap.megachunk_size * 2 - LocalPlayer().CHUNK_OFFSET) * InfMap.chunk_size * 2)
+		
 		self.RENDER_MESH = {Mesh = Mesh(), Material = default_mat, Matrix = mat}
 
 		local mesh = mesh

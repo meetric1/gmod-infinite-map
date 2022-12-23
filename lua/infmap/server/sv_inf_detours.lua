@@ -41,7 +41,7 @@ end
 
 EntityMT.InfMap_WorldToLocal = EntityMT.InfMap_WorldToLocal or EntityMT.WorldToLocal
 function EntityMT:WorldToLocal(pos)
-	return self:InfMap_WorldToLocal(InfMap.unlocalize_vector(pos, -self.CHUNK_OFFSET))
+	return self:InfMap_WorldToLocal(-InfMap.unlocalize_vector(-pos, self.CHUNK_OFFSET))
 end
 
 EntityMT.InfMap_EyePos = EntityMT.InfMap_EyePos or EntityMT.EyePos
@@ -63,6 +63,14 @@ function EntityMT:GetAttachment(num)
 	return data
 end
 
+// get setentity data since theres no GetEntity
+EntityMT.InfMap_SetEntity = EntityMT.InfMap_SetEntity or EntityMT.SetEntity
+function EntityMT:SetEntity(str, ent)
+	self.SET_ENTITIES = self.SET_ENTITIES or {}
+	self.SET_ENTITIES[str] = ent
+	self:InfMap_SetEntity(str, ent)
+end
+
 local function unfuck_keyvalue(self, value)
 	if !self:GetKeyValues()[value] then return end
 	self:SetKeyValue(value, tostring(InfMap.unlocalize_vector(Vector(self:GetKeyValues()[value]), -self.CHUNK_OFFSET)))
@@ -70,13 +78,16 @@ end
 
 EntityMT.InfMap_Spawn = EntityMT.InfMap_Spawn or EntityMT.Spawn
 function EntityMT:Spawn()
-	if IsValid(self) and (self:IsConstraint() or self:GetClass() == "phys_spring") then	// elastic isnt considered a constraint..?
+	if IsValid(self) and (self:IsConstraint() or self:GetClass() == "phys_spring" or self:GetClass() == "keyframe_rope") then	// elastic isnt considered a constraint..?
 		unfuck_keyvalue(self, "attachpoint")
 		unfuck_keyvalue(self, "springaxis")
 		unfuck_keyvalue(self, "slideaxis")
 		unfuck_keyvalue(self, "hingeaxis")
 		unfuck_keyvalue(self, "axis")
 		unfuck_keyvalue(self, "position2")
+		if self.SET_ENTITIES and self.SET_ENTITIES.EndEntity == game.GetWorld() then 
+			unfuck_keyvalue(self, "EndOffset") 
+		end
 		self:SetPos(self:InfMap_GetPos())
 	end
 	return self:InfMap_Spawn()

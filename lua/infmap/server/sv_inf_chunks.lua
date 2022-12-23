@@ -61,7 +61,7 @@ local function update_entity(ent, pos, chunk)
 			InfMap.constrained_status(carry)	// initialize constrained data
 			local ent_pos = ent:InfMap_GetPos()
 
-			for _, constrained_ent in ipairs(carry.CONSTRAINED_DATA) do	// includes itself
+			for _, constrained_ent in ipairs(carry.CONSTRAINED_DATA or {ent, carry}) do	// includes itself
 				if !constrained_ent:IsValid() or InfMap.filter_entities(constrained_ent) then continue end
 				if constrained_ent != carry then
 					constrained_ent:ForcePlayerDrop()

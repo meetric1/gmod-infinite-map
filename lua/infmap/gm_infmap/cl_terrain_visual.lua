@@ -33,6 +33,7 @@ hook.Add("PropUpdateChunk", "infmap_terrain_init", function(ent, chunk, old_chun
 				if !IsValid(InfMap.client_chunks[y][x]) then 
 					local e = ents.CreateClientside("infmap_terrain_render")
 					e:Spawn()
+					e:SetAngles(Angle())
 					e:SetMaterial(InfMap.terrain_material)
 					e:GenerateMesh(InfMap.height_function, (Vector(x, y, 0) + mega_chunk) * InfMap.megachunk_size * 2, time)
 					e.CHUNK_OFFSET = Vector(x, y, 0) + mega_chunk
@@ -66,6 +67,7 @@ hook.Add("RenderScene", "infmap_update_renderbounds", function(eyePos)
 			// update render bounds when visible
 			chunk:SetLocalRenderBounds(eyePos, chunksize)
 			chunk:SetNoDraw(invalid)
+			chunk:SetMaterial(InfMap.terrain_material)	//fixes materialurl addon for some reason
 		end
 	end
 	if invalid then switch = true end
