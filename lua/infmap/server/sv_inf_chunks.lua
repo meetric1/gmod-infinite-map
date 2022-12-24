@@ -126,6 +126,7 @@ end)
 
 // object wrapping, if in next chunk, put in next chunk and do localization math
 hook.Add("Think", "infinite_chunkmove", function()
+	if true then return end
 	for _, main_ent in ipairs(all_ents) do
 		if !IsValid(main_ent) then continue end
 		if !main_ent.CHUNK_OFFSET then continue end

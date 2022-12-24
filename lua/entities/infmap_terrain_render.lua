@@ -112,7 +112,7 @@ function ENT:Think()
 end
 
 // cursed localized renderbounds shit so clients dont get destroyed from massive render bounds
-local sub_size = 2^14 - InfMap.chunk_size * 1.5	// how far out render bounds can be before outside of the map
+local sub_size = 100 //2^14 - InfMap.chunk_size * 1.5	// how far out render bounds can be before outside of the map
 function ENT:SetLocalRenderBounds(eyePos, size)
 	local min, max = -size, size
 	min[3] = self.CHUNK_MAX
