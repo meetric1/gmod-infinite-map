@@ -43,6 +43,14 @@ function EntityMT:WorldSpaceAABB()
 	return InfMap.unlocalize_vector(v1, self.CHUNK_OFFSET - LocalPlayer().CHUNK_OFFSET), InfMap.unlocalize_vector(v2, self.CHUNK_OFFSET - LocalPlayer().CHUNK_OFFSET)
 end
 
+EntityMT.InfMap_GetBonePosition = EntityMT.InfMap_GetBonePosition or EntityMT.GetBonePosition
+function EntityMT:GetBonePosition(index)
+	local pos, ang = self:InfMap_GetBonePosition(index)
+	if invalid_chunk(self, LocalPlayer()) then return pos, ang end
+	pos = InfMap.unlocalize_vector(pos, self.CHUNK_OFFSET - LocalPlayer().CHUNK_OFFSET)
+	return pos, ang
+end
+
 EntityMT.InfMap_SetRenderBounds = EntityMT.InfMap_SetRenderBounds or EntityMT.SetRenderBounds
 function EntityMT:SetRenderBounds(min, max, add)
 	if self.RENDER_BOUNDS then

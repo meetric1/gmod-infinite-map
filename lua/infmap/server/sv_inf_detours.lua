@@ -63,6 +63,13 @@ function EntityMT:GetAttachment(num)
 	return data
 end
 
+EntityMT.InfMap_GetBonePosition = EntityMT.InfMap_GetBonePosition or EntityMT.GetBonePosition
+function EntityMT:GetBonePosition(index)
+	local pos, ang = self:InfMap_GetBonePosition(index)
+	pos = InfMap.unlocalize_vector(pos, self.CHUNK_OFFSET)
+	return pos, ang
+end
+
 // get setentity data since theres no GetEntity
 EntityMT.InfMap_SetEntity = EntityMT.InfMap_SetEntity or EntityMT.SetEntity
 function EntityMT:SetEntity(str, ent)

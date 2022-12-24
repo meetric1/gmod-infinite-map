@@ -42,6 +42,7 @@ The map isnt actually infinite, its impossible to go past the source bounds, so 
 * Entity:EyePos
 * Entity:NearestPoint
 * Entity:GetAttatchment
+* Entity:GetBonePosition
 * Entity:Spawn (for constraints)
 
 * PhysObj:GetPos
@@ -93,6 +94,7 @@ The map isnt actually infinite, its impossible to go past the source bounds, so 
 * Entity:WorldSpaceCenter
 * Entity:WorldSpaceAABB
 * Entity:SetRenderBounds
+* Entity:GetBonePosition
 
 * PhysObj:SetPos
 
