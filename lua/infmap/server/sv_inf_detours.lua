@@ -119,7 +119,7 @@ end
 
 PhysObjMT.InfMap_ApplyForceOffset = PhysObjMT.InfMap_ApplyForceOffset or PhysObjMT.ApplyForceOffset
 function PhysObjMT:ApplyForceOffset(impulse, position)
-	return self:InfMap_ApplyForceOffset(impulse, InfMap.unlocalize_vector(position, -self:GetEntity().CHUNK_OFFSET))
+	return self:InfMap_ApplyForceOffset(impulse, -InfMap.unlocalize_vector(-position, self:GetEntity().CHUNK_OFFSET))
 end
 
 PhysObjMT.InfMap_LocalToWorld = PhysObjMT.InfMap_LocalToWorld or PhysObjMT.LocalToWorld
@@ -129,7 +129,7 @@ end
 
 PhysObjMT.InfMap_CalculateVelocityOffset = PhysObjMT.InfMap_CalculateVelocityOffset or PhysObjMT.CalculateVelocityOffset
 function PhysObjMT:CalculateVelocityOffset(impulse, position)
-	return self:InfMap_CalculateVelocityOffset(impulse, InfMap.unlocalize_vector(position, -self:GetEntity().CHUNK_OFFSET))
+	return self:InfMap_CalculateVelocityOffset(impulse, -InfMap.unlocalize_vector(-position, self:GetEntity().CHUNK_OFFSET))
 end
 
 PhysObjMT.InfMap_WorldToLocal = PhysObjMT.InfMap_WorldToLocal or PhysObjMT.WorldToLocal
@@ -139,12 +139,12 @@ end
 
 PhysObjMT.InfMap_ApplyForceOffset = PhysObjMT.InfMap_ApplyForceOffset or PhysObjMT.ApplyForceOffset
 function PhysObjMT:ApplyForceOffset(impulse, pos)
-	return self:InfMap_ApplyForceOffset(impulse, InfMap.unlocalize_vector(pos, -self:GetEntity().CHUNK_OFFSET))
+	return self:InfMap_ApplyForceOffset(impulse, -InfMap.unlocalize_vector(-pos, self:GetEntity().CHUNK_OFFSET))
 end
 
 PhysObjMT.InfMap_GetVelocityAtPoint = PhysObjMT.InfMap_GetVelocityAtPoint or PhysObjMT.GetVelocityAtPoint
 function PhysObjMT:GetVelocityAtPoint(pos)
-	return self:InfMap_GetVelocityAtPoint(InfMap.unlocalize_vector(pos, -self:GetEntity().CHUNK_OFFSET))
+	return self:InfMap_GetVelocityAtPoint(-InfMap.unlocalize_vector(-pos, self:GetEntity().CHUNK_OFFSET))
 end
 
 PhysObjMT.InfMap_SetMaterial = PhysObjMT.InfMap_SetMaterial or PhysObjMT.SetMaterial
