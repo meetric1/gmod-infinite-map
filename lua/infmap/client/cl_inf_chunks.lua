@@ -4,6 +4,7 @@ hook.Add("InitPostEntity", "inf_init", function()
 end)
 
 local too_far = 100 * 100	// how far away before you just stop rendering entirely ^2
+local empty_function = function() end
 
 // detour render bounds of entities in other chunks
 // needs to be updated every tick since the offset is not local to the prop
@@ -17,7 +18,7 @@ local function update_ents(all)
 		local ent = InfMap.all_ents[i]
 		local invalid = !ent.CHUNK_OFFSET
 		invalid = invalid or InfMap.filter_entities(ent)
-		invalid = invalid or !ent.RenderOverride
+		invalid = invalid or (!ent.RenderOverride or ent.RenderOverride == empty_function)
 		invalid = invalid or ent:GetNoDraw()
 		invalid = invalid or ent.CHUNK_OFFSET:LengthSqr() > too_far
 		
@@ -33,10 +34,11 @@ timer.Create("infinite_chunkmove_update", 1, 0, function()
 	update_all = true
 end)
 
+
 hook.Add("RenderScene", "!infinite_update_visbounds", function(eyePos, eyeAngles)
 	//eyePos = LocalPlayer():GetShootPos()
-	local sub_size = 2^14 - InfMap.chunk_size - 64	// how far out render bounds can be before outside of the map
-	local sub_size_sqr = sub_size * sub_size
+	local sub_size = 100// - InfMap.chunk_size - 64	// how far out render bounds can be before outside of the map
+	local sub_size_sqr = sub_size^3
 	local lp_chunk_offset = LocalPlayer().CHUNK_OFFSET
 	if !lp_chunk_offset then return end
 	for _, ent in ipairs(InfMap.all_ents) do	// I feel bad for doing this
@@ -67,7 +69,7 @@ hook.Add("RenderScene", "!infinite_update_visbounds", function(eyePos, eyeAngles
 		end
 
 		if world_chunk_offset:LengthSqr() > 16 then
-			if prop_dir:LengthSqr() > too_far then	// to avoid normalizing
+			if prop_dir:LengthSqr() > 2000*2000 then	// to avoid normalizing
 				prop_dir = prop_dir * 0.01
 			end
 			ent:SetRenderBoundsWS(eyePos + prop_dir, eyePos + prop_dir)
@@ -126,7 +128,6 @@ end)
 
 // server tells clients when a prop has entered another chunk
 // detour rendering of entities in other chunks
-local empty_function = function() end
 function InfMap.prop_update_chunk(ent, chunk)
 	local prev_chunk = ent.CHUNK_OFFSET
 	ent.CHUNK_OFFSET = chunk
@@ -221,7 +222,8 @@ function InfMap.prop_update_chunk(ent, chunk)
 
 		// materials arent valid for the first tick sometimes?
 		timer.Simple(0, function()
-			mat = Material(ent:GetMaterials()[1] or "models/wireframe")
+			mat_str = ent:GetMaterial()
+			if mat_str == "" then mat_str = ent:GetMaterials()[1] end
 		end)
 
 		if mat_str then mat = Material(mat_str) end
