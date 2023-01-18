@@ -4,6 +4,11 @@
 This is a garrys mod addon that adds a map to the game called gm_infinite, as the title suggests this map visually appears infinite
 This is partially inspired by gm_infiniteflatgrass (from the Gravity Hull addon), but the map was very buggy and mostly impractical for use, especially when it comes to planes and ACF cars. Since the original creator of Gravity Hull is (presumably) dead, I am attempting to recreate it (Only the infinite map).
 
+### Documentation
+Documentation can be found here: https://github.com/Mee12345/gmod-infinite-map/wiki/Documentation
+It explains (to the best of my ability) how to set up an infinite map, as well as all of the provided functions that are avalible on the lua side.
+I apologize in advance if it is difficult to read or understand. Hopefully the API will improve over time.
+
 ### This mod attempts to recreate gm_infiniteflatgrass with more features including:
 * Generally less buggy
 * Generally better addon support
