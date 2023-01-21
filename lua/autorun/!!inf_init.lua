@@ -18,7 +18,7 @@ if SERVER then
 			for _, d in ipairs(dirs) do
 				// only open lua that client or the map name (infmap lua loading during map load)
 				local low_d = string.lower(d)
-				if low_d == "client" or low_d == string.lower(game.GetMap()) then
+				if low_d == string.lower(game.GetMap()) then
 					loadfolder(dir .. d .. "/")
 				end
 			end
@@ -61,7 +61,7 @@ local function openfolder(dir)
 		for _, d in ipairs(dirs) do
 			// only open lua that is server, client or the map name (infmap lua loading during map load)
 			local low_d = string.lower(d)
-			if low_d == "server" or low_d == "client" or low_d == string.lower(game.GetMap()) then
+			if low_d == string.lower(game.GetMap()) then
 				openfolder(dir .. d .. "/")
 			end
 		end

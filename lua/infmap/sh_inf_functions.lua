@@ -46,6 +46,7 @@ end
 // all the classes that are useless
 InfMap.filter = InfMap.filter or {
 	infmap_clone = true,
+	infmap_obj = true,
 	physgun_beam = true,
 	worldspawn = true,
 	gmod_hands = true,
@@ -85,6 +86,7 @@ InfMap.filter = InfMap.filter or {
 // classes that should not be picked up by physgun
 InfMap.disable_pickup = InfMap.disable_pickup or {
 	infmap_clone = true,
+	infmap_obj = true,
 }
 
 function InfMap.filter_entities(e)
@@ -220,4 +222,150 @@ function InfMap.update_track(ent,chunk)
 	if not InfMap.ent_list[curchunk] then InfMap.ent_list[curchunk] = {} end
 
 	InfMap.ent_list[curchunk][ent:EntIndex()] = true
+end
+
+
+// tris are in the format {{pos = value}, {pos = value2}}
+function InfMap.split_convex(tris, plane_pos, plane_dir)
+    if !tris then return {} end
+    local plane_dir = plane_dir:GetNormalized()     // normalize plane direction
+    local split_tris = {}
+    local plane_points = {}
+    // loop through all triangles in the mesh
+    local util_IntersectRayWithPlane = util.IntersectRayWithPlane
+    local table_insert = table.insert
+    for i = 1, #tris, 3 do
+        local pos1 = tris[i    ]
+        local pos2 = tris[i + 1]
+        local pos3 = tris[i + 2]
+        if tris[i].pos then
+            pos1 = tris[i    ].pos
+            pos2 = tris[i + 1].pos
+            pos3 = tris[i + 2].pos
+        end
+
+        // get points that are valid sides of the plane
+
+        //if !pos1 or !pos2 or !pos3 then continue end      // just in case??
+
+        local pos1_valid = (pos1 - plane_pos):Dot(plane_dir) > 0
+        local pos2_valid = (pos2 - plane_pos):Dot(plane_dir) > 0
+        local pos3_valid = (pos3 - plane_pos):Dot(plane_dir) > 0
+        
+        // if all points should be kept, add triangle
+        if pos1_valid and pos2_valid and pos3_valid then 
+            table_insert(split_tris, pos1)
+            table_insert(split_tris, pos2)
+            table_insert(split_tris, pos3)
+            continue
+        end
+        
+        // if none of the points should be kept, skip triangle
+        if !pos1_valid and !pos2_valid and !pos3_valid then 
+            continue 
+        end
+        
+        local new_tris_index = 0    // optimization because table.insert is garbage
+        local new_tris = {}
+        
+        // all possible states of the intersected triangle
+        // extremely fast since a max of 4 if statments are required
+        local point1
+        local point2
+        local is_flipped = false
+        if pos1_valid then
+            if pos2_valid then      //pos1 = valid, pos2 = valid, pos3 = invalid
+                point1 = util_IntersectRayWithPlane(pos1, pos3 - pos1, plane_pos, plane_dir)
+                point2 = util_IntersectRayWithPlane(pos2, pos3 - pos2, plane_pos, plane_dir)
+                if !point1 then point1 = pos3 end
+                if !point2 then point2 = pos3 end
+                new_tris[new_tris_index + 1] = pos1
+                new_tris[new_tris_index + 2] = pos2
+                new_tris[new_tris_index + 3] = point1
+
+                new_tris[new_tris_index + 4] = point2
+                new_tris[new_tris_index + 5] = point1
+                new_tris[new_tris_index + 6] = pos2
+                new_tris_index = new_tris_index + 6
+                is_flipped = true
+            elseif pos3_valid then  // pos1 = valid, pos2 = invalid, pos3 = valid
+                point1 = util_IntersectRayWithPlane(pos1, pos2 - pos1, plane_pos, plane_dir)
+                point2 = util_IntersectRayWithPlane(pos3, pos2 - pos3, plane_pos, plane_dir)
+                if !point1 then point1 = pos2 end
+                if !point2 then point2 = pos2 end
+                new_tris[new_tris_index + 1] = point1
+                new_tris[new_tris_index + 2] = pos3
+                new_tris[new_tris_index + 3] = pos1
+
+                new_tris[new_tris_index + 4] = pos3
+                new_tris[new_tris_index + 5] = point1
+                new_tris[new_tris_index + 6] = point2
+                new_tris_index = new_tris_index + 6
+            else                    // pos1 = valid, pos2 = invalid, pos3 = invalid
+                point1 = util_IntersectRayWithPlane(pos1, pos2 - pos1, plane_pos, plane_dir)
+                point2 = util_IntersectRayWithPlane(pos1, pos3 - pos1, plane_pos, plane_dir)
+                if !point1 then point1 = pos2 end
+                if !point2 then point2 = pos3 end
+                new_tris[new_tris_index + 1] = pos1
+                new_tris[new_tris_index + 2] = point1
+                new_tris[new_tris_index + 3] = point2
+                new_tris_index = new_tris_index + 3
+            end
+        elseif pos2_valid then
+            if pos3_valid then      // pos1 = invalid, pos2 = valid, pos3 = valid
+                point1 = util_IntersectRayWithPlane(pos2, pos1 - pos2, plane_pos, plane_dir)
+                point2 = util_IntersectRayWithPlane(pos3, pos1 - pos3, plane_pos, plane_dir)
+                if !point1 then point1 = pos1 end
+                if !point2 then point2 = pos1 end
+                new_tris[new_tris_index + 1] = pos2
+                new_tris[new_tris_index + 2] = pos3
+                new_tris[new_tris_index + 3] = point1
+
+                new_tris[new_tris_index + 4] = point2
+                new_tris[new_tris_index + 5] = point1
+                new_tris[new_tris_index + 6] = pos3
+                new_tris_index = new_tris_index + 6
+                is_flipped = true 
+            else                    // pos1 = invalid, pos2 = valid, pos3 = invalid
+                point1 = util_IntersectRayWithPlane(pos2, pos1 - pos2, plane_pos, plane_dir)
+                point2 = util_IntersectRayWithPlane(pos2, pos3 - pos2, plane_pos, plane_dir)
+                if !point1 then point1 = pos1 end
+                if !point2 then point2 = pos3 end
+                new_tris[new_tris_index + 1] = point2
+                new_tris[new_tris_index + 2] = point1
+                new_tris[new_tris_index + 3] = pos2
+                new_tris_index = new_tris_index + 3
+                is_flipped = true
+            end
+        else                       // pos1 = invalid, pos2 = invalid, pos3 = valid
+            point1 = util_IntersectRayWithPlane(pos3, pos1 - pos3, plane_pos, plane_dir)
+            point2 = util_IntersectRayWithPlane(pos3, pos2 - pos3, plane_pos, plane_dir)
+            if !point1 then point1 = pos1 end
+            if !point2 then point2 = pos2 end
+            new_tris[new_tris_index + 1] = pos3
+            new_tris[new_tris_index + 2] = point1
+            new_tris[new_tris_index + 3] = point2
+            new_tris_index = new_tris_index + 3
+        end
+    
+        table.Add(split_tris, new_tris)
+        if is_flipped then
+            table_insert(plane_points, point1)
+            table_insert(plane_points, point2)
+        else
+            table_insert(plane_points, point2)
+            table_insert(plane_points, point1)
+        end
+    end
+    
+    // add triangles inside of the object
+    // each 2 points is an edge, create a triangle between the egde and first point
+    // start at index 4 since the first edge (1-2) cant exist since we are wrapping around the first point
+    //for i = 4, #plane_points, 2 do
+    //    table_insert(split_tris, plane_points[1    ])
+    //    table_insert(split_tris, plane_points[i - 1])
+    //    table_insert(split_tris, plane_points[i    ])
+    //end
+
+    return split_tris
 end
