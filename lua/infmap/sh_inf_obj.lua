@@ -48,14 +48,14 @@ local function find_path(path, file_name)
 	local files, dir = file.Find(path .. "/*", "GAME")
 	for _, name in ipairs(files) do
 		if string.Split(name, ".")[1] == file_name then
-			return dir
+			return path
 		end
 	end
 
 	for _, name in ipairs(dir) do
 		local found = find_path(path .. "/" .. name, file_name)
 		if found then 
-			return path .. "/" .. name
+			return found
 		end
 	end
 end
@@ -161,6 +161,9 @@ end
 // Main parsing function
 function InfMap.parse_obj(object_name, scale, client_only)
 	if SERVER and client_only then return end
+
+	// clear all collision data
+	table.Empty(InfMap.parsed_collision_data)
 
 	// find location of obj name
 	local object_path = find_path("models/infmap", object_name)
