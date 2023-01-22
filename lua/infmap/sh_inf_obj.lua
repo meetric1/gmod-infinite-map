@@ -6,7 +6,7 @@ InfMap.parsed_objects = InfMap.parsed_objects or {}
 // creates collisions for chunk .objs
 local build_object_collision
 if SERVER then
-	build_object_collision = function(ent, chunk)
+	build_object_collision = function(ent, chunk, old_chunk)
 		if InfMap.filter_entities(ent) then return end
 
 		local chunk_coord = InfMap.ezcoord(chunk)
@@ -37,7 +37,6 @@ else
 				
 				print("Spawning in chunk " .. chunk_coord)
 				collider:UpdateCollision(chunk_data)
-				InfMap.prop_update_chunk(collider, chunk)
 				table.Empty(InfMap.parsed_collision_data[chunk_coord]) InfMap.parsed_collision_data[chunk_coord] = nil	// bgone memory
 				break
 			end
@@ -170,8 +169,8 @@ function InfMap.parse_obj(object_name, scale, client_only)
 		return 
 	end
 
+	// actual obj file
 	local obj = file.Read(object_path .. "/" .. object_name .. ".obj", "GAME")
-	// obj file doesnt exist, bail
 	if !obj then 
 		print("Couldn't find .obj file when parsing " .. object_name .. "!")
 		return 
@@ -301,7 +300,6 @@ end
 
 if CLIENT then
 	// render parsed objs
-	
 	local ambient = render.GetLightColor(Vector()) * 0.5
 	local model_lights = {{ 
 		type = MATERIAL_LIGHT_DIRECTIONAL,
