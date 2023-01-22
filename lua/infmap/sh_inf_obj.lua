@@ -16,8 +16,6 @@ if SERVER then
 		print("Spawning in chunk " .. chunk_coord)
 		local collider = ents.Create("infmap_obj")
 		collider:SetModel("models/props_junk/CinderBlock01a.mdl")
-		collider:InfMap_SetPos(Vector())
-		collider:SetAngles(Angle())
 		collider:Spawn()
 		collider:UpdateCollision(chunk_data)
 		InfMap.prop_update_chunk(collider, chunk)
@@ -167,8 +165,12 @@ function InfMap.parse_obj(object_name, scale, client_only)
 
 	// find location of obj name
 	local object_path = find_path("models/infmap", object_name)
-	local obj = file.Read(object_path .. "/" .. object_name .. ".obj", "GAME")
+	if !object_path then 
+		print("Couldn't find .obj path when parsing " .. object_name .. "! (is the file in models/infmap/ ?)")
+		return 
+	end
 
+	local obj = file.Read(object_path .. "/" .. object_name .. ".obj", "GAME")
 	// obj file doesnt exist, bail
 	if !obj then 
 		print("Couldn't find .obj file when parsing " .. object_name .. "!")
@@ -299,12 +301,17 @@ end
 
 if CLIENT then
 	// render parsed objs
-	local default_material = Material("hunter/myplastic")
+	
 	local ambient = render.GetLightColor(Vector()) * 0.5
 	local model_lights = {{ 
 		type = MATERIAL_LIGHT_DIRECTIONAL,
 		color = Vector(2, 2, 2),
 	}}
+	local default_material = CreateMaterial("infmap_objdefault", "VertexLitGeneric", {
+		["$basetexture"] = "dev/graygrid", 
+		["$model"] = 1, 
+		["$nocull"] = 1
+	})
 	hook.Add("PostDrawOpaqueRenderables", "infmap_obj_render", function()
 		model_lights[1].dir = -(util.GetSunInfo().direction or Vector(0.7, 0.7, 0.7))
 		render.SetLocalModelLights(model_lights) // no lighting
