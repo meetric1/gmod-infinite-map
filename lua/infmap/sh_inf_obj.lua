@@ -6,7 +6,7 @@ InfMap.parsed_objects = InfMap.parsed_objects or {}
 // creates collisions for chunk .objs
 local build_object_collision
 if SERVER then
-	build_object_collision = function(ent, chunk, old_chunk)
+	build_object_collision = function(ent, chunk)
 		if InfMap.filter_entities(ent) then return end
 
 		local chunk_coord = InfMap.ezcoord(chunk)
@@ -14,7 +14,7 @@ if SERVER then
 		if !chunk_data then return end
 
 		print("Spawning in chunk " .. chunk_coord)
-		local collider = ents.Create("infmap_obj")
+		local collider = ents.Create("infmap_obj_collider")
 		collider:SetModel("models/props_junk/CinderBlock01a.mdl")
 		collider:Spawn()
 		collider:UpdateCollision(chunk_data)
@@ -31,7 +31,7 @@ else
 			if !chunk_data then return end
 
 			// find object to parent collisions to
-			for _, collider in ipairs(ents.FindByClass("infmap_obj")) do
+			for _, collider in ipairs(ents.FindByClass("infmap_obj_collider")) do
 				if collider.CHUNK_OFFSET != chunk then continue end
 				if !collider.UpdateCollision then continue end
 				
@@ -90,9 +90,10 @@ local function parse_client_data(object_path, object_name, faces, materials)
 		local face_mesh = Mesh()
 		face_mesh:BuildFromTriangles(faces[i])
 		table.insert(InfMap.parsed_objects, {
-			material = mtl_data[materials[i]], 
-			mesh = face_mesh
+			mesh = face_mesh,
+			material = mtl_data[materials[i]]
 		})
+
 		coroutine.yield()	// looks cool
 	end
 
@@ -105,13 +106,13 @@ local function parse_server_data(vertices, faces)
 	// combine and split faces into chunks
 	for i, face in ipairs(faces) do
 		for i = 1, #face, 3 do
-			local face_1 = face[i    ]
-			local face_2 = face[i + 1]
-			local face_3 = face[i + 2]
+			local face_1 = Vector(face[i    ].pos)
+			local face_2 = Vector(face[i + 1].pos)
+			local face_3 = Vector(face[i + 2].pos)
 
-			local _, chunk_1 = InfMap.localize_vector(face_1.pos)
-			local _, chunk_2 = InfMap.localize_vector(face_2.pos)
-			local _, chunk_3 = InfMap.localize_vector(face_3.pos)
+			local _, chunk_1 = InfMap.localize_vector(face_1)
+			local _, chunk_2 = InfMap.localize_vector(face_2)
+			local _, chunk_3 = InfMap.localize_vector(face_3)
 
 			local face_1_offset = -InfMap.unlocalize_vector(Vector(), chunk_1)
 			local face_2_offset = -InfMap.unlocalize_vector(Vector(), chunk_2)
@@ -126,22 +127,22 @@ local function parse_server_data(vertices, faces)
 			InfMap.parsed_collision_data[chunk_3_str] = InfMap.parsed_collision_data[chunk_3_str] or {}
 
 			local len = #InfMap.parsed_collision_data[chunk_1_str]
-			InfMap.parsed_collision_data[chunk_1_str][len + 1] = {pos = face_1.pos + face_1_offset}
-			InfMap.parsed_collision_data[chunk_1_str][len + 2] = {pos = face_2.pos + face_1_offset}
-			InfMap.parsed_collision_data[chunk_1_str][len + 3] = {pos = face_3.pos + face_1_offset}
+			InfMap.parsed_collision_data[chunk_1_str][len + 1] = {pos = face_1 + face_1_offset}
+			InfMap.parsed_collision_data[chunk_1_str][len + 2] = {pos = face_2 + face_1_offset}
+			InfMap.parsed_collision_data[chunk_1_str][len + 3] = {pos = face_3 + face_1_offset}
 
 			if chunk_2 != chunk_1 then
 				local len = #InfMap.parsed_collision_data[chunk_2_str]
-				InfMap.parsed_collision_data[chunk_2_str][len + 1] = {pos = face_1.pos + face_2_offset}
-				InfMap.parsed_collision_data[chunk_2_str][len + 2] = {pos = face_2.pos + face_2_offset}
-				InfMap.parsed_collision_data[chunk_2_str][len + 3] = {pos = face_3.pos + face_2_offset}
+				InfMap.parsed_collision_data[chunk_2_str][len + 1] = {pos = face_1 + face_2_offset}
+				InfMap.parsed_collision_data[chunk_2_str][len + 2] = {pos = face_2 + face_2_offset}
+				InfMap.parsed_collision_data[chunk_2_str][len + 3] = {pos = face_3 + face_2_offset}
 			end
 
 			if chunk_3 != chunk_2 and chunk_3 != chunk_1 then
 				local len = #InfMap.parsed_collision_data[chunk_3_str]
-				InfMap.parsed_collision_data[chunk_3_str][len + 1] = {pos = face_1.pos + face_3_offset}
-				InfMap.parsed_collision_data[chunk_3_str][len + 2] = {pos = face_2.pos + face_3_offset}
-				InfMap.parsed_collision_data[chunk_3_str][len + 3] = {pos = face_3.pos + face_3_offset}
+				InfMap.parsed_collision_data[chunk_3_str][len + 1] = {pos = face_1 + face_3_offset}
+				InfMap.parsed_collision_data[chunk_3_str][len + 2] = {pos = face_2 + face_3_offset}
+				InfMap.parsed_collision_data[chunk_3_str][len + 3] = {pos = face_3 + face_3_offset}
 			end
 		end
 
@@ -187,35 +188,68 @@ function InfMap.parse_obj(object_name, scale, client_only)
 	local faces = {}
 	local materials = {}
 
+	// stupid obj format
+	local function unfuck_negative(v_str, max)
+		if !v_str then return 0 end
+
+		local v_num = tonumber(v_str)
+		return v_num > 0 and v_num or v_num % max + 1
+	end
+
 	// takes in table of 3 data points, if the triangle is valid adds to faces
-	local function add_triangle(abc) 
+	local function add_triangle(a, b, c) 
 		if !faces[material] then
 			print("Material undefined for group " .. group)
 			material = material + 1
 			faces[material] = {}
 		end
 
-		local triangle = {}
-		for i = 1, 3 do
-			local vertex = string.Split(abc[i], "/")
-			local vert = tonumber(vertex[1])
-			local uv = tonumber(vertex[2])
-			local normal = tonumber(vertex[3])
-			
-			triangle[i] = {
-				pos = vert and vertices[group][vert > 0 and vert or vert % #vertices[group] + 1],
-				u = uv and  uvs[group][uv > 0 and uv or uv % #uvs[group] + 1][1],
-				v = uv and -uvs[group][uv > 0 and uv or uv % #uvs[group] + 1][2],
-				normal = normal and normals[group][normal > 0 and normal or normal % #normals[group] + 1]
-			}
-		end
+		local err, str = pcall(function()
+		local max_verts = #vertices[group]
+		local max_uvs = #uvs[group]
+		local max_normals = #normals[group]
 
-		// degenerate triangle check (infinitely thin)
-		if (triangle[1].pos - triangle[2].pos):Cross(triangle[1].pos - triangle[3].pos):LengthSqr() > 0.0001 then
-			table.Add(faces[material], triangle)
-		end
+		local vertex1 = string.Split(a, "/")
+		local vertex1_pos = vertices[group][unfuck_negative(vertex1[1], max_verts)]
+		
+		local vertex2 = string.Split(b, "/")
+		local vertex2_pos = vertices[group][unfuck_negative(vertex2[1], max_verts)]
+		
+		local vertex3 = string.Split(c, "/")
+		local vertex3_pos = vertices[group][unfuck_negative(vertex3[1], max_verts)]
 
-		table.Empty(triangle) triangle = nil
+		// degenerate triangle check
+		if (vertex1_pos - vertex2_pos):Cross(vertex1_pos - vertex3_pos):LengthSqr() < 0.0001 then return end
+
+		local vertex1_uv = uvs[group][unfuck_negative(vertex1[2], max_uvs)] or {0, 0}
+		local vertex1_normal = normals[group][unfuck_negative(vertex1[3], max_normals)]
+		local vertex2_uv = uvs[group][unfuck_negative(vertex2[2], max_uvs)] or {0, 0}
+		local vertex2_normal = normals[group][unfuck_negative(vertex2[3], max_normals)]
+		local vertex3_uv = uvs[group][unfuck_negative(vertex3[2], max_uvs)] or {0, 0}
+		local vertex3_normal = normals[group][unfuck_negative(vertex3[3], max_normals)]
+
+		table.insert(faces[material], {
+			pos = vertex1_pos,
+			u = vertex1_uv[1],
+			v = -vertex1_uv[2],	// flip v since we flip y axis in obj to account for source having Z as up
+			normal = vertex1_normal,
+		})
+
+		table.insert(faces[material], {
+			pos = vertex2_pos,
+			u = vertex2_uv[1],
+			v = -vertex2_uv[2],	
+			normal = vertex2_normal,
+		})
+
+		table.insert(faces[material], {
+			pos = vertex3_pos,
+			u = vertex3_uv[1],
+			v = -vertex3_uv[2],	
+			normal = vertex3_normal,
+		})
+		end)
+		if !err then print(str) end
 	end
 
 	// time to parse
@@ -245,7 +279,7 @@ function InfMap.parse_obj(object_name, scale, client_only)
 				local total_data = #line_data
 				// n gon support
 				for i = 3, total_data do
-					add_triangle({line_data[i - 1], line_data[1], line_data[i]})
+					add_triangle(line_data[i - 1], line_data[1], line_data[i])
 				end
 			end
 
@@ -300,25 +334,28 @@ function InfMap.parse_obj(object_name, scale, client_only)
 	end)
 end
 
-
 if CLIENT then
 	// render parsed objs
 	local ambient = render.GetLightColor(Vector()) * 0.5
 	local model_lights = {{ 
 		type = MATERIAL_LIGHT_DIRECTIONAL,
 		color = Vector(2, 2, 2),
+		dir = Vector(1, 1, 1):GetNormalized(),
 	}}
 	local default_material = CreateMaterial("infmap_objdefault", "VertexLitGeneric", {
 		["$basetexture"] = "dev/graygrid", 
 		["$model"] = 1, 
-		["$nocull"] = 1
+		["$nocull"] = 1,
+		["$alpha"] = 1
 	})
 	hook.Add("PostDrawOpaqueRenderables", "infmap_obj_render", function()
-		model_lights[1].dir = -(util.GetSunInfo().direction or Vector(0.7, 0.7, 0.7))
+		local sun = util.GetSunInfo()
+		if sun and sun.direction then
+			model_lights[1].dir = -sun.direction
+		end
 		render.SetLocalModelLights(model_lights) // no lighting
 		render.ResetModelLighting(ambient[1], ambient[2], ambient[3])
 
-		default_material:SetFloat("$alpha", 1)
 		cam.Start3D(InfMap.unlocalize_vector(EyePos(), LocalPlayer().CHUNK_OFFSET))
 		for _, object in ipairs(InfMap.parsed_objects) do
 			render.SetMaterial(object.material or default_material)

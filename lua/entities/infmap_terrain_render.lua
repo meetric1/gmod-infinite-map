@@ -96,7 +96,7 @@ function ENT:Think()
 		self.RENDER_MESH = {Mesh = Mesh(), Material = default_mat, Matrix = mat}
 
 		local mesh = mesh
-		mesh.Begin(self.RENDER_MESH.Mesh, MATERIAL_TRIANGLES, math.min(#self.TRIANGLES / 3, 2^15))
+		mesh.Begin(self.RENDER_MESH.Mesh, MATERIAL_TRIANGLES, math.min(#self.TRIANGLES / 3, 10000))
 			for _, tri in ipairs(self.TRIANGLES) do
 				mesh.Position(tri[1])
 				mesh.TexCoord(0, tri[2], tri[3])
@@ -106,7 +106,7 @@ function ENT:Think()
 			end
 		mesh.End()
 		table.Empty(self.TRIANGLES)
-		self:SetRenderBoundsWS(-Vector(1, 1, 1) * 2^14, Vector(1, 1, 1) * 2^14)
+		self:SetRenderBoundsWS(-InfMap.source_bounds, InfMap.source_bounds)
 		self.COROUTINE = nil
 	end
 end

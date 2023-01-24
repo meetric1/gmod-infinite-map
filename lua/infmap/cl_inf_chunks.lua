@@ -97,7 +97,7 @@ end)
 
 // debug cache
 local debug_enabled = CreateClientConVar("infmap_debug", "0", true, false)
-local maxsize = Vector(1, 1, 1) * 2^14
+local maxsize = InfMap.source_bounds
 local black = Color(0, 0, 0, 0)
 local red = Color(255, 0, 0, 255)
 local blue = Color(0, 0, 255, 255)

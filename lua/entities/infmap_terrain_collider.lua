@@ -12,7 +12,7 @@ ENT.Spawnable		= false
 
 if !InfMap then return end
 
-local bounds = 2^14
+local bounds = InfMap.source_bounds[1]
 function ENT:BuildCollision(heightFunction)
     local chunk_offset = self.CHUNK_OFFSET
     local x = chunk_offset[1]

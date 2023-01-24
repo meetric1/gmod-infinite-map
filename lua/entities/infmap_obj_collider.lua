@@ -4,7 +4,7 @@ ENT.Type = "anim"
 ENT.Base = "base_gmodentity"
 
 ENT.Category		= "Other"
-ENT.PrintName		= "Obj"
+ENT.PrintName		= "Obj_c"
 ENT.Author			= "Mee"
 ENT.Purpose			= ""
 ENT.Instructions	= ""
@@ -38,43 +38,37 @@ function ENT:TryOptimizeCollision()
     end
 end
 
-function ENT:Think()
-    local phys = self:GetPhysicsObject()
-    if phys:IsValid() then
-        phys:EnableMotion(false)
-        phys:SetMass(50000)  // max weight should help a bit with the physics solver
+if CLIENT then
+    function ENT:Think()
+        self:TryOptimizeCollision()
+        self:SetNextClientThink(CurTime() + 1)
+        return true
     end
-
-    self:TryOptimizeCollision()
-
-    if SERVER then self:NextThink(CurTime() + 1)
-    else self:SetNextClientThink(CurTime() + 1) end
-
-    return true
 end
 
-// return data back to parsed_obj table
-function ENT:ParseDataBack()
+function ENT:OnRemove()
     local phys = self:GetPhysicsObject()
     if phys:IsValid() then
         InfMap.parsed_collision_data[InfMap.ezcoord(self.CHUNK_OFFSET)] = phys:GetMesh()
-        self:PhysicsDestroy()
     else
         print("Unable to retrieve collision data for chunk " .. InfMap.ezcoord(self.CHUNK_OFFSET))
     end
 end
 
-function ENT:OnRemove()
-    self:ParseDataBack()
-end
-
 // physics solver optimization
 hook.Add("PropUpdateChunk", "infmap_obj_optimizecollision", function(ent, chunk)
-    if SERVER and InfMap.filter_entities(ent) then return end
-    if CLIENT and ent != LocalPlayer() then return end
-
-    for k, v in ipairs(ents.FindByClass("infmap_obj")) do
-        if !v.TryOptimizeCollision then continue end    // wtf?
-        v:TryOptimizeCollision()
+    if SERVER then
+        if InfMap.filter_entities(ent) then return end
+        for k, v in ipairs(ents.FindByClass("infmap_obj_collider")) do
+            v:TryOptimizeCollision()
+        end
+    else
+        if CLIENT and ent != LocalPlayer() then return end
+        timer.Simple(0, function() // race CONDITION
+            for k, v in ipairs(ents.FindByClass("infmap_obj_collider")) do
+                if !v.TryOptimizeCollision then continue end    // wtf?
+                v:TryOptimizeCollision()
+            end
+        end)
     end
 end)

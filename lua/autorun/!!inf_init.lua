@@ -4,6 +4,7 @@ AddCSLuaFile()
 
 InfMap = InfMap or {}
 InfMap.chunk_size = 10000
+InfMap.source_bounds = Vector(1, 1, 1) * math.pow(2, 14)
 
 // Add required files for clients
 if SERVER then

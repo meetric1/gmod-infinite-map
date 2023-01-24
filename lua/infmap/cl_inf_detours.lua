@@ -20,7 +20,7 @@ end
 // clamp setpos or it spams console
 EntityMT.InfMap_SetPos = EntityMT.InfMap_SetPos or EntityMT.SetPos
 function EntityMT:SetPos(pos)
-	local pos = clamp_vector(pos, 2^14)
+	local pos = clamp_vector(pos, InfMap.source_bounds[1])
 	return self:InfMap_SetPos(pos)
 end
 
@@ -95,7 +95,7 @@ end
 // clamp setpos or it spams console
 PhysObjMT.InfMap_SetPos = PhysObjMT.InfMap_SetPos or PhysObjMT.SetPos
 function PhysObjMT:SetPos(pos)
-	local pos = clamp_vector(pos, 2^14)
+	local pos = clamp_vector(pos, InfMap.source_bounds[1])
 	return self:InfMap_SetPos(pos)
 end
 
