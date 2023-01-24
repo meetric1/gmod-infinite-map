@@ -333,40 +333,37 @@ build_object_collision = function(ent, chunk)
 	if CLIENT and !(ent == LocalPlayer() or ent:GetClass() == "infmap_obj_collider") then return end
 
 	local chunk_coord = InfMap.ezcoord(chunk)
+	if InfMap.parsed_objects[chunk_coord] then return end
 	local chunk_data = InfMap.parsed_collision_data[chunk_coord]
 	if !chunk_data then return end
 
-	local collider
 	if SERVER then
-		collider = ents.Create("infmap_obj_collider")
+		local collider = ents.Create("infmap_obj_collider")
 		collider:SetModel("models/props_junk/CinderBlock01a.mdl")
 		collider:Spawn()
+		collider:UpdateCollision(chunk_data)
 		InfMap.prop_update_chunk(collider, chunk)
 		print("Spawning collider in chunk " .. chunk_coord)
+		InfMap.parsed_objects[chunk_coord] = collider
 	else
 		// try to find a collider in our chunk
-		for _, col in ipairs(ents.FindByClass("infmap_obj_collider")) do
-			if col.CHUNK_OFFSET != chunk then continue end
-			collider = col
+		for _, collider in ipairs(ents.FindByClass("infmap_obj_collider")) do
+			if collider.CHUNK_OFFSET != LocalPlayer().CHUNK_OFFSET then continue end
+			if IsValid(collider:GetPhysicsObject()) then continue end
+
+			print("Updating collider in " .. chunk_coord)
+
+			// weird hack to prevent null physobjs on client
+			if !collider.UpdateCollision then
+				collider.RENDER_MESH = chunk_data
+			else
+				collider:UpdateCollision(chunk_data)
+			end
+
+			// we found our collider, stop looking
 			break
 		end
-
-		// im actually not sure why this makes it work so dont touch it
-		if collider and !collider.UpdateCollision then
-			if ent:GetClass() == "infmap_obj_collider" then
-				timer.Simple(0.001, function()	// 0 instantly crashes??
-					build_object_collision(ent, chunk)
-				end)
-			end
-			collider = nil
-		end
 	end
-
-	if !collider or IsValid(collider:GetPhysicsObject()) then return end
-
-	print("Updating collider in " .. chunk_coord)
-	collider:UpdateCollision(chunk_data)
-	table.Empty(InfMap.parsed_collision_data[chunk_coord]) InfMap.parsed_collision_data[chunk_coord] = nil	// bgone memory
 end
 
 hook.Add("PropUpdateChunk", "infmap_obj_spawn", build_object_collision)
