@@ -25,7 +25,6 @@ function ENT:Initialize()
 end
 
 function ENT:UpdateCollision(verts)
-    self:SetNotSolid(CLIENT)    // PLEASE DONT CRASH
     self:PhysicsFromMesh(verts)
     self:GetPhysicsObject():EnableMotion(false)
 end

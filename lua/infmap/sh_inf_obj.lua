@@ -336,8 +336,6 @@ build_object_collision = function(ent, chunk)
 	local chunk_data = InfMap.parsed_collision_data[chunk_coord]
 	if !chunk_data then return end
 
-	
-
 	local collider
 	if SERVER then
 		collider = ents.Create("infmap_obj_collider")
@@ -348,9 +346,19 @@ build_object_collision = function(ent, chunk)
 	else
 		// try to find a collider in our chunk
 		for _, col in ipairs(ents.FindByClass("infmap_obj_collider")) do
-			if col.CHUNK_OFFSET != chunk or !col.UpdateCollision then continue end
+			if col.CHUNK_OFFSET != chunk then continue end
 			collider = col
 			break
+		end
+
+		// im actually not sure why this makes it work so dont touch it
+		if collider and !collider.UpdateCollision then
+			if ent:GetClass() == "infmap_obj_collider" then
+				timer.Simple(0.001, function()	// 0 instantly crashes??
+					build_object_collision(ent, chunk)
+				end)
+			end
+			collider = nil
 		end
 	end
 
