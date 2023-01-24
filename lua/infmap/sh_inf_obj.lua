@@ -3,47 +3,10 @@ local yield_quota = 2500
 InfMap.parsed_collision_data = InfMap.parsed_collision_data or {}
 InfMap.parsed_objects = InfMap.parsed_objects or {}
 
-// creates collisions for chunk .objs
+// creates collisions for chunk .objs (defined later)
 local build_object_collision
-if SERVER then
-	build_object_collision = function(ent, chunk)
-		if InfMap.filter_entities(ent) then return end
 
-		local chunk_coord = InfMap.ezcoord(chunk)
-		local chunk_data = InfMap.parsed_collision_data[chunk_coord]
-		if !chunk_data then return end
-
-		print("Spawning in chunk " .. chunk_coord)
-		local collider = ents.Create("infmap_obj_collider")
-		collider:SetModel("models/props_junk/CinderBlock01a.mdl")
-		collider:Spawn()
-		collider:UpdateCollision(chunk_data)
-		InfMap.prop_update_chunk(collider, chunk)
-		table.Empty(InfMap.parsed_collision_data[chunk_coord]) InfMap.parsed_collision_data[chunk_coord] = nil	// bgone memory
-	end
-else
-	build_object_collision = function(ent, chunk)
-		timer.Simple(0, function() // ugh, have do this because of race condition
-			if ent != LocalPlayer() then return end
-
-			local chunk_coord = InfMap.ezcoord(chunk)
-			local chunk_data = InfMap.parsed_collision_data[chunk_coord]
-			if !chunk_data then return end
-
-			// find object to parent collisions to
-			for _, collider in ipairs(ents.FindByClass("infmap_obj_collider")) do
-				if collider.CHUNK_OFFSET != chunk then continue end
-				if !collider.UpdateCollision then continue end
-				
-				print("Spawning in chunk " .. chunk_coord)
-				collider:UpdateCollision(chunk_data)
-				table.Empty(InfMap.parsed_collision_data[chunk_coord]) InfMap.parsed_collision_data[chunk_coord] = nil	// bgone memory
-				break
-			end
-		end)
-	end
-end
-
+// finds & returns path to a file with a given name
 local function find_path(path, file_name)
 	local files, dir = file.Find(path .. "/*", "GAME")
 	for _, name in ipairs(files) do
@@ -363,6 +326,39 @@ if CLIENT then
 		end
 		cam.End3D()
 	end)
+end
+
+build_object_collision = function(ent, chunk)
+	if SERVER and InfMap.filter_entities(ent) then return end
+	if CLIENT and !(ent == LocalPlayer() or ent:GetClass() == "infmap_obj_collider") then return end
+
+	local chunk_coord = InfMap.ezcoord(chunk)
+	local chunk_data = InfMap.parsed_collision_data[chunk_coord]
+	if !chunk_data then return end
+
+	
+
+	local collider
+	if SERVER then
+		collider = ents.Create("infmap_obj_collider")
+		collider:SetModel("models/props_junk/CinderBlock01a.mdl")
+		collider:Spawn()
+		InfMap.prop_update_chunk(collider, chunk)
+		print("Spawning collider in chunk " .. chunk_coord)
+	else
+		// try to find a collider in our chunk
+		for _, col in ipairs(ents.FindByClass("infmap_obj_collider")) do
+			if col.CHUNK_OFFSET != chunk or !col.UpdateCollision then continue end
+			collider = col
+			break
+		end
+	end
+
+	if !collider or IsValid(collider:GetPhysicsObject()) then return end
+
+	print("Updating collider in " .. chunk_coord)
+	collider:UpdateCollision(chunk_data)
+	table.Empty(InfMap.parsed_collision_data[chunk_coord]) InfMap.parsed_collision_data[chunk_coord] = nil	// bgone memory
 end
 
 hook.Add("PropUpdateChunk", "infmap_obj_spawn", build_object_collision)
