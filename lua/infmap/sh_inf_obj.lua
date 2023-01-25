@@ -30,18 +30,18 @@ local function parse_client_data(object_path, object_name, faces, materials)
 	local mtl = file.Read(object_path .. "/" .. object_name .. ".mtl", "GAME")
 	if mtl then
 		local mtl_split = string.Split(mtl, "\n")
-		local material = 0
+		local material
 		for i = 1, #mtl_split do
 			local data = string.Split(mtl_split[i], " ")
 			local first = table.remove(data, 1)
 
 			if first == "newmtl" then 
-				material = data[1]
+				material = string.Trim(data[1])
 			end
 
 			if first == "map_Kd" then
 				local material_path = object_path .. "/" .. string.Trim(data[1])
-				mtl_data[material] = Material(material_path, "vertexlitgeneric mips smooth noclamp nocull")
+				mtl_data[material] = Material(material_path, "vertexlitgeneric mips smooth noclamp alphatest")
 			end
 		end
 	else
@@ -168,19 +168,12 @@ function InfMap.parse_obj(object_name, scale, client_only)
 
 			// vertex processing
 			if first == "v" then
-				table.insert(vertices[group], Vector(-tonumber(line_data[1]), tonumber(line_data[3]), tonumber(line_data[2])) * scale)
-			end
-
-			if first == "vt" then
-				table.insert(uvs[group], Vector(tonumber(line_data[1]), tonumber(line_data[2])))
-			end
-
-			if first == "vn" then
-				table.insert(normals[group], Vector(-tonumber(line_data[1]), tonumber(line_data[3]), tonumber(line_data[2])))
-			end
-
-			// face processing
-			if first == "f" then
+				vertices[group][#vertices[group] + 1] = Vector(-tonumber(line_data[1]), tonumber(line_data[3]), tonumber(line_data[2])) * scale
+			elseif first == "vt" then
+				uvs[group][#uvs[group] + 1] = Vector(tonumber(line_data[1]), tonumber(line_data[2]))
+			elseif first == "vn" then
+				normals[group][#normals[group] + 1] = Vector(-tonumber(line_data[1]), tonumber(line_data[3]), tonumber(line_data[2]))
+			elseif first == "f" then // face processing
 				local total_data = #line_data
 				if !faces[material] then
 					print("Material undefined for group " .. group)
@@ -213,7 +206,7 @@ function InfMap.parse_obj(object_name, scale, client_only)
 					faces[material][face_len + 1] = {
 						pos = vertex1_pos,
 						u = vertex1[2] and uv[1],
-						v = vertex1[2] and uv[2],
+						v = vertex1[2] and -uv[2],
 						normal = normals[group][unfuck_negative(vertex1[3], max_normals)]
 					}
 
@@ -221,7 +214,7 @@ function InfMap.parse_obj(object_name, scale, client_only)
 					faces[material][face_len + 2] = {
 						pos = vertex2_pos,
 						u = vertex2[2] and uv[1],
-						v = vertex2[2] and uv[2],
+						v = vertex2[2] and -uv[2],
 						normal = normals[group][unfuck_negative(vertex2[3], max_normals)]
 					}
 
@@ -229,21 +222,15 @@ function InfMap.parse_obj(object_name, scale, client_only)
 					faces[material][face_len + 3] = {
 						pos = vertex3_pos,
 						u = vertex3[2] and uv[1],
-						v = vertex3[2] and uv[2],
+						v = vertex3[2] and -uv[2],
 						normal = normals[group][unfuck_negative(vertex3[3], max_normals)]
 					}
 				end
-			end
-
-			// material
-			if first == "usemtl" then
+			elseif first == "usemtl" then // material
 				material = material + 1
 				faces[material] = {}
 				materials[material] = line_data[1]
-			end
-
-			// increment groups of tris
-			if first == "g" or first == "o" then
+			elseif first == "g" or first == "o" then	// increment groups of tris
 				if first == "o" and group != 0 then 
 					continue 
 				end

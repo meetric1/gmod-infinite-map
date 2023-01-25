@@ -13,14 +13,17 @@ InfMap.all_ents = {}
 local function update_ents(all)
 	InfMap.all_ents = ents.GetAll()
 	if all then return end
+
+	local lpco = LocalPlayer().CHUNK_OFFSET
 	for i = #InfMap.all_ents, 1, -1 do	// iterate downward
 		// if invalid is true, then the entity should be removed from the table calculated per frame
 		local ent = InfMap.all_ents[i]
-		local invalid = !ent.CHUNK_OFFSET
+		local invalid = !ent.CHUNK_OFFSET or !lpco
 		invalid = invalid or InfMap.filter_entities(ent)
 		invalid = invalid or (!ent.RenderOverride or ent.RenderOverride == empty_function)
 		invalid = invalid or ent:GetNoDraw()
-		invalid = invalid or ent.CHUNK_OFFSET:LengthSqr() > too_far
+		invalid = invalid or (ent.CHUNK_OFFSET - lpco):LengthSqr() > too_far
+		invalid = invalid or (ent:GetPos() - EyePos()):Dot(EyeAngles():Forward()) < 0	// behind player
 		
 		if invalid then
 			table.remove(InfMap.all_ents, i)	// remove invalid entity
@@ -29,7 +32,7 @@ local function update_ents(all)
 end
 
 local update_all = false
-timer.Create("infinite_chunkmove_update", 1, 0, function()
+timer.Create("infinite_chunkmove_update", 0.5, 0, function()
 	update_ents(true)
 	update_all = true
 end)
