@@ -65,13 +65,13 @@ end
 
 
 // server generates physmesh data from obj file
-local function parse_server_data(vertices, faces)
+local function parse_server_data(faces)
 	// combine and split faces into chunks
 	for i, face in ipairs(faces) do
 		for i = 1, #face, 3 do
-			local face_1 = Vector(face[i    ].pos)
-			local face_2 = Vector(face[i + 1].pos)
-			local face_3 = Vector(face[i + 2].pos)
+			local face_1 = face[i    ].pos
+			local face_2 = face[i + 1].pos
+			local face_3 = face[i + 2].pos
 
 			local _, chunk_1 = InfMap.localize_vector(face_1)
 			local _, chunk_2 = InfMap.localize_vector(face_2)
@@ -120,7 +120,13 @@ local function parse_server_data(vertices, faces)
 		build_object_collision(v, v.CHUNK_OFFSET)
 	end
 end
+// stupid obj format
+local function unfuck_negative(v_str, max)
+	if !v_str then return 0 end
 
+	local v_num = tonumber(v_str)
+	return v_num > 0 and v_num or v_num % max + 1
+end
 
 // Main parsing function
 function InfMap.parse_obj(object_name, scale, client_only)
@@ -143,80 +149,16 @@ function InfMap.parse_obj(object_name, scale, client_only)
 		return 
 	end
 
-	local group = 0
-	local material = 0
-	local vertices = {}
-	local uvs = {}
-	local normals = {}
-	local faces = {}
-	local materials = {}
-
-	// stupid obj format
-	local function unfuck_negative(v_str, max)
-		if !v_str then return 0 end
-
-		local v_num = tonumber(v_str)
-		return v_num > 0 and v_num or v_num % max + 1
-	end
-
-	// takes in table of 3 data points, if the triangle is valid adds to faces
-	local function add_triangle(a, b, c) 
-		if !faces[material] then
-			print("Material undefined for group " .. group)
-			material = material + 1
-			faces[material] = {}
-		end
-
-		local err, str = pcall(function()
-		local max_verts = #vertices[group]
-		local max_uvs = #uvs[group]
-		local max_normals = #normals[group]
-
-		local vertex1 = string.Split(a, "/")
-		local vertex1_pos = vertices[group][unfuck_negative(vertex1[1], max_verts)]
-		
-		local vertex2 = string.Split(b, "/")
-		local vertex2_pos = vertices[group][unfuck_negative(vertex2[1], max_verts)]
-		
-		local vertex3 = string.Split(c, "/")
-		local vertex3_pos = vertices[group][unfuck_negative(vertex3[1], max_verts)]
-
-		// degenerate triangle check
-		if (vertex1_pos - vertex2_pos):Cross(vertex1_pos - vertex3_pos):LengthSqr() < 0.0001 then return end
-
-		local vertex1_uv = uvs[group][unfuck_negative(vertex1[2], max_uvs)] or {0, 0}
-		local vertex1_normal = normals[group][unfuck_negative(vertex1[3], max_normals)]
-		local vertex2_uv = uvs[group][unfuck_negative(vertex2[2], max_uvs)] or {0, 0}
-		local vertex2_normal = normals[group][unfuck_negative(vertex2[3], max_normals)]
-		local vertex3_uv = uvs[group][unfuck_negative(vertex3[2], max_uvs)] or {0, 0}
-		local vertex3_normal = normals[group][unfuck_negative(vertex3[3], max_normals)]
-
-		table.insert(faces[material], {
-			pos = vertex1_pos,
-			u = vertex1_uv[1],
-			v = -vertex1_uv[2],	// flip v since we flip y axis in obj to account for source having Z as up
-			normal = vertex1_normal,
-		})
-
-		table.insert(faces[material], {
-			pos = vertex2_pos,
-			u = vertex2_uv[1],
-			v = -vertex2_uv[2],	
-			normal = vertex2_normal,
-		})
-
-		table.insert(faces[material], {
-			pos = vertex3_pos,
-			u = vertex3_uv[1],
-			v = -vertex3_uv[2],	
-			normal = vertex3_normal,
-		})
-		end)
-		if !err then print(str) end
-	end
-
 	// time to parse
 	local coro = coroutine.create(function()
+		local group = 0
+		local material = 0
+		local vertices = {}
+		local uvs = {}
+		local normals = {}
+		local materials = {}
+		local faces = {}
+
 		// sort the data
 		local split_obj = string.Split(obj, "\n")
 		for i, newline_data in ipairs(split_obj) do
@@ -240,9 +182,56 @@ function InfMap.parse_obj(object_name, scale, client_only)
 			// face processing
 			if first == "f" then
 				local total_data = #line_data
+				if !faces[material] then
+					print("Material undefined for group " .. group)
+					material = material + 1
+					faces[material] = {}
+				end
+
 				// n gon support
 				for i = 3, total_data do
-					add_triangle(line_data[i - 1], line_data[1], line_data[i])
+					// who tf uses negative indexes?!??
+					// why am I adding support for this!?
+					local max_verts = #vertices[group]
+					local max_uvs = #uvs[group]
+					local max_normals = #normals[group]
+				
+					// get our vertex indices data
+					local vertex1 = string.Split(line_data[i - 1], "/")
+					local vertex2 = string.Split(line_data[1], "/")
+					local vertex3 = string.Split(line_data[i], "/")
+
+					local vertex1_pos = vertices[group][unfuck_negative(vertex1[1], max_verts)]
+					local vertex2_pos = vertices[group][unfuck_negative(vertex2[1], max_verts)]
+					local vertex3_pos = vertices[group][unfuck_negative(vertex3[1], max_verts)]
+
+					// degenerate triangle check
+					if (vertex1_pos - vertex2_pos):Cross(vertex1_pos - vertex3_pos):LengthSqr() < 0.0001 then continue end
+
+					local face_len = #faces[material]
+					local uv = uvs[group][unfuck_negative(vertex1[2], max_uvs)]
+					faces[material][face_len + 1] = {
+						pos = vertex1_pos,
+						u = vertex1[2] and uv[1],
+						v = vertex1[2] and uv[2],
+						normal = normals[group][unfuck_negative(vertex1[3], max_normals)]
+					}
+
+					uv = uvs[group][unfuck_negative(vertex2[2], max_uvs)]
+					faces[material][face_len + 2] = {
+						pos = vertex2_pos,
+						u = vertex2[2] and uv[1],
+						v = vertex2[2] and uv[2],
+						normal = normals[group][unfuck_negative(vertex2[3], max_normals)]
+					}
+
+					uv = uvs[group][unfuck_negative(vertex3[2], max_uvs)]
+					faces[material][face_len + 3] = {
+						pos = vertex3_pos,
+						u = vertex3[2] and uv[1],
+						v = vertex3[2] and uv[2],
+						normal = normals[group][unfuck_negative(vertex3[3], max_normals)]
+					}
 				end
 			end
 
@@ -276,16 +265,16 @@ function InfMap.parse_obj(object_name, scale, client_only)
 		end
 
 		if !client_only then
-			parse_server_data(vertices, faces)
+			parse_server_data(faces)
 		end
 
-		// free memory
-		// pretty sure these are all freed automatically because of local variables, but lets just be safe
+		// free data (memory leak moment)
 		table.Empty(vertices) vertices = nil
 		table.Empty(uvs) uvs = nil
 		table.Empty(normals) normals = nil
 		table.Empty(materials) materials = nil
 		table.Empty(faces) faces = nil
+		print("Finished parsing " .. object_name)
 	end)
 
 	hook.Add("Think", "infmap_parse" .. object_name, function() 
@@ -299,7 +288,7 @@ end
 
 if CLIENT then
 	// render parsed objs
-	local ambient = render.GetLightColor(Vector()) * 0.5
+	local ambient = render.GetLightColor(Vector())
 	local model_lights = {{ 
 		type = MATERIAL_LIGHT_DIRECTIONAL,
 		color = Vector(2, 2, 2),
