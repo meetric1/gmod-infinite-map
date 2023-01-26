@@ -24,9 +24,9 @@ local function find_path(path, file_name)
 end
 
 // client generates meshes & materials from obj data
-local function parse_client_data(object_path, object_name, faces, materials)
+local function parse_client_data(object_path, object_name)
 	// parse mtl file for materials
-	local mtl_data = {}
+	InfMap.parsed_data.mtl_data = {}
 	local mtl = file.Read(object_path .. "/" .. object_name .. ".mtl", "GAME")
 	if mtl then
 		local mtl_split = string.Split(mtl, "\n")
@@ -41,7 +41,7 @@ local function parse_client_data(object_path, object_name, faces, materials)
 
 			if first == "map_Kd" then
 				local material_path = object_path .. "/" .. string.Trim(data[1])
-				mtl_data[material] = Material(material_path, "vertexlitgeneric mips smooth noclamp alphatest")
+				InfMap.parsed_data.mtl_data[material] = Material(material_path, "vertexlitgeneric mips smooth noclamp")	// alphatest
 			end
 		end
 	else
@@ -49,67 +49,65 @@ local function parse_client_data(object_path, object_name, faces, materials)
 	end
 
 	// build meshes & materials
-	for i = 1, #faces do
+	for i = 1, #InfMap.parsed_data.faces do
 		local face_mesh = Mesh()
-		face_mesh:BuildFromTriangles(faces[i])
+		face_mesh:BuildFromTriangles(InfMap.parsed_data.faces[i])
 		table.insert(InfMap.parsed_objects, {
 			mesh = face_mesh,
-			material = mtl_data[materials[i]]
+			material = InfMap.parsed_data.mtl_data[InfMap.parsed_data.materials[i]]
 		})
 
 		coroutine.yield()	// looks cool
 	end
-
-	table.Empty(mtl_data) mtl_data = nil
 end
 
 
 // server generates physmesh data from obj file
-local function parse_server_data(faces)
+// tris are in the format collisiondata[chunk][mat] = {{pos = Vector}, {pos = Vector}, {pos = Vector}...}
+local function parse_server_data()
+	local function add_data(chunk, face1, face2, face3)
+		local chunk_str = InfMap.ezcoord(chunk)
+		InfMap.parsed_collision_data[chunk_str] = InfMap.parsed_collision_data[chunk_str] or {{}}
+		local parsed_len = #InfMap.parsed_collision_data[chunk_str]
+		local parsed_tri_len = #InfMap.parsed_collision_data[chunk_str][parsed_len]
+		if parsed_tri_len > yield_quota then
+			InfMap.parsed_collision_data[chunk_str][parsed_len + 1] = {}
+			parsed_tri_len = 0
+			parsed_len = parsed_len + 1
+		end
+
+		local offset = -InfMap.unlocalize_vector(Vector(), chunk)
+		InfMap.parsed_collision_data[chunk_str][parsed_len][parsed_tri_len + 1] = {pos = face1 + offset}
+		InfMap.parsed_collision_data[chunk_str][parsed_len][parsed_tri_len + 2] = {pos = face2 + offset}
+		InfMap.parsed_collision_data[chunk_str][parsed_len][parsed_tri_len + 3] = {pos = face3 + offset}
+	end
+
 	// combine and split faces into chunks
-	for i, face in ipairs(faces) do
+	for mat, face in ipairs(InfMap.parsed_data.faces) do
 		for i = 1, #face, 3 do
-			local face_1 = face[i    ].pos
-			local face_2 = face[i + 1].pos
-			local face_3 = face[i + 2].pos
+			local face1 = face[i    ].pos
+			local face2 = face[i + 1].pos
+			local face3 = face[i + 2].pos
 
-			local _, chunk_1 = InfMap.localize_vector(face_1)
-			local _, chunk_2 = InfMap.localize_vector(face_2)
-			local _, chunk_3 = InfMap.localize_vector(face_3)
+			// too small, dont bother generating collision
+			if (face1 - face2):Cross(face1 - face3):LengthSqr() < 100000 then continue end
 
-			local face_1_offset = -InfMap.unlocalize_vector(Vector(), chunk_1)
-			local face_2_offset = -InfMap.unlocalize_vector(Vector(), chunk_2)
-			local face_3_offset = -InfMap.unlocalize_vector(Vector(), chunk_3)
+			local _, chunk1 = InfMap.localize_vector(face1)
+			local _, chunk2 = InfMap.localize_vector(face2)
+			local _, chunk3 = InfMap.localize_vector(face3)
 
-			local chunk_1_str = InfMap.ezcoord(chunk_1)
-			local chunk_2_str = InfMap.ezcoord(chunk_2)
-			local chunk_3_str = InfMap.ezcoord(chunk_3)
+			add_data(chunk1, face1, face2, face3)
 
-			InfMap.parsed_collision_data[chunk_1_str] = InfMap.parsed_collision_data[chunk_1_str] or {}
-			InfMap.parsed_collision_data[chunk_2_str] = InfMap.parsed_collision_data[chunk_2_str] or {}
-			InfMap.parsed_collision_data[chunk_3_str] = InfMap.parsed_collision_data[chunk_3_str] or {}
-
-			local len = #InfMap.parsed_collision_data[chunk_1_str]
-			InfMap.parsed_collision_data[chunk_1_str][len + 1] = {pos = face_1 + face_1_offset}
-			InfMap.parsed_collision_data[chunk_1_str][len + 2] = {pos = face_2 + face_1_offset}
-			InfMap.parsed_collision_data[chunk_1_str][len + 3] = {pos = face_3 + face_1_offset}
-
-			if chunk_2 != chunk_1 then
-				local len = #InfMap.parsed_collision_data[chunk_2_str]
-				InfMap.parsed_collision_data[chunk_2_str][len + 1] = {pos = face_1 + face_2_offset}
-				InfMap.parsed_collision_data[chunk_2_str][len + 2] = {pos = face_2 + face_2_offset}
-				InfMap.parsed_collision_data[chunk_2_str][len + 3] = {pos = face_3 + face_2_offset}
+			if chunk2 != chunk1 then
+				add_data(chunk2, face1, face2, face3)
 			end
 
-			if chunk_3 != chunk_2 and chunk_3 != chunk_1 then
-				local len = #InfMap.parsed_collision_data[chunk_3_str]
-				InfMap.parsed_collision_data[chunk_3_str][len + 1] = {pos = face_1 + face_3_offset}
-				InfMap.parsed_collision_data[chunk_3_str][len + 2] = {pos = face_2 + face_3_offset}
-				InfMap.parsed_collision_data[chunk_3_str][len + 3] = {pos = face_3 + face_3_offset}
+			if chunk3 != chunk2 and chunk3 != chunk1 then
+				add_data(chunk3, face1, face2, face3)
 			end
 		end
 
-		print("Finished parsing face " .. i .. "/" .. #faces)
+		print("Finished parsing face " .. mat .. "/" .. #InfMap.parsed_data.faces)
 		coroutine.yield()
 	end
 
@@ -120,6 +118,7 @@ local function parse_server_data(faces)
 		build_object_collision(v, v.CHUNK_OFFSET)
 	end
 end
+
 // stupid obj format
 local function unfuck_negative(v_str, max)
 	if !v_str then return 0 end
@@ -151,117 +150,125 @@ function InfMap.parse_obj(object_name, scale, client_only)
 
 	// time to parse
 	local coro = coroutine.create(function()
+		local err, str = pcall(function()
 		local group = 0
 		local material = 0
-		local vertices = {}
-		local uvs = {}
-		local normals = {}
-		local materials = {}
-		local faces = {}
+		InfMap.parsed_data = {}
+		InfMap.parsed_data.vertices = {}
+		InfMap.parsed_data.uvs = {}
+		InfMap.parsed_data.normals = {}
+		InfMap.parsed_data.materials = {}
+		InfMap.parsed_data.faces = {}
 
 		// sort the data
 		local split_obj = string.Split(obj, "\n")
-		for i, newline_data in ipairs(split_obj) do
+		local split_obj_len = #split_obj
+		for i = 1, split_obj_len do
 			// get data from line
-			local line_data = string.Split(newline_data, " ")
+			local line_data = string.Split(split_obj[i], " ")
 			local first = table.remove(line_data, 1)
 
 			// vertex processing
 			if first == "v" then
-				vertices[group][#vertices[group] + 1] = Vector(-tonumber(line_data[1]), tonumber(line_data[3]), tonumber(line_data[2])) * scale
-			elseif first == "vt" then
-				uvs[group][#uvs[group] + 1] = Vector(tonumber(line_data[1]), tonumber(line_data[2]))
-			elseif first == "vn" then
-				normals[group][#normals[group] + 1] = Vector(-tonumber(line_data[1]), tonumber(line_data[3]), tonumber(line_data[2]))
-			elseif first == "f" then // face processing
-				local total_data = #line_data
-				if !faces[material] then
+				table.insert(InfMap.parsed_data.vertices[group], Vector(-tonumber(line_data[1]), tonumber(line_data[3]), tonumber(line_data[2])) * scale)
+
+			// only client uses uvs and normals
+			elseif first == "vt" and CLIENT then	
+				table.insert(InfMap.parsed_data.uvs[group], Vector(tonumber(line_data[1]), tonumber(line_data[2])))
+			elseif first == "vn" and CLIENT then
+				table.insert(InfMap.parsed_data.normals[group], Vector(-tonumber(line_data[1]), tonumber(line_data[3]), tonumber(line_data[2])))
+
+			// face processing
+			elseif first == "f" then 
+				// sometimes a material isnt defined, not sure why.. define empty one
+				if !InfMap.parsed_data.faces[material] then
 					print("Material undefined for group " .. group)
 					material = material + 1
-					faces[material] = {}
+					InfMap.parsed_data.faces[material] = {}
 				end
+				
+				// who tf uses negative indexes?!??
+				// why am I adding support for this!?
+				local max_verts = #InfMap.parsed_data.vertices[group]
+				local max_uvs = #InfMap.parsed_data.uvs[group]
+				local max_normals = #InfMap.parsed_data.normals[group]
 
 				// n gon support
-				for i = 3, total_data do
-					// who tf uses negative indexes?!??
-					// why am I adding support for this!?
-					local max_verts = #vertices[group]
-					local max_uvs = #uvs[group]
-					local max_normals = #normals[group]
-				
+				for i = 3, #line_data do
 					// get our vertex indices data
 					local vertex1 = string.Split(line_data[i - 1], "/")
 					local vertex2 = string.Split(line_data[1], "/")
 					local vertex3 = string.Split(line_data[i], "/")
 
-					local vertex1_pos = vertices[group][unfuck_negative(vertex1[1], max_verts)]
-					local vertex2_pos = vertices[group][unfuck_negative(vertex2[1], max_verts)]
-					local vertex3_pos = vertices[group][unfuck_negative(vertex3[1], max_verts)]
+					local vertex1_pos = InfMap.parsed_data.vertices[group][unfuck_negative(vertex1[1], max_verts)]
+					local vertex2_pos = InfMap.parsed_data.vertices[group][unfuck_negative(vertex2[1], max_verts)]
+					local vertex3_pos = InfMap.parsed_data.vertices[group][unfuck_negative(vertex3[1], max_verts)]
 
 					// degenerate triangle check
 					if (vertex1_pos - vertex2_pos):Cross(vertex1_pos - vertex3_pos):LengthSqr() < 0.0001 then continue end
 
-					local face_len = #faces[material]
-					local uv = uvs[group][unfuck_negative(vertex1[2], max_uvs)]
-					faces[material][face_len + 1] = {
+					local face_len = #InfMap.parsed_data.faces[material]
+					local uv = InfMap.parsed_data.uvs[group][unfuck_negative(vertex1[2], max_uvs)]
+					InfMap.parsed_data.faces[material][face_len + 1] = {
 						pos = vertex1_pos,
-						u = vertex1[2] and uv[1],
-						v = vertex1[2] and -uv[2],
-						normal = normals[group][unfuck_negative(vertex1[3], max_normals)]
+						u = uv and  uv[1],
+						v = uv and -uv[2],	// reverse triangle winding
+						normal = InfMap.parsed_data.normals[group][unfuck_negative(vertex1[3], max_normals)]
 					}
 
-					uv = uvs[group][unfuck_negative(vertex2[2], max_uvs)]
-					faces[material][face_len + 2] = {
+					uv = InfMap.parsed_data.uvs[group][unfuck_negative(vertex2[2], max_uvs)]
+					InfMap.parsed_data.faces[material][face_len + 2] = {
 						pos = vertex2_pos,
-						u = vertex2[2] and uv[1],
-						v = vertex2[2] and -uv[2],
-						normal = normals[group][unfuck_negative(vertex2[3], max_normals)]
+						u = uv and  uv[1],
+						v = uv and -uv[2],
+						normal = InfMap.parsed_data.normals[group][unfuck_negative(vertex2[3], max_normals)]
 					}
 
-					uv = uvs[group][unfuck_negative(vertex3[2], max_uvs)]
-					faces[material][face_len + 3] = {
+					uv = InfMap.parsed_data.uvs[group][unfuck_negative(vertex3[2], max_uvs)]
+					InfMap.parsed_data.faces[material][face_len + 3] = {
 						pos = vertex3_pos,
-						u = vertex3[2] and uv[1],
-						v = vertex3[2] and -uv[2],
-						normal = normals[group][unfuck_negative(vertex3[3], max_normals)]
+						u = uv and  uv[1],
+						v = uv and -uv[2],
+						normal = InfMap.parsed_data.normals[group][unfuck_negative(vertex3[3], max_normals)]
 					}
 				end
 			elseif first == "usemtl" then // material
 				material = material + 1
-				faces[material] = {}
-				materials[material] = line_data[1]
+				InfMap.parsed_data.faces[material] = {}
+				InfMap.parsed_data.materials[material] = string.Trim(line_data[1])
 			elseif first == "g" or first == "o" then	// increment groups of tris
 				if first == "o" and group != 0 then 
 					continue 
 				end
 
 				group = group + 1
-				vertices[group] = {}
-				uvs[group] = {}
-				normals[group] = {}
+				InfMap.parsed_data.vertices[group] = {}
+				InfMap.parsed_data.uvs[group] = {}
+				InfMap.parsed_data.normals[group] = {}
 			end
 
+			table.Empty(line_data) line_data = nil
+
 			if i % yield_quota == 0 then
-				print(object_name .. " " .. math.floor((i / #split_obj) * 100) .. "%")
+				print(object_name .. " " .. math.floor((i / split_obj_len) * 100) .. "%")
 				coroutine.yield()
 			end
 		end
 
 		if CLIENT then
-			parse_client_data(object_path, object_name, faces, materials)
+			parse_client_data(object_path, object_name)
 		end
 
 		if !client_only then
-			parse_server_data(faces)
+			parse_server_data()
 		end
 
-		// free data (memory leak moment)
-		table.Empty(vertices) vertices = nil
-		table.Empty(uvs) uvs = nil
-		table.Empty(normals) normals = nil
-		table.Empty(materials) materials = nil
-		table.Empty(faces) faces = nil
+		// free data
+		table.Empty(split_obj) split_obj = nil
+		table.Empty(InfMap.parsed_data) InfMap.parsed_data = nil
 		print("Finished parsing " .. object_name)
+		end)
+		if !err then print(str) end
 	end)
 
 	hook.Add("Think", "infmap_parse" .. object_name, function() 
@@ -309,35 +316,45 @@ build_object_collision = function(ent, chunk)
 	if CLIENT and !(ent == LocalPlayer() or ent:GetClass() == "infmap_obj_collider") then return end
 
 	local chunk_coord = InfMap.ezcoord(chunk)
-	if InfMap.parsed_objects[chunk_coord] then return end
+	if IsValid(InfMap.parsed_objects[chunk_coord]) then return end
 	local chunk_data = InfMap.parsed_collision_data[chunk_coord]
 	if !chunk_data then return end
 
 	if SERVER then
-		local collider = ents.Create("infmap_obj_collider")
-		collider:SetModel("models/props_junk/CinderBlock01a.mdl")
-		collider:Spawn()
-		collider:UpdateCollision(chunk_data)
-		InfMap.prop_update_chunk(collider, chunk)
-		print("Spawning collider in chunk " .. chunk_coord)
-		InfMap.parsed_objects[chunk_coord] = collider
+		print("Spawning colliders in chunk " .. chunk_coord)
+		for i = 1, #chunk_data do
+			local collider = ents.Create("infmap_obj_collider")
+			collider:SetModel("models/props_junk/CinderBlock01a.mdl")
+			collider:Spawn()
+			collider:UpdateCollision(chunk_data[i])
+			InfMap.prop_update_chunk(collider, chunk)
+			InfMap.parsed_objects[chunk_coord] = collider
+		end
 	else
+		print("Updating colliders in chunk " .. chunk_coord)
+
 		// try to find a collider in our chunk
+		local collider_len = #chunk_data
+		local collider_count = 1
 		for _, collider in ipairs(ents.FindByClass("infmap_obj_collider")) do
 			if collider.CHUNK_OFFSET != LocalPlayer().CHUNK_OFFSET then continue end
 			if IsValid(collider:GetPhysicsObject()) then continue end
 
-			print("Updating collider in " .. chunk_coord)
-
 			// weird hack to prevent null physobjs on client
 			if !collider.UpdateCollision then
-				collider.RENDER_MESH = chunk_data
+				collider.RENDER_MESH = chunk_data[collider_count]
 			else
-				collider:UpdateCollision(chunk_data)
+				collider:UpdateCollision(chunk_data[collider_count])
 			end
 
-			// we found our collider, stop looking
-			break
+			InfMap.parsed_objects[chunk_coord] = collider
+
+			collider_count = collider_count + 1
+
+			// we found our colliders, stop looking
+			if collider_count > collider_len then
+				break
+			end
 		end
 	end
 end

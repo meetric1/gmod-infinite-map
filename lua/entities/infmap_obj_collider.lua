@@ -24,12 +24,11 @@ function ENT:Initialize()
 end
 
 function ENT:UpdateCollision(verts)
-    local verts = verts or self.RENDER_MESH
+    verts = verts or self.RENDER_MESH
     if !verts then return end    
     self:PhysicsFromMesh(verts)
     self:GetPhysicsObject():EnableMotion(false)
-    if !self.RENDER_MESH then return end
-    table.Empty(self.RENDER_MESH) self.RENDER_MESH = nil
+    self.RENDER_MESH = nil
 end
 
 function ENT:TryOptimizeCollision()
