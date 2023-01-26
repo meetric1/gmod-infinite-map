@@ -129,8 +129,9 @@ local function unfuck_negative(v_str, max)
 end
 
 // Main parsing function
-function InfMap.parse_obj(object_name, scale, client_only)
+function InfMap.parse_obj(object_name, scale, client_only, world_offset)
 	if SERVER and client_only then return end
+	if not world_offset then world_offset = Vector(0, 0, 0) end
 
 	// clear all collision data
 	table.Empty(InfMap.parsed_collision_data)
@@ -194,9 +195,9 @@ function InfMap.parse_obj(object_name, scale, client_only)
 					local vertex2 = string.Split(line_data[1], "/")
 					local vertex3 = string.Split(line_data[i], "/")
 
-					local vertex1_pos = vertices[group][unfuck_negative(vertex1[1], max_verts)]
-					local vertex2_pos = vertices[group][unfuck_negative(vertex2[1], max_verts)]
-					local vertex3_pos = vertices[group][unfuck_negative(vertex3[1], max_verts)]
+					local vertex1_pos = vertices[group][unfuck_negative(vertex1[1], max_verts)] + world_offset
+					local vertex2_pos = vertices[group][unfuck_negative(vertex2[1], max_verts)] + world_offset
+					local vertex3_pos = vertices[group][unfuck_negative(vertex3[1], max_verts)] + world_offset
 
 					// degenerate triangle check
 					if (vertex1_pos - vertex2_pos):Cross(vertex1_pos - vertex3_pos):LengthSqr() < 0.0001 then continue end
@@ -207,7 +208,7 @@ function InfMap.parse_obj(object_name, scale, client_only)
 						pos = vertex1_pos,
 						u = vertex1[2] and uv[1],
 						v = vertex1[2] and -uv[2],
-						normal = normals[group][unfuck_negative(vertex1[3], max_normals)]
+						normal = normals[group][unfuck_negative(vertex1[3], max_normals)] + world_offset
 					}
 
 					uv = uvs[group][unfuck_negative(vertex2[2], max_uvs)]
@@ -215,7 +216,7 @@ function InfMap.parse_obj(object_name, scale, client_only)
 						pos = vertex2_pos,
 						u = vertex2[2] and uv[1],
 						v = vertex2[2] and -uv[2],
-						normal = normals[group][unfuck_negative(vertex2[3], max_normals)]
+						normal = normals[group][unfuck_negative(vertex2[3], max_normals)] + world_offset
 					}
 
 					uv = uvs[group][unfuck_negative(vertex3[2], max_uvs)]
@@ -223,7 +224,7 @@ function InfMap.parse_obj(object_name, scale, client_only)
 						pos = vertex3_pos,
 						u = vertex3[2] and uv[1],
 						v = vertex3[2] and -uv[2],
-						normal = normals[group][unfuck_negative(vertex3[3], max_normals)]
+						normal = normals[group][unfuck_negative(vertex3[3], max_normals)] + world_offset
 					}
 				end
 			elseif first == "usemtl" then // material
@@ -261,6 +262,7 @@ function InfMap.parse_obj(object_name, scale, client_only)
 		table.Empty(normals) normals = nil
 		table.Empty(materials) materials = nil
 		table.Empty(faces) faces = nil
+		world_offset = nil
 		print("Finished parsing " .. object_name)
 	end)
 
