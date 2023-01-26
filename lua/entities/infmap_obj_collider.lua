@@ -31,9 +31,13 @@ function ENT:UpdateCollision(verts)
     self.RENDER_MESH = nil
 end
 
+InfMap.all_ents = InfMap.all_ents or {}
+
 function ENT:TryOptimizeCollision()
     if SERVER then
-        self:SetNotSolid(#InfMap.find_in_chunk(self.CHUNK_OFFSET) < 1)
+        local co = InfMap.ezcoord(self.CHUNK_OFFSET)
+        if !InfMap.all_ents[co] then return end
+        self:SetNotSolid(table.Count(InfMap.all_ents[co]) < 1)
     else
         self:SetNotSolid(LocalPlayer().CHUNK_OFFSET != self.CHUNK_OFFSET)
     end
@@ -48,9 +52,21 @@ if CLIENT then
 end
 
 // physics solver optimization
-hook.Add("PropUpdateChunk", "infmap_obj_optimizecollision", function(ent, chunk)
+hook.Add("PropUpdateChunk", "infmap_obj_optimizecollision", function(ent, chunk, oldchunk)
     if SERVER then
         if InfMap.filter_entities(ent) then return end
+
+        local chunk_str = InfMap.ezcoord(chunk)
+        
+        InfMap.all_ents[chunk_str] = InfMap.all_ents[chunk_str] or {}
+        InfMap.all_ents[chunk_str][ent] = true
+        if oldchunk then
+            local oldchunk_str = InfMap.ezcoord(oldchunk)
+            if InfMap.all_ents[oldchunk_str] then
+                InfMap.all_ents[oldchunk_str][ent] = nil
+            end
+        end
+
         for k, v in ipairs(ents.FindByClass("infmap_obj_collider")) do
             v:TryOptimizeCollision()
         end
@@ -60,5 +76,17 @@ hook.Add("PropUpdateChunk", "infmap_obj_optimizecollision", function(ent, chunk)
             if !v.TryOptimizeCollision then continue end    // wtf?
             v:TryOptimizeCollision()
         end
+    end
+end)
+
+if CLIENT then return end
+
+hook.Add("EntityRemoved", "infmap_obj_optimizecollision", function(ent)
+    local co = ent.CHUNK_OFFSET
+    if !co then return end
+
+    local ez = InfMap.ezcoord(co)
+    if InfMap.all_ents[ez] then
+        InfMap.all_ents[ez][ent] = nil
     end
 end)

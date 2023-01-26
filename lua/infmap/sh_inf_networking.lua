@@ -2,7 +2,6 @@ if SERVER then
 	util.AddNetworkString("infmap_particle")
 	function InfMap.prop_update_chunk(ent, chunk)
 		local prev_chunk = ent.CHUNK_OFFSET
-		InfMap.update_track(ent,chunk)
 		ent.CHUNK_OFFSET = chunk
 		ent:SetCustomCollisionCheck(true)	// required for ShouldCollide hook
 		

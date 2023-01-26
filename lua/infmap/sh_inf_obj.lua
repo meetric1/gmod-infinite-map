@@ -70,7 +70,7 @@ local function parse_server_data()
 		InfMap.parsed_collision_data[chunk_str] = InfMap.parsed_collision_data[chunk_str] or {{}}
 		local parsed_len = #InfMap.parsed_collision_data[chunk_str]
 		local parsed_tri_len = #InfMap.parsed_collision_data[chunk_str][parsed_len]
-		if parsed_tri_len > yield_quota then
+		if parsed_tri_len > yield_quota * 3 then
 			InfMap.parsed_collision_data[chunk_str][parsed_len + 1] = {}
 			parsed_tri_len = 0
 			parsed_len = parsed_len + 1
@@ -121,7 +121,7 @@ end
 
 // stupid obj format
 local function unfuck_negative(v_str, max)
-	if !v_str then return 0 end
+	if !v_str or v_str == "" then return 0 end
 
 	local v_num = tonumber(v_str)
 	return v_num > 0 and v_num or v_num % max + 1
@@ -313,10 +313,11 @@ end
 
 build_object_collision = function(ent, chunk)
 	if SERVER and InfMap.filter_entities(ent) then return end
-	if CLIENT and !(ent == LocalPlayer() or ent:GetClass() == "infmap_obj_collider") then return end
+	if CLIENT and ent != LocalPlayer() then return end
 
 	local chunk_coord = InfMap.ezcoord(chunk)
 	if IsValid(InfMap.parsed_objects[chunk_coord]) then return end
+
 	local chunk_data = InfMap.parsed_collision_data[chunk_coord]
 	if !chunk_data then return end
 
@@ -331,31 +332,31 @@ build_object_collision = function(ent, chunk)
 			InfMap.parsed_objects[chunk_coord] = collider
 		end
 	else
-		print("Updating colliders in chunk " .. chunk_coord)
+		timer.Simple(0, function()	// race condition
+			print("Updating colliders in chunk " .. chunk_coord)
 
-		// try to find a collider in our chunk
-		local collider_len = #chunk_data
-		local collider_count = 1
-		for _, collider in ipairs(ents.FindByClass("infmap_obj_collider")) do
-			if collider.CHUNK_OFFSET != LocalPlayer().CHUNK_OFFSET then continue end
-			if IsValid(collider:GetPhysicsObject()) then continue end
+			// try to find a collider in our chunk
+			local collider_len = #chunk_data
+			local collider_count = 1
+			for _, collider in ipairs(ents.FindByClass("infmap_obj_collider")) do
+				if collider.CHUNK_OFFSET != LocalPlayer().CHUNK_OFFSET then continue end
+				if collider:GetPhysicsObject():IsValid() then continue end
+				
+				// weird hack to prevent null physobjs on client
+				if !collider.UpdateCollision then
+					collider.RENDER_MESH = chunk_data[collider_count]
+				else
+					collider:UpdateCollision(chunk_data[collider_count])
+				end
 
-			// weird hack to prevent null physobjs on client
-			if !collider.UpdateCollision then
-				collider.RENDER_MESH = chunk_data[collider_count]
-			else
-				collider:UpdateCollision(chunk_data[collider_count])
+				collider_count = collider_count + 1
+
+				// we found our colliders, stop looking
+				if collider_count > collider_len then
+					break
+				end
 			end
-
-			InfMap.parsed_objects[chunk_coord] = collider
-
-			collider_count = collider_count + 1
-
-			// we found our colliders, stop looking
-			if collider_count > collider_len then
-				break
-			end
-		end
+		end)
 	end
 end
 

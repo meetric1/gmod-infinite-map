@@ -318,24 +318,6 @@ end
 
 // M: Find functions Courtesy of LiddulBOFH! Thanks bro!
 // This and below are potentially usable, faster than running FindInBox on a single chunk (provided the entities to search are tracked by chunk updates)
-function InfMap.find_in_chunk(chunk) 
-	if TypeID(chunk) ~= TYPE_VECTOR then return {} end
-
-	local tchunk = Vector(math.floor(chunk[1]),math.floor(chunk[2]),math.floor(chunk[3]))
-	local entlist = InfMap.ent_list[InfMap.ezcoord(tchunk)]
-
-	if TypeID(entlist) ~= TYPE_TABLE then return {} end // don't ask, just please don't
-
-	local Results = {}
-	for k,v in pairs(entlist) do
-		local ent = Entity(k)
-		if not IsValid(ent) then continue end
-		if InfMap.disable_pickup[ent:GetClass()] then continue end
-		table.insert(Results,ent)
-	end
-
-	return Results
-end
 
 InfMap.FindInBox = InfMap.FindInBox or ents.FindInBox
 function ents.FindInBox(v1, v2)
