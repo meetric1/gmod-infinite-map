@@ -24,9 +24,9 @@ local function find_path(path, file_name)
 end
 
 // client generates meshes & materials from obj data
-local function parse_client_data(object_path, object_name)
+local function parse_client_data(object_path, object_name, faces, materials)
 	// parse mtl file for materials
-	InfMap.parsed_data.mtl_data = {}
+	local mtl_data = {}
 	local mtl = file.Read(object_path .. "/" .. object_name .. ".mtl", "GAME")
 	if mtl then
 		local mtl_split = string.Split(mtl, "\n")
@@ -41,7 +41,7 @@ local function parse_client_data(object_path, object_name)
 
 			if first == "map_Kd" then
 				local material_path = object_path .. "/" .. string.Trim(data[1])
-				InfMap.parsed_data.mtl_data[material] = Material(material_path, "vertexlitgeneric mips smooth noclamp")	// alphatest
+				mtl_data[material] = Material(material_path, "vertexlitgeneric mips smooth noclamp")	// alphatest
 			end
 		end
 	else
@@ -49,12 +49,12 @@ local function parse_client_data(object_path, object_name)
 	end
 
 	// build meshes & materials
-	for i = 1, #InfMap.parsed_data.faces do
+	for i = 1, #faces do
 		local face_mesh = Mesh()
-		face_mesh:BuildFromTriangles(InfMap.parsed_data.faces[i])
+		face_mesh:BuildFromTriangles(faces[i])
 		table.insert(InfMap.parsed_objects, {
 			mesh = face_mesh,
-			material = InfMap.parsed_data.mtl_data[InfMap.parsed_data.materials[i]]
+			material = mtl_data[materials[i]]
 		})
 
 		coroutine.yield()	// looks cool
@@ -64,7 +64,7 @@ end
 
 // server generates physmesh data from obj file
 // tris are in the format collisiondata[chunk][mat] = {{pos = Vector}, {pos = Vector}, {pos = Vector}...}
-local function parse_server_data()
+local function parse_server_data(faces)
 	local function add_data(chunk, face1, face2, face3)
 		local chunk_str = InfMap.ezcoord(chunk)
 		InfMap.parsed_collision_data[chunk_str] = InfMap.parsed_collision_data[chunk_str] or {{}}
@@ -83,7 +83,7 @@ local function parse_server_data()
 	end
 
 	// combine and split faces into chunks
-	for mat, face in ipairs(InfMap.parsed_data.faces) do
+	for mat, face in ipairs(faces) do
 		for i = 1, #face, 3 do
 			local face1 = face[i    ].pos
 			local face2 = face[i + 1].pos
@@ -107,7 +107,7 @@ local function parse_server_data()
 			end
 		end
 
-		print("Finished parsing face " .. mat .. "/" .. #InfMap.parsed_data.faces)
+		print("Finished parsing face " .. mat .. "/" .. #faces)
 		coroutine.yield()
 	end
 
@@ -129,7 +129,7 @@ end
 
 // Main parsing function
 function InfMap.parse_obj(object_name, scale, client_only)
-	if SERVER and client_only then return end
+	if SERVER and client_only == true then return end
 
 	// clear all collision data
 	table.Empty(InfMap.parsed_collision_data)
@@ -153,12 +153,11 @@ function InfMap.parse_obj(object_name, scale, client_only)
 		local err, str = pcall(function()
 		local group = 0
 		local material = 0
-		InfMap.parsed_data = {}
-		InfMap.parsed_data.vertices = {}
-		InfMap.parsed_data.uvs = {}
-		InfMap.parsed_data.normals = {}
-		InfMap.parsed_data.materials = {}
-		InfMap.parsed_data.faces = {}
+		local vertices = {}
+		local uvs = {}
+		local normals = {}
+		local materials = {}
+		local faces = {}
 
 		// sort the data
 		local split_obj = string.Split(obj, "\n")
@@ -170,28 +169,28 @@ function InfMap.parse_obj(object_name, scale, client_only)
 
 			// vertex processing
 			if first == "v" then
-				table.insert(InfMap.parsed_data.vertices[group], Vector(-tonumber(line_data[1]), tonumber(line_data[3]), tonumber(line_data[2])) * scale)
+				table.insert(vertices[group], Vector(-tonumber(line_data[1]), tonumber(line_data[3]), tonumber(line_data[2])) * scale)
 
 			// only client uses uvs and normals
 			elseif first == "vt" and CLIENT then	
-				table.insert(InfMap.parsed_data.uvs[group], Vector(tonumber(line_data[1]), tonumber(line_data[2])))
+				table.insert(uvs[group], Vector(tonumber(line_data[1]), tonumber(line_data[2])))
 			elseif first == "vn" and CLIENT then
-				table.insert(InfMap.parsed_data.normals[group], Vector(-tonumber(line_data[1]), tonumber(line_data[3]), tonumber(line_data[2])))
+				table.insert(normals[group], Vector(-tonumber(line_data[1]), tonumber(line_data[3]), tonumber(line_data[2])))
 
 			// face processing
 			elseif first == "f" then 
 				// sometimes a material isnt defined, not sure why.. define empty one
-				if !InfMap.parsed_data.faces[material] then
+				if !faces[material] then
 					print("Material undefined for group " .. group)
 					material = material + 1
-					InfMap.parsed_data.faces[material] = {}
+					faces[material] = {}
 				end
 				
 				// who tf uses negative indexes?!??
 				// why am I adding support for this!?
-				local max_verts = #InfMap.parsed_data.vertices[group]
-				local max_uvs = #InfMap.parsed_data.uvs[group]
-				local max_normals = #InfMap.parsed_data.normals[group]
+				local max_verts = #vertices[group]
+				local max_uvs = #uvs[group]
+				local max_normals = #normals[group]
 
 				// n gon support
 				for i = 3, #line_data do
@@ -200,51 +199,56 @@ function InfMap.parse_obj(object_name, scale, client_only)
 					local vertex2 = string.Split(line_data[1], "/")
 					local vertex3 = string.Split(line_data[i], "/")
 
-					local vertex1_pos = InfMap.parsed_data.vertices[group][unfuck_negative(vertex1[1], max_verts)]
-					local vertex2_pos = InfMap.parsed_data.vertices[group][unfuck_negative(vertex2[1], max_verts)]
-					local vertex3_pos = InfMap.parsed_data.vertices[group][unfuck_negative(vertex3[1], max_verts)]
+					local vertex1_pos = vertices[group][unfuck_negative(vertex1[1], max_verts)]
+					local vertex2_pos = vertices[group][unfuck_negative(vertex2[1], max_verts)]
+					local vertex3_pos = vertices[group][unfuck_negative(vertex3[1], max_verts)]
+
+					// this should never be run, but just in case
+					//if !vertex1_pos or !vertex2_pos or !vertex3_pos then continue end
 
 					// degenerate triangle check
 					if (vertex1_pos - vertex2_pos):Cross(vertex1_pos - vertex3_pos):LengthSqr() < 0.0001 then continue end
 
-					local face_len = #InfMap.parsed_data.faces[material]
-					local uv = InfMap.parsed_data.uvs[group][unfuck_negative(vertex1[2], max_uvs)]
-					InfMap.parsed_data.faces[material][face_len + 1] = {
+					local face_len = #faces[material]
+					local uv = uvs[group][unfuck_negative(vertex1[2], max_uvs)]
+					faces[material][face_len + 1] = {
 						pos = vertex1_pos,
 						u = uv and  uv[1],
 						v = uv and -uv[2],	// reverse triangle winding
-						normal = InfMap.parsed_data.normals[group][unfuck_negative(vertex1[3], max_normals)]
+						normal = normals[group][unfuck_negative(vertex1[3], max_normals)]
 					}
 
-					uv = InfMap.parsed_data.uvs[group][unfuck_negative(vertex2[2], max_uvs)]
-					InfMap.parsed_data.faces[material][face_len + 2] = {
+					uv = uvs[group][unfuck_negative(vertex2[2], max_uvs)]
+					faces[material][face_len + 2] = {
 						pos = vertex2_pos,
 						u = uv and  uv[1],
 						v = uv and -uv[2],
-						normal = InfMap.parsed_data.normals[group][unfuck_negative(vertex2[3], max_normals)]
+						normal = normals[group][unfuck_negative(vertex2[3], max_normals)]
 					}
 
-					uv = InfMap.parsed_data.uvs[group][unfuck_negative(vertex3[2], max_uvs)]
-					InfMap.parsed_data.faces[material][face_len + 3] = {
+					uv = uvs[group][unfuck_negative(vertex3[2], max_uvs)]
+					faces[material][face_len + 3] = {
 						pos = vertex3_pos,
 						u = uv and  uv[1],
 						v = uv and -uv[2],
-						normal = InfMap.parsed_data.normals[group][unfuck_negative(vertex3[3], max_normals)]
+						normal = normals[group][unfuck_negative(vertex3[3], max_normals)]
 					}
 				end
 			elseif first == "usemtl" then // material
 				material = material + 1
-				InfMap.parsed_data.faces[material] = {}
-				InfMap.parsed_data.materials[material] = string.Trim(line_data[1])
-			elseif first == "g" or first == "o" then	// increment groups of tris
-				if first == "o" and group != 0 then 
-					continue 
-				end
-
+				faces[material] = {}
+				materials[material] = string.Trim(line_data[1])
+			elseif first == "o" or first == "g" then
+				if group != 0 then continue end
 				group = group + 1
-				InfMap.parsed_data.vertices[group] = {}
-				InfMap.parsed_data.uvs[group] = {}
-				InfMap.parsed_data.normals[group] = {}
+				vertices[group] = {}
+				uvs[group] = {}
+				normals[group] = {}
+			elseif first == "mtllib" then	// increment groups of tris
+				group = group + 1
+				vertices[group] = {}
+				uvs[group] = {}
+				normals[group] = {}
 			end
 
 			table.Empty(line_data) line_data = nil
@@ -255,17 +259,23 @@ function InfMap.parse_obj(object_name, scale, client_only)
 			end
 		end
 
-		if CLIENT then
-			parse_client_data(object_path, object_name)
+		if CLIENT and client_only != false then
+			parse_client_data(object_path, object_name, faces, materials)
 		end
 
-		if !client_only then
-			parse_server_data()
+		if client_only != true then
+			parse_server_data(faces)
+			hook.Add("PropUpdateChunk", "infmap_obj_spawn", build_object_collision)
 		end
 
 		// free data
 		table.Empty(split_obj) split_obj = nil
-		table.Empty(InfMap.parsed_data) InfMap.parsed_data = nil
+		table.Empty(vertices) vertices = nil
+		table.Empty(uvs) uvs = nil
+		table.Empty(normals) normals = nil
+		table.Empty(faces) faces = nil
+		table.Empty(materials) materials = nil
+
 		print("Finished parsing " .. object_name)
 		end)
 		if !err then print(str) end
@@ -303,7 +313,8 @@ if CLIENT then
 		render.ResetModelLighting(ambient[1], ambient[2], ambient[3])
 
 		cam.Start3D(InfMap.unlocalize_vector(EyePos(), LocalPlayer().CHUNK_OFFSET))
-		for _, object in ipairs(InfMap.parsed_objects) do
+		for i = 1, #InfMap.parsed_objects do
+			local object = InfMap.parsed_objects[i]
 			render.SetMaterial(object.material or default_material)
 			object.mesh:Draw()
 		end
@@ -311,9 +322,7 @@ if CLIENT then
 	end)
 end
 
-build_object_collision = function(ent, chunk, force)
-	if InfMap.parsed_data and !isbool(force) then return end
-
+build_object_collision = function(ent, chunk)
 	if SERVER and InfMap.filter_entities(ent) then return end
 	if CLIENT and ent != LocalPlayer() then return end
 
@@ -361,5 +370,3 @@ build_object_collision = function(ent, chunk, force)
 		end)
 	end
 end
-
-hook.Add("PropUpdateChunk", "infmap_obj_spawn", build_object_collision)
