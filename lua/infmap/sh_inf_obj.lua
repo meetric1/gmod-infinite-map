@@ -115,7 +115,7 @@ local function parse_server_data()
 
 	for k, v in ipairs(player.GetAll()) do
 		if !v.CHUNK_OFFSET then continue end
-		build_object_collision(v, v.CHUNK_OFFSET)
+		build_object_collision(v, v.CHUNK_OFFSET, true)
 	end
 end
 
@@ -311,7 +311,9 @@ if CLIENT then
 	end)
 end
 
-build_object_collision = function(ent, chunk)
+build_object_collision = function(ent, chunk, force)
+	if InfMap.parsed_data and !isbool(force) then return end
+
 	if SERVER and InfMap.filter_entities(ent) then return end
 	if CLIENT and ent != LocalPlayer() then return end
 
