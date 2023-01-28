@@ -1,5 +1,6 @@
 // obj parser
-local yield_quota = 2500
+local yield_quota = 3000
+local max_collision_verts = 7500
 InfMap.parsed_collision_data = InfMap.parsed_collision_data or {}
 InfMap.parsed_objects = InfMap.parsed_objects or {}
 
@@ -33,15 +34,19 @@ local function parse_client_data(object_path, object_name, faces, materials)
 		local material
 		for i = 1, #mtl_split do
 			local data = string.Split(mtl_split[i], " ")
+			if !data[2] then continue end	// ignore empty lines
 			local first = table.remove(data, 1)
 
+			local material_data = string.Trim(data[1])
 			if first == "newmtl" then 
-				material = string.Trim(data[1])
-			end
-
-			if first == "map_Kd" then
-				local material_path = object_path .. "/" .. string.Trim(data[1])
+				material = material_data
+			elseif first == "map_Kd" then
+				local material_path = object_path .. "/" .. material_data
 				mtl_data[material] = Material(material_path, "vertexlitgeneric mips smooth noclamp")	// alphatest
+			elseif first == "bump" and mtl_data[material] then
+				local material_path = object_path .. "/" .. material_data
+				local bumpmap = Material(material_path, "mips smooth noclamp")
+				mtl_data[material]:SetTexture("$bumpmap", bumpmap:GetTexture("$basetexture"))	// alphatest
 			end
 		end
 	else
@@ -70,7 +75,7 @@ local function parse_server_data(faces)
 		InfMap.parsed_collision_data[chunk_str] = InfMap.parsed_collision_data[chunk_str] or {{}}
 		local parsed_len = #InfMap.parsed_collision_data[chunk_str]
 		local parsed_tri_len = #InfMap.parsed_collision_data[chunk_str][parsed_len]
-		if parsed_tri_len > yield_quota * 3 then
+		if parsed_tri_len > max_collision_verts then
 			InfMap.parsed_collision_data[chunk_str][parsed_len + 1] = {}
 			parsed_tri_len = 0
 			parsed_len = parsed_len + 1
@@ -128,6 +133,7 @@ local function unfuck_negative(v_str, max)
 end
 
 // Main parsing function
+local mesh_tangent = {1, 1, 1, 1}
 function InfMap.parse_obj(object_name, scale, client_only)
 	if SERVER and client_only == true then return end
 
@@ -215,7 +221,8 @@ function InfMap.parse_obj(object_name, scale, client_only)
 						pos = vertex1_pos,
 						u = uv and  uv[1],
 						v = uv and -uv[2],	// reverse triangle winding
-						normal = normals[group][unfuck_negative(vertex1[3], max_normals)]
+						normal = normals[group][unfuck_negative(vertex1[3], max_normals)],
+						userdata = mesh_tangent
 					}
 
 					uv = uvs[group][unfuck_negative(vertex2[2], max_uvs)]
@@ -223,7 +230,8 @@ function InfMap.parse_obj(object_name, scale, client_only)
 						pos = vertex2_pos,
 						u = uv and  uv[1],
 						v = uv and -uv[2],
-						normal = normals[group][unfuck_negative(vertex2[3], max_normals)]
+						normal = normals[group][unfuck_negative(vertex2[3], max_normals)],
+						userdata = mesh_tangent
 					}
 
 					uv = uvs[group][unfuck_negative(vertex3[2], max_uvs)]
@@ -231,7 +239,8 @@ function InfMap.parse_obj(object_name, scale, client_only)
 						pos = vertex3_pos,
 						u = uv and  uv[1],
 						v = uv and -uv[2],
-						normal = normals[group][unfuck_negative(vertex3[3], max_normals)]
+						normal = normals[group][unfuck_negative(vertex3[3], max_normals)],
+						userdata = mesh_tangent
 					}
 				end
 			elseif first == "usemtl" then // material

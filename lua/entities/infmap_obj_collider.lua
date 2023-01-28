@@ -25,9 +25,15 @@ end
 
 function ENT:UpdateCollision(verts)
     verts = verts or self.RENDER_MESH
-    if !verts then return end    
+    if !verts then return end
+    self:PhysicsDestroy()
     self:PhysicsFromMesh(verts)
-    self:GetPhysicsObject():EnableMotion(false)
+
+    local phys = self:GetPhysicsObject()
+    phys:EnableMotion(false)
+    phys:SetMass(50000)
+    phys:AddGameFlag(FVPHYSICS_CONSTRAINT_STATIC)
+    phys:AddGameFlag(FVPHYSICS_NO_SELF_COLLISIONS)
     self.RENDER_MESH = nil
 end
 
