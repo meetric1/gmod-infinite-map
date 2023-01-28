@@ -25,7 +25,7 @@ local function find_path(path, file_name)
 end
 
 // client generates meshes & materials from obj data
-local function parse_client_data(object_path, object_name, faces, materials)
+local function parse_client_data(object_path, object_name, faces, materials, shaders)
 	// parse mtl file for materials
 	local mtl_data = {}
 	local mtl = file.Read(object_path .. "/" .. object_name .. ".mtl", "GAME")
@@ -42,7 +42,7 @@ local function parse_client_data(object_path, object_name, faces, materials)
 				material = material_data
 			elseif first == "map_Kd" then
 				local material_path = object_path .. "/" .. material_data
-				mtl_data[material] = Material(material_path, "vertexlitgeneric mips smooth noclamp")	// alphatest
+				mtl_data[material] = Material(material_path, "vertexlitgeneric mips smooth noclamp" .. shaders)	// alphatest
 			elseif first == "bump" and mtl_data[material] then
 				local material_path = object_path .. "/" .. material_data
 				local bumpmap = Material(material_path, "mips smooth noclamp")
@@ -132,10 +132,27 @@ local function unfuck_negative(v_str, max)
 	return v_num > 0 and v_num or v_num % max + 1
 end
 
+// anti memory leak stuff (for hotreloading)
+function InfMap.clear_parsed_objects()
+	if CLIENT then
+		for _, object in ipairs(InfMap.parsed_objects) do
+			object.mesh:Destroy()
+		end
+	end
+	if SERVER then
+		for k, v in pairs(ents.FindByClass("infmap_obj_collider")) do
+			v:Remove()
+		end
+	end
+	table.Empty(InfMap.parsed_objects)
+
+	hook.Remove("PropUpdateChunk", "infmap_obj_spawn")
+end
+
 // Main parsing function
 local mesh_tangent = {1, 1, 1, 1}
-function InfMap.parse_obj(object_name, scale, client_only)
-	if SERVER and client_only == true then return end
+function InfMap.parse_obj(object_name, translation, client_only, shaders)
+	if SERVER and client_only == 1 then return end
 
 	// clear all collision data
 	table.Empty(InfMap.parsed_collision_data)
@@ -153,6 +170,8 @@ function InfMap.parse_obj(object_name, scale, client_only)
 		print("Couldn't find .obj file when parsing " .. object_name .. "!")
 		return 
 	end
+	
+	local rotation = translation:GetAngles()
 
 	// time to parse
 	local coro = coroutine.create(function()
@@ -175,13 +194,15 @@ function InfMap.parse_obj(object_name, scale, client_only)
 
 			// vertex processing
 			if first == "v" then
-				table.insert(vertices[group], Vector(-tonumber(line_data[1]), tonumber(line_data[3]), tonumber(line_data[2])) * scale)
+				table.insert(vertices[group], translation * Vector(-tonumber(line_data[1]), tonumber(line_data[3]), tonumber(line_data[2])))
 
 			// only client uses uvs and normals
-			elseif first == "vt" and CLIENT then	
+			elseif first == "vt" and CLIENT then
 				table.insert(uvs[group], Vector(tonumber(line_data[1]), tonumber(line_data[2])))
 			elseif first == "vn" and CLIENT then
-				table.insert(normals[group], Vector(-tonumber(line_data[1]), tonumber(line_data[3]), tonumber(line_data[2])))
+				local normal = Vector(-tonumber(line_data[1]), tonumber(line_data[3]), tonumber(line_data[2]))
+				normal:Rotate(rotation)
+				table.insert(normals[group], normal)
 
 			// face processing
 			elseif first == "f" then 
@@ -268,11 +289,11 @@ function InfMap.parse_obj(object_name, scale, client_only)
 			end
 		end
 
-		if CLIENT and client_only != false then
-			parse_client_data(object_path, object_name, faces, materials)
+		if CLIENT and client_only != 2 then
+			parse_client_data(object_path, object_name, faces, materials, shaders or "")
 		end
 
-		if client_only != true then
+		if client_only != 1 then
 			parse_server_data(faces)
 			hook.Add("PropUpdateChunk", "infmap_obj_spawn", build_object_collision)
 		end
