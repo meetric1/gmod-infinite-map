@@ -12,7 +12,9 @@ local materials_path = "materials/infmap/"
 local function parse_client_data(object_name, faces, materials, shaders)
 	// parse mtl file for materials
 	local mtl_data = {}
-	local mtl = file.Read("maps/" .. object_name .. ".mtl.ain", "GAME")
+	local mtl = file.Read("maps/" .. object_name .. ".mtl.ain", "GAME") 
+	or file.Read("maps/" .. object_name .. ".mtl", "GAME")
+
 	if mtl then
 		local mtl_split = string.Split(mtl, "\n")
 		local material
@@ -46,6 +48,9 @@ local function parse_client_data(object_name, faces, materials, shaders)
 			material = mtl_data[materials[i]]
 		})
 
+		if faces[i] and #faces[i] / 3 > 10922 then 
+			print("Failed to parse Mesh " .. i .. " as it has more than 10,000 triangles!")
+		end
 		coroutine.yield()	// looks cool
 	end
 end
@@ -96,7 +101,6 @@ local function parse_server_data(faces)
 			end
 		end
 
-		print("Finished parsing face " .. mat .. "/" .. #faces)
 		coroutine.yield()
 	end
 
@@ -143,6 +147,8 @@ function InfMap.parse_obj(object_name, translation, client_only, shaders)
 
 	// actual obj file
 	local obj = file.Read("maps/" .. object_name .. ".obj.ain", "GAME")
+	or file.Read("maps/" .. object_name .. ".obj", "GAME")
+
 	if !obj then 
 		print("Couldn't find .obj file when parsing " .. object_name .. "! (is the file in maps/ ?)")
 		return 
@@ -261,7 +267,6 @@ function InfMap.parse_obj(object_name, translation, client_only, shaders)
 			table.Empty(line_data) line_data = nil
 
 			if i % yield_quota == 0 then
-				print(object_name .. " " .. math.floor((i / split_obj_len) * 100) .. "%")
 				coroutine.yield()
 			end
 		end
@@ -340,7 +345,6 @@ build_object_collision = function(ent, chunk)
 	if !chunk_data then return end
 
 	if SERVER then
-		print("Spawning colliders in chunk " .. chunk_coord)
 		for i = 1, #chunk_data do
 			local collider = ents.Create("infmap_obj_collider")
 			collider:SetModel("models/props_junk/CinderBlock01a.mdl")
@@ -351,8 +355,6 @@ build_object_collision = function(ent, chunk)
 		end
 	else
 		timer.Simple(0, function()	// race condition
-			print("Updating colliders in chunk " .. chunk_coord)
-
 			// try to find a collider in our chunk
 			local collider_len = #chunk_data
 			local collider_count = 1
