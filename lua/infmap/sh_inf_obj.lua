@@ -7,28 +7,12 @@ InfMap.parsed_objects = InfMap.parsed_objects or {}
 // creates collisions for chunk .objs (defined later)
 local build_object_collision
 
-// finds & returns path to a file with a given name
-local function find_path(path, file_name)
-	local files, dir = file.Find(path .. "/*", "GAME")
-	for _, name in ipairs(files) do
-		if string.Split(name, ".")[1] == file_name then
-			return path
-		end
-	end
-
-	for _, name in ipairs(dir) do
-		local found = find_path(path .. "/" .. name, file_name)
-		if found then 
-			return found
-		end
-	end
-end
-
 // client generates meshes & materials from obj data
-local function parse_client_data(object_path, object_name, faces, materials, shaders)
+local materials_path = "materials/infmap/"
+local function parse_client_data(object_name, faces, materials, shaders)
 	// parse mtl file for materials
 	local mtl_data = {}
-	local mtl = file.Read(object_path .. "/" .. object_name .. ".mtl", "GAME")
+	local mtl = file.Read("maps/" .. object_name .. ".mtl.ain", "GAME")
 	if mtl then
 		local mtl_split = string.Split(mtl, "\n")
 		local material
@@ -41,10 +25,10 @@ local function parse_client_data(object_path, object_name, faces, materials, sha
 			if first == "newmtl" then 
 				material = material_data
 			elseif first == "map_Kd" then
-				local material_path = object_path .. "/" .. material_data
+				local material_path = materials_path .. material_data
 				mtl_data[material] = Material(material_path, "vertexlitgeneric mips smooth noclamp" .. shaders)	// alphatest
 			elseif first == "bump" and mtl_data[material] then
-				local material_path = object_path .. "/" .. material_data
+				local material_path = materials_path .. material_data
 				local bumpmap = Material(material_path, "mips smooth noclamp")
 				mtl_data[material]:SetTexture("$bumpmap", bumpmap:GetTexture("$basetexture"))	// alphatest
 			end
@@ -157,17 +141,10 @@ function InfMap.parse_obj(object_name, translation, client_only, shaders)
 	// clear all collision data
 	table.Empty(InfMap.parsed_collision_data)
 
-	// find location of obj name
-	local object_path = find_path("models/infmap", object_name)
-	if !object_path then 
-		print("Couldn't find .obj path when parsing " .. object_name .. "! (is the file in models/infmap/ ?)")
-		return 
-	end
-
 	// actual obj file
-	local obj = file.Read(object_path .. "/" .. object_name .. ".obj", "GAME")
+	local obj = file.Read("maps/" .. object_name .. ".obj.ain", "GAME")
 	if !obj then 
-		print("Couldn't find .obj file when parsing " .. object_name .. "!")
+		print("Couldn't find .obj file when parsing " .. object_name .. "! (is the file in maps/ ?)")
 		return 
 	end
 	
@@ -290,7 +267,7 @@ function InfMap.parse_obj(object_name, translation, client_only, shaders)
 		end
 
 		if CLIENT and client_only != 2 then
-			parse_client_data(object_path, object_name, faces, materials, shaders or "")
+			parse_client_data(object_name, faces, materials, shaders or "")
 		end
 
 		if client_only != 1 then
