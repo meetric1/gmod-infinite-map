@@ -10,6 +10,8 @@ local build_object_collision
 // client generates meshes & materials from obj data
 local materials_path = "materials/infmap/"
 local function parse_client_data(object_name, faces, materials, shaders)
+	print("Started parsing " .. object_name)
+	
 	// parse mtl file for materials
 	local mtl_data = {}
 	local mtl = file.Read("maps/" .. object_name .. ".mtl.ain", "GAME") 
@@ -249,14 +251,12 @@ function InfMap.parse_obj(object_name, translation, client_only, shaders)
 					}
 				end
 			elseif first == "usemtl" then // material
-				material_name = string.Trim(line_data[1])
-			elseif first == "o" or first == "g" then
 				material = material + 1
 				faces[material] = {}
-				materials[material] = material_name
-
-				// incase it doesnt exist
-				if group == 0 then 
+				materials[material] = string.Trim(line_data[1])
+				//material_name = string.Trim(line_data[1])
+			elseif first == "o" or first == "g" then
+				if group == 0 then // incase it doesnt exist
 					group = group + 1
 					vertices[group] = {}
 					uvs[group] = {}
