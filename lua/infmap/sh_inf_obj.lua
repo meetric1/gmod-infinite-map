@@ -48,8 +48,8 @@ local function parse_client_data(object_name, faces, materials, shaders)
 			material = mtl_data[materials[i]]
 		})
 
-		if faces[i] and #faces[i] / 3 > 10922 then 
-			print("Failed to parse Mesh " .. i .. " as it has more than 10,000 triangles!")
+		if faces[i] and #faces[i] / 3 > 32768 then 
+			print("Failed to parse Mesh " .. i .. " as it has more than 32768 triangles!")
 		end
 		coroutine.yield()	// looks cool
 	end
@@ -161,6 +161,7 @@ function InfMap.parse_obj(object_name, translation, client_only, shaders)
 		local err, str = pcall(function()
 		local group = 0
 		local material = 0
+		local material_name = ""
 		local vertices = {}
 		local uvs = {}
 		local normals = {}
@@ -248,15 +249,19 @@ function InfMap.parse_obj(object_name, translation, client_only, shaders)
 					}
 				end
 			elseif first == "usemtl" then // material
+				material_name = string.Trim(line_data[1])
+			elseif first == "o" or first == "g" then
 				material = material + 1
 				faces[material] = {}
-				materials[material] = string.Trim(line_data[1])
-			elseif first == "o" or first == "g" then
-				if group != 0 then continue end
-				group = group + 1
-				vertices[group] = {}
-				uvs[group] = {}
-				normals[group] = {}
+				materials[material] = material_name
+
+				// incase it doesnt exist
+				if group == 0 then 
+					group = group + 1
+					vertices[group] = {}
+					uvs[group] = {}
+					normals[group] = {}
+				end
 			elseif first == "mtllib" then	// increment groups of tris
 				group = group + 1
 				vertices[group] = {}
