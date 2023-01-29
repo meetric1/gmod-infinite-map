@@ -50,8 +50,8 @@ local function parse_client_data(object_name, faces, materials, shaders)
 			material = mtl_data[materials[i]]
 		})
 
-		if faces[i] and #faces[i] / 3 > 32768 then 
-			print("Failed to parse Mesh " .. i .. " as it has more than 32768 triangles!")
+		if faces[i] and #faces[i] / 3 > 21845 then 
+			print("Failed to parse face " .. i .. " as it has " .. #faces[i] / 3 .. " triangles! (Limit of 21,845)")
 		end
 		coroutine.yield()	// looks cool
 	end
