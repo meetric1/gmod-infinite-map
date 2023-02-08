@@ -414,6 +414,16 @@ hook.Add("PlayerCanPickupWeapon", "infmap_entdetour", can_pickup)
 hook.Add("PlayerCanPickupItem", "infmap_entdetour", can_pickup)
 hook.Add("GravGunPickupAllowed", "infmap_entdetour", can_pickup)
 
+// localize the toolgun beam
+hook.Add("PreRegisterSWEP", "infmap_toolgundetour", function(SWEP, class)
+    if class == "gmod_tool" then
+		SWEP.InfMap_DoShootEffect = SWEP.InfMap_DoShootEffect or SWEP.DoShootEffect
+		function SWEP:DoShootEffect(hitpos, ...)
+			SWEP.InfMap_DoShootEffect(self, hitpos - InfMap.unlocalize_vector(Vector(), self:GetOwner().CHUNK_OFFSET), ...)
+		end
+	end
+end)
+
 // explosions should not damage things in other chunks
 hook.Add("EntityTakeDamage", "infmap_explodedetour", function(ply, dmg)
 	if !(dmg:IsExplosionDamage() or dmg:IsDamageType(DMG_BURN)) then return end
