@@ -12,7 +12,7 @@ ENT.Spawnable		= false
 
 if !InfMap or SERVER then return end
 
-InfMap.uv_scale = 100
+InfMap.uv_scale = InfMap.uv_scale or 100
 local function add_quad(tab, p1, p2, p3, p4, n1, n2)
 	local tablen = #tab
 
@@ -117,7 +117,8 @@ function ENT:SetLocalRenderBounds(eyePos, size)
 	local min, max = -size, size
 	min[3] = self.CHUNK_MAX
 	max[3] = self.CHUNK_MIN
-	if max[3] - min[3] > 2^22 then return end	// hard cutoff because when render bounds gets too big it stops rendering, thanks source.
+	local sub = max[3] - min[3]
+	if sub > 2^22 or sub < -2^22 then return end	// hard cutoff because when render bounds gets too big it stops rendering, thanks source.
 	local prop_dir = self.RENDER_MESH.Matrix:GetTranslation() - eyePos
 	local shrunk = sub_size / prop_dir:Length()
 	

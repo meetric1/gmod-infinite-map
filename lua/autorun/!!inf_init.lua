@@ -31,7 +31,7 @@ if SERVER then
 				local prefix = string.lower(string.sub(f, 1, 2))
 				if prefix != "sv" then
 					AddCSLuaFile(dir .. f)
-					print("Loaded ", f)
+					//print("Loaded ", f)
 				end
 			end
 		end
@@ -52,7 +52,7 @@ local function openfolder(dir)
 			local valid = valid or (SERVER and prefix != "cl")
 			if valid then
 				include(dir .. f)
-				print("Initialized ", f)
+				//print("Initialized ", f)
 			end
 		end
 	end
