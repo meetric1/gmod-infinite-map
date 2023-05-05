@@ -46,6 +46,10 @@ end
 EntityMT.InfMap_GetBonePosition = EntityMT.InfMap_GetBonePosition or EntityMT.GetBonePosition
 function EntityMT:GetBonePosition(index)
 	local pos, ang = self:InfMap_GetBonePosition(index)
+	if !pos or !ang then // bones are weird
+		return pos, ang 
+	end	
+
 	if invalid_chunk(self, LocalPlayer()) then return pos, ang end
 	pos = InfMap.unlocalize_vector(pos, self.CHUNK_OFFSET - LocalPlayer().CHUNK_OFFSET)
 	return pos, ang
