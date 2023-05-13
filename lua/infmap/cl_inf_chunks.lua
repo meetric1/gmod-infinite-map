@@ -215,19 +215,13 @@ function InfMap.prop_update_chunk(ent, chunk)
 			ent.RenderOverride = empty_function
 			return 
 		end
+
 		local render_DrawBox = render.DrawBox
 		local render_SetMaterial = render.SetMaterial
-		local render_ResetModelLighting = render.ResetModelLighting
 
 		local mat = Material("models/wireframe")
 		local mat_str = ent:GetMaterial()
 		if mat_str == "" then mat_str = ent:GetMaterials()[1] end
-
-		// materials arent valid for the first tick sometimes?
-		timer.Simple(0, function()
-			mat_str = ent:GetMaterial()
-			if mat_str == "" then mat_str = ent:GetMaterials()[1] end
-		end)
 
 		if mat_str then mat = Material(mat_str) end
 		ent.RenderOverride = function(self)	// high lod

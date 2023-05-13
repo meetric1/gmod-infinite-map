@@ -31,9 +31,14 @@ if SERVER then
 		// network weapons from players always
 		if ent:IsPlayer() or ent:IsNPC() then
 			for _, weapon in ipairs(ent:GetWeapons()) do
-				hook.Run("PropUpdateChunk", weapon, chunk, weapon.CHUNK_OFFSET)
+				local prev_chunk = weapon.CHUNK_OFFSET
 				weapon.CHUNK_OFFSET = chunk
 				weapon:SetCustomCollisionCheck(true)
+				
+				// addons may error when calling this
+				local err, str = pcall(function() hook.Run("PropUpdateChunk", ent, chunk, prev_chunk) end)
+				if !err then ErrorNoHalt(str) end
+
 				weapon:SetNW2Vector("CHUNK_OFFSET", chunk)
 			end
 		end
