@@ -111,7 +111,6 @@ hook.Add("PostDrawOpaqueRenderables", "infinite_player_render", function()
 	local chunk_offset = LocalPlayer().CHUNK_OFFSET
 	for k, v in ipairs(player.GetAll()) do
 		if v.CHUNK_OFFSET != chunk_offset and v:Alive() then
-			v:DrawModel()
 			v:RemoveEffects(EF_DIMLIGHT)	// force flashlight off if in another chunk
 		end
 	end
@@ -209,7 +208,8 @@ function InfMap.prop_update_chunk(ent, chunk)
 	
 	// lod test
 	local len = chunk_offset:LengthSqr()
-	if len > 100 and !ent:IsPlayer() then	// make players have no lod so u can see your friends far away :)
+	local is_player = ent:IsPlayer()
+	if len > 100 and !is_player then	// make players have no lod so u can see your friends far away :)
 		// object is so small and so far away why even bother rendering it
 		if ent:BoundingRadius() < 10 or ent:IsWeapon() or len > too_far then // too small or too far, dont bother rendering
 			ent.RenderOverride = empty_function
@@ -229,6 +229,8 @@ function InfMap.prop_update_chunk(ent, chunk)
 			render_DrawBox(self:InfMap_GetPos() + visual_offset, self:GetAngles(), self:OBBMins(), self:OBBMaxs())
 		end
 	else
+		if len > too_far and is_player then ent.RenderOverride = empty_function end
+
 		local cam_Start3D = cam.Start3D
 		local cam_End3D = cam.End3D
 		local eyePos = EyePos

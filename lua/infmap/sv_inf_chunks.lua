@@ -208,7 +208,7 @@ local co = coroutine.create(function()
 					for y = -1, 1 do
 						for x = -1, 1 do
 							// never clone in the same chunk the object is already in
-							if !(x != 0 or y != 0 or z != 0) then continue end	// same as 'x == 0 && y == 0 && z == 0'
+							if x == 0 and y == 0 and z == 0 then continue end
 
 							i = i + 1
 

@@ -179,7 +179,7 @@ else
 	local function IsPlayerSound(data)
 		local a,b = string.find(string.lower(data.OriginalSoundName),"footsteps")
 		local c,d = string.find(string.lower(data.SoundName),"weapon")
-		return (a and b) or (c and d) or data.OriginalSoundName == "Airboat.FireGunRevDown"
+		return (a and b) or (c and d) or data.OriginalSoundName == "Airboat.FireGunRevDown" or data.OriginalSoundName == "Weapon_Crowbar.Melee_Hit"
 	end
     
     local valid_sounds = {

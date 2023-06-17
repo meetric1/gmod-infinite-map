@@ -21,30 +21,13 @@ function ENT:SetReferenceData(ent, chunk)
     self.REFERENCE_DATA = {parent = ent, chunk = chunk, chunk_offset = ent.CHUNK_OFFSET + chunk}    //1 = ent, 2 = world chunk, 3 = local chunk
 end
 
-local function unfuck_table(verts)
-    local actually_useful_data = {}
-    for convex = 1, #verts do
-        actually_useful_data[convex] = {}
-        for vertex = 1, #verts[convex] do
-            actually_useful_data[convex][vertex] = verts[convex][vertex].pos
-        end
-    end
-    return actually_useful_data
-end
-
 function ENT:InitializePhysics(convexes)
-    local points = 0
-    for i = 1, #convexes do points = points + #convexes[i] end
-    if points < 1024 then // lags a lot when generating more than this
-        self:PhysicsInitMultiConvex(unfuck_table(convexes))
-    else
-        self:PhysicsInit(SOLID_VPHYSICS)
-    end
-
     self:EnableCustomCollisions(true)
-    
-    if self:GetPhysicsObject():IsValid() then
-        self:GetPhysicsObject():EnableMotion(false)
+    self:PhysicsFromMesh(convexes)
+
+    local phys = self:GetPhysicsObject()
+    if phys:IsValid() then
+        phys:EnableMotion(false)
     end
 end
 
@@ -54,10 +37,10 @@ function ENT:InitializeClient(parent)
         return
     end
 
-    self:SetSolid(SOLID_VPHYSICS) 
-    self:SetMoveType(MOVETYPE_VPHYSICS)
-    self:SetModel(parent:GetModel())
-    self:SetCollisionGroup(parent:GetCollisionGroup())
+    //self:SetModel(parent:GetModel())
+    //self:SetCollisionGroup(parent:GetCollisionGroup())
+    //self:SetSolid(SOLID_VPHYSICS) 
+    //self:SetMoveType(MOVETYPE_VPHYSICS)
 
     local phys = parent:GetPhysicsObject()
     if !phys:IsValid() then // no custom physmesh, bail
@@ -65,7 +48,7 @@ function ENT:InitializeClient(parent)
         return 
     end
     
-    local convexes = phys:GetMeshConvexes()
+    local convexes = phys:GetMesh()
     if !convexes then   // no convexes, bail
         self:PhysicsInit(SOLID_VPHYSICS)
         return
@@ -92,7 +75,7 @@ function ENT:Initialize()
         return 
     end
     
-    local convexes = phys:GetMeshConvexes()
+    local convexes = phys:GetMesh()
     if !convexes then
         SafeRemoveEntity(self)
         return
