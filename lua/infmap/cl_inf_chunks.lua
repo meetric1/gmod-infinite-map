@@ -40,8 +40,7 @@ end)
 
 hook.Add("RenderScene", "!infinite_update_visbounds", function(eyePos, eyeAngles)
 	//eyePos = LocalPlayer():GetShootPos()
-	local sub_size = 100// - InfMap.chunk_size - 64	// how far out render bounds can be before outside of the map
-	local sub_size_sqr = sub_size^3
+	local sub_size = (InfMap.source_bounds[1] - InfMap.chunk_size) * 0.5	// how far out render bounds can be before outside of the map
 	local lp_chunk_offset = LocalPlayer().CHUNK_OFFSET
 	if !lp_chunk_offset then return end
 	for _, ent in ipairs(InfMap.all_ents) do	// I feel bad for doing this
@@ -52,17 +51,13 @@ hook.Add("RenderScene", "!infinite_update_visbounds", function(eyePos, eyeAngles
 		// when bounding box is outside of world bounds the object isn't rendered
 		// to combat this we locally "shrink" the bounds so they are right infront of the players eyes
 		local world_chunk_offset = ent.CHUNK_OFFSET - lp_chunk_offset
-		if world_chunk_offset == Vector() then continue end
+		if world_chunk_offset == vector_origin then continue end
 		if world_chunk_offset:LengthSqr() > too_far then continue end	// too far, dont render
 
 		local prop_dir = (InfMap.unlocalize_vector(ent:InfMap_GetPos(), world_chunk_offset) - eyePos)
 
 		//local shrunk = !far_lod and 0.02 or sub_size / prop_dir:Length()
-		local shrunk = 0.02	// how much you locally shrink render bounds [in reality should be chunksize / prop_dir:Length()]
-		if prop_dir:LengthSqr() < sub_size_sqr then
-			shrunk = 1
-		end
-
+		local shrunk = sub_size / prop_dir:Length()	// how much you locally shrink render bounds [in reality should be chunksize / prop_dir:Length()]
 		prop_dir = prop_dir * shrunk
 
 		// grab render bounds in case its been edited (prop resizer compatability)
@@ -72,9 +67,6 @@ hook.Add("RenderScene", "!infinite_update_visbounds", function(eyePos, eyeAngles
 		end
 
 		if world_chunk_offset:LengthSqr() > 16 then
-			if prop_dir:LengthSqr() > 2000*2000 then	// to avoid normalizing
-				prop_dir = prop_dir * 0.01
-			end
 			ent:SetRenderBoundsWS(eyePos + prop_dir, eyePos + prop_dir)
 		else
 			// if entity angle is perfectly 0,0,0 GetRotatedAABB returns Vector(),Vector() for some reason
