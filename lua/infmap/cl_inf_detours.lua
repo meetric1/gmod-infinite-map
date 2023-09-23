@@ -182,7 +182,7 @@ net.Receive("infmap_particle", function()
 end)
 
 // effects detour
-local sqrdist = InfMap.chunk_size * InfMap.chunk_size * 8
+local sqrdist = InfMap.chunk_size * InfMap.chunk_size * 4
 net.Receive("infmap_effectdata", function()
 	local effect = net.ReadString()
 	local override = net.ReadBool()
@@ -198,7 +198,11 @@ net.Receive("infmap_effectdata", function()
 	effectdata:SetMagnitude(net.ReadInt(32))
 	effectdata:SetMaterialIndex(net.ReadInt(32))
 	effectdata:SetNormal(net.ReadVector())
-	effectdata:SetOrigin(effectdata:GetEntity():GetPos()+net.ReadVector())
+	if IsValid(effectdata:GetEntity()) then 
+		effectdata:SetOrigin(effectdata:GetEntity():GetPos()+net.ReadVector())
+	else
+		effectdata:SetOrigin(net.ReadVector())
+	end
 	effectdata:SetRadius(net.ReadInt(32))
 	effectdata:SetScale(net.ReadInt(32))
 	effectdata:SetStart(net.ReadVector())
