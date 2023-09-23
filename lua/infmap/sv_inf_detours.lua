@@ -237,6 +237,45 @@ function util.IsInWorld(pos)
 	return true
 end
 
+// effects detour
+util.AddNetworkString("infmap_effectdata")
+local sqrdist = InfMap.chunk_size * InfMap.chunk_size * 8
+
+InfMap.Effect = InfMap.Effect or util.Effect
+function util.Effect(effect,ed,override,recipient)
+
+	if !IsValid(ed:GetEntity()) then
+		return InfMap.Effect(effect,ed,override,recipient)
+	end
+
+	local ent_pos = ed:GetEntity():GetPos()
+
+	for _, ply in ipairs(player.GetAll()) do
+		if ply:GetPos():DistToSqr(ent_pos) < sqrdist then
+			net.Start( "infmap_effectdata" )
+			net.WriteString(effect)
+			net.WriteBool(override)
+
+			net.WriteAngle(ed:GetAngles())
+			net.WriteInt(ed:GetAttachment(),32)
+			net.WriteInt(ed:GetColor(),32)
+			net.WriteInt(ed:GetDamageType(),32)
+			net.WriteEntity(ed:GetEntity())
+			net.WriteInt(ed:GetFlags(),32)
+			net.WriteInt(ed:GetHitBox(),32)
+			net.WriteInt(ed:GetMagnitude(),32)
+			net.WriteInt(ed:GetMaterialIndex(),32)
+			net.WriteVector(ed:GetNormal())
+			net.WriteVector(ed:GetOrigin()-ent_pos)
+			net.WriteInt(ed:GetRadius(),32)
+			net.WriteInt(ed:GetScale(),32)
+			net.WriteVector(ed:GetStart())
+			net.WriteInt(ed:GetSurfaceProp(),32)
+			net.Send(ply)
+		end
+	end
+end
+
 // faster lookup
 local istable = istable
 local IsEntity = IsEntity
