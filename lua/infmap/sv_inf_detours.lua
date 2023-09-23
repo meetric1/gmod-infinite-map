@@ -239,13 +239,26 @@ end
 
 // effects detour
 util.AddNetworkString("infmap_effectdata")
-local sqrdist = InfMap.chunk_size * InfMap.chunk_size * 8
+local sqrdist = InfMap.chunk_size * InfMap.chunk_size * 4
 
 InfMap.Effect = InfMap.Effect or util.Effect
 function util.Effect(effect,ed,override,recipient)
 
 	if !IsValid(ed:GetEntity()) then
 		return InfMap.Effect(effect,ed,override,recipient)
+	end
+
+	local dist = 16384
+	local ent, vec
+	for k, v in pairs(ents.GetAll()) do
+		vec = v:InfMap_GetPos()
+		if vec:DistToSqr(ed:GetOrigin()) < dist and !InfMap.filter_entities(v) then
+			dist = vec:DistToSqr(ed:GetOrigin())
+			ent = v
+		end
+	end
+	if IsValid(ent) then
+		ed:SetEntity(ent)
 	end
 
 	local ent_pos = ed:GetEntity():GetPos()
