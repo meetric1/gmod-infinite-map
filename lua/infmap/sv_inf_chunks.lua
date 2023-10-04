@@ -134,7 +134,7 @@ hook.Add("Think", "infinite_chunkmove", function()
 		local vel = 0
 		if InfMap.constrained_status(main_ent) then
 			for v, constrained_ent in ipairs(main_ent.CONSTRAINED_DATA) do // average out velocities of all props in contraption to enable better transitions
-				if !IsValid(constrained_ent) then continue end
+				if !IsValid(constrained_ent) or IsValid(constrained_ent:GetParent()) then continue end
 				if IsValid(main_ent:GetPhysicsObject()) then 
 					vel = vel + main_ent:GetPhysicsObject():GetVelocity():Length() 
 				else
@@ -144,7 +144,7 @@ hook.Add("Think", "infinite_chunkmove", function()
 			vel = vel / #main_ent.CONSTRAINED_DATA
 		end
 		
-		if !InfMap.in_chunk(main_ent:InfMap_GetPos(), InfMap.chunk_size - vel) then // minus velocity length to enable smooth boundary transitions
+		if !InfMap.in_chunk(main_ent:InfMap_GetPos(), InfMap.chunk_size - vel) then // minus velocity length to enable smooth transitions
 			if !InfMap.constrained_status(main_ent) then continue end
 			if main_ent:IsPlayerHolding() then continue end	// physgun, gravgun, and use support
 
