@@ -130,19 +130,31 @@ hook.Add("Think", "infinite_chunkmove", function()
 		if !IsValid(main_ent) then continue end
 		if !main_ent.CHUNK_OFFSET then continue end
 		
-		if !InfMap.in_chunk(main_ent:InfMap_GetPos(), InfMap.chunk_size + 1) then // add 1 to avoid recourring teleport when prop is perfectly at chunk boundery
+
+		local vel = 0
+		if InfMap.constrained_status(main_ent) then
+			for v, constrained_ent in ipairs(main_ent.CONSTRAINED_DATA) do // average out velocities of all props in contraption to enable better transitions
+				if !IsValid(constrained_ent) then continue end
+				if IsValid(main_ent:GetPhysicsObject()) then 
+					vel = vel + main_ent:GetPhysicsObject():GetVelocity():Length() 
+				else
+					vel = vel + main_ent:GetVelocity():Length()
+				end
+			end
+			vel = vel / #main_ent.CONSTRAINED_DATA
+		end
+		
+		if !InfMap.in_chunk(main_ent:InfMap_GetPos(), InfMap.chunk_size - vel) then // minus velocity length to enable smooth boundary transitions
 			if !InfMap.constrained_status(main_ent) then continue end
 			if main_ent:IsPlayerHolding() then continue end	// physgun, gravgun, and use support
 
-			local pos, offset = InfMap.localize_vector(main_ent:InfMap_GetPos())
-			local final_chunk_offset = main_ent.CHUNK_OFFSET + offset
 			local main_ent_pos = main_ent:InfMap_GetPos()
+			local pos, offset = InfMap.localize_vector(main_ent_pos)
+			local final_chunk_offset = main_ent.CHUNK_OFFSET + offset
+			
 
 			local constrained_vel = {}
 			local constrained_ang = {}
-			//grab ang+vel before teleport
-			local main_vel = main_ent:GetVelocity()
-			local main_ang = main_ent:GetAngles()
 
 			for v, constrained_ent in ipairs(main_ent.CONSTRAINED_DATA) do
 				if !IsValid(constrained_ent) then continue end
@@ -150,27 +162,18 @@ hook.Add("Think", "infinite_chunkmove", function()
 				constrained_ang[v] = constrained_ent:GetAngles()
 			end
 
-			for _, constrained_ent in ipairs(main_ent.CONSTRAINED_DATA) do	// includes itself
-				if main_ent == constrained_ent then continue end
+			for _, constrained_ent in ipairs(main_ent.CONSTRAINED_DATA) do
 				if !constrained_ent:IsValid() or InfMap.filter_entities(constrained_ent) then continue end
-				local phys = constrained_ent:GetPhysicsObject()
 				if constrained_ent != main_ent then
 					constrained_ent:ForcePlayerDrop()
 				end
-				//if constrained_ent.CHUNK_OFFSET != main_ent.CHUNK_OFFSET then continue end
 				local delta_pos = pos + (constrained_ent:InfMap_GetPos() - main_ent_pos)
 				update_entity(constrained_ent, delta_pos, final_chunk_offset)
 			end
 
-			// update main ent
-			update_entity(main_ent, pos, final_chunk_offset)
-
-			// set vel+ang after teleport on constrained props
 			for v, constrained_ent in ipairs(main_ent.CONSTRAINED_DATA) do
 				unfucked_SetVelAng(constrained_ent,constrained_vel[v],constrained_ang[v])
 			end
-			//set vel+ang on main prop after teleport
-			unfucked_SetVelAng(main_ent,main_vel,main_ang)
 
 		else 
 			InfMap.reset_constrained_data(main_ent)
