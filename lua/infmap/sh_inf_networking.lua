@@ -36,7 +36,7 @@ if SERVER then
 				weapon:SetCustomCollisionCheck(true)
 				
 				// addons may error when calling this
-				local err, str = pcall(function() hook.Run("PropUpdateChunk", ent, chunk, prev_chunk) end)
+				local err, str = pcall(function() hook.Run("PropUpdateChunk", weapon, chunk, prev_chunk) end)
 				if !err then ErrorNoHalt(str) end
 
 				weapon:SetNW2Vector("CHUNK_OFFSET", chunk)
