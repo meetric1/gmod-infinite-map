@@ -132,6 +132,7 @@ hook.Add("Think", "infinite_chunkmove", function()
 		
 
 		local vel = 0
+		local count = 0
 		if InfMap.constrained_status(main_ent) then
 			for v, constrained_ent in ipairs(main_ent.CONSTRAINED_DATA) do // average out velocities of all props in contraption to enable better transitions
 				if !IsValid(constrained_ent) or IsValid(constrained_ent:GetParent()) then continue end
@@ -140,8 +141,9 @@ hook.Add("Think", "infinite_chunkmove", function()
 				else
 					vel = vel + main_ent:GetVelocity():Length()
 				end
+				count = count + 1
 			end
-			vel = vel / #main_ent.CONSTRAINED_DATA
+			if count > 0 then vel = vel / count end
 		end
 		
 		if !InfMap.in_chunk(main_ent:InfMap_GetPos(), InfMap.chunk_size - vel) then // minus velocity length to enable smooth transitions
