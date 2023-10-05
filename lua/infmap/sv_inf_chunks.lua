@@ -131,7 +131,7 @@ hook.Add("Think", "infinite_chunkmove", function()
 		if !main_ent.CHUNK_OFFSET then continue end
 		local vel = main_ent:GetVelocity()
 
-		if !InfMap.in_chunk(main_ent:InfMap_GetPos() - (vel*engine.TickInterval()), InfMap.chunk_size - vel:Length()) then // average out velocities of all props in contraption to enable better transitions
+		if !InfMap.in_chunk(main_ent:InfMap_GetPos() - (vel*engine.TickInterval()), InfMap.chunk_size - vel:Length()) then // better prediction for smoother boundary transitions
 
 			if !InfMap.constrained_status(main_ent) then continue end
 			if main_ent:IsPlayerHolding() then continue end	// physgun, gravgun, and use support
