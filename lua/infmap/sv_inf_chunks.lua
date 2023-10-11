@@ -45,7 +45,7 @@ local function unfucked_SetVelAng(ent, vel, ang)
 	
 	if phys:IsValid() then 
 		if ang then phys:SetAngles(ang) end
-		phys:SetVelocity(vel)
+		phys:SetVelocityInstantaneous(vel)
 	else
 		if ang then ent:SetAngles(ang) end
 		ent:SetVelocity(vel)
@@ -79,7 +79,12 @@ local function update_entity(ent, pos, chunk)
 		end
 	end
 
-	InfMap.prop_update_chunk(ent, chunk)
+	if !InfMap.in_chunk(ent:InfMap_GetPos(), InfMap.chunk_size + 1) and InfMap.constrained_status(ent) and !InfMap.filter_entities(ent) then //first prop to cross the boundary updates chunks on the rest
+		for v, constrained_ent in ipairs(ent.CONSTRAINED_DATA) do //this means only one prop update per prop is done when boundary is crossed, reducing lag
+			if !IsValid(constrained_ent) then continue end
+			InfMap.prop_update_chunk(constrained_ent, chunk)
+		end
+	end
 	unfucked_SetPos(ent, pos)
 end
 
@@ -125,14 +130,17 @@ hook.Add("Think", "infinite_gravhull_update", function()
 end)
 
 // object wrapping, if in next chunk, put in next chunk and do localization math
-hook.Add("Think", "infinite_chunkmove", function()
+hook.Add("Think", "!!infinite_chunkmove", function() //must run before any other hook in think, otherwise wire setpos/setang will stop working
 	for _, main_ent in ipairs(all_ents) do
 		if !IsValid(main_ent) then continue end
 		if !main_ent.CHUNK_OFFSET then continue end
-		local vel = main_ent:GetVelocity()
 
-		if !InfMap.in_chunk(main_ent:InfMap_GetPos() - (vel*engine.TickInterval()), InfMap.chunk_size - vel:Length()) then // better prediction for smoother boundary transitions
-
+		local vel = main_ent:GetVelocity():Length()*4
+		if main_ent:IsPlayer() or game.SinglePlayer() then //players and singleplayer games already have perfect teleports, don't need to start setpos loop early
+			vel = -1
+		end
+		
+		if !InfMap.in_chunk(main_ent:InfMap_GetPos(), InfMap.chunk_size - vel) then // start setpos loop early (without updating chunks) to reduce jump when chunk is updated
 			if !InfMap.constrained_status(main_ent) then continue end
 			if main_ent:IsPlayerHolding() then continue end	// physgun, gravgun, and use support
 
@@ -155,11 +163,9 @@ hook.Add("Think", "infinite_chunkmove", function()
 			for _, constrained_ent in ipairs(main_ent.CONSTRAINED_DATA) do	// includes itself
 				if main_ent == constrained_ent then continue end
 				if !constrained_ent:IsValid() or InfMap.filter_entities(constrained_ent) then continue end
-				local phys = constrained_ent:GetPhysicsObject()
 				if constrained_ent != main_ent then
 					constrained_ent:ForcePlayerDrop()
 				end
-				//if constrained_ent.CHUNK_OFFSET != main_ent.CHUNK_OFFSET then continue end
 				local delta_pos = pos + (constrained_ent:InfMap_GetPos() - main_ent_pos)
 				update_entity(constrained_ent, delta_pos, final_chunk_offset)
 			end
@@ -169,10 +175,8 @@ hook.Add("Think", "infinite_chunkmove", function()
 
 			// set vel+ang after teleport on constrained props
 			for v, constrained_ent in ipairs(main_ent.CONSTRAINED_DATA) do
-				unfucked_SetVelAng(constrained_ent,constrained_vel[v],constrained_ang[v])
+				unfucked_SetVelAng(constrained_ent,constrained_vel[v],constrained_ang[v]) //set vel/ang on all props in contraption
 			end
-			//set vel+ang on main prop after teleport
-			unfucked_SetVelAng(main_ent,main_vel,main_ang)
 
 		else 
 			InfMap.reset_constrained_data(main_ent)
