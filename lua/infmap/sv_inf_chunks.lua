@@ -79,9 +79,10 @@ local function update_entity(ent, pos, chunk)
 		end
 	end
 
-	if !InfMap.in_chunk(ent:InfMap_GetPos(), InfMap.chunk_size + 1) and InfMap.constrained_status(ent) and !InfMap.filter_entities(ent) then //first prop to cross the boundary updates chunks on the rest
+	if !InfMap.in_chunk(ent:InfMap_GetPos(), InfMap.chunk_size + 1) and InfMap.constrained_status(ent) and !InfMap.filter_entities(ent) then //first prop to cross the boundary updates chunks on the rest 
 		for v, constrained_ent in ipairs(ent.CONSTRAINED_DATA) do //this means only one prop update per prop is done when boundary is crossed, reducing lag
 			if !IsValid(constrained_ent) then continue end
+			unfucked_SetPos(constrained_ent, pos + (constrained_ent:InfMap_GetPos() - ent:InfMap_GetPos()))
 			InfMap.prop_update_chunk(constrained_ent, chunk)
 		end
 	end
@@ -161,7 +162,6 @@ hook.Add("Think", "!!infinite_chunkmove", function() //must run before any other
 			end
 
 			for _, constrained_ent in ipairs(main_ent.CONSTRAINED_DATA) do	// includes itself
-				if main_ent == constrained_ent then continue end
 				if !constrained_ent:IsValid() or InfMap.filter_entities(constrained_ent) then continue end
 				if constrained_ent != main_ent then
 					constrained_ent:ForcePlayerDrop()
@@ -170,14 +170,10 @@ hook.Add("Think", "!!infinite_chunkmove", function() //must run before any other
 				update_entity(constrained_ent, delta_pos, final_chunk_offset)
 			end
 
-			// update main ent
-			update_entity(main_ent, pos, final_chunk_offset)
-
 			// set vel+ang after teleport on constrained props
 			for v, constrained_ent in ipairs(main_ent.CONSTRAINED_DATA) do
 				unfucked_SetVelAng(constrained_ent,constrained_vel[v],constrained_ang[v]) //set vel/ang on all props in contraption
 			end
-
 		else 
 			InfMap.reset_constrained_data(main_ent)
 		end
