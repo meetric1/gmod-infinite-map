@@ -45,10 +45,10 @@ local function unfucked_SetVelAng(ent, vel, ang)
 	
 	if phys:IsValid() then 
 		if ang then phys:SetAngles(ang) end
-		phys:SetVelocity(vel)
+		phys:SetVelocityInstantaneous(vel)
 	else
 		if ang then ent:SetAngles(ang) end
-		ent:SetVelocity(vel)
+		ent:SetVelocityInstantaneous(vel)
 	end
 end
 

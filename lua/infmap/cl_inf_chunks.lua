@@ -23,7 +23,7 @@ local function update_ents(all)
 		invalid = invalid or (!ent.RenderOverride or ent.RenderOverride == empty_function)
 		invalid = invalid or ent:GetNoDraw()
 		invalid = invalid or (ent.CHUNK_OFFSET - lpco):LengthSqr() > too_far
-		invalid = invalid or (ent:GetPos() - EyePos()):Dot(EyeAngles():Forward()) < 0	// behind player
+		--invalid = invalid or (ent:GetPos() - EyePos()):Dot(EyeAngles():Forward()) < 0	// behind player
 		
 		if invalid then
 			table.remove(InfMap.all_ents, i)	// remove invalid entity
@@ -102,9 +102,11 @@ hook.Add("PostDrawOpaqueRenderables", "infinite_player_render", function()
 	if !LocalPlayer().CHUNK_OFFSET then return end
 	local chunk_offset = LocalPlayer().CHUNK_OFFSET
 	for k, v in ipairs(player.GetAll()) do
-		if v.CHUNK_OFFSET != chunk_offset and v:Alive() then
+		if !v:Alive() then continue end
+		if v.CHUNK_OFFSET != chunk_offset then
 			v:RemoveEffects(EF_DIMLIGHT)	// force flashlight off if in another chunk
 		end
+		v:DrawModel()
 	end
 
 	// debug lines
@@ -211,12 +213,16 @@ function InfMap.prop_update_chunk(ent, chunk)
 		local render_DrawBox = render.DrawBox
 		local render_SetMaterial = render.SetMaterial
 
-		local mat = Material("models/wireframe")
-		local mat_str = ent:GetMaterial()
-		if mat_str == "" then mat_str = ent:GetMaterials()[1] end
-
-		if mat_str then mat = Material(mat_str) end
+		local mat = nil
 		ent.RenderOverride = function(self)	// high lod
+			if !mat then 
+				local mat_str = ent:GetMaterials()[1] or ent:GetMaterial()
+				if mat_str and #mat_str != 0 then 
+					mat = Material(mat_str)
+				else
+					return 
+				end
+			end
 			render_SetMaterial(mat)
 			render_DrawBox(self:InfMap_GetPos() + visual_offset, self:GetAngles(), self:OBBMins(), self:OBBMaxs())
 		end
