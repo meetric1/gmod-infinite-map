@@ -31,8 +31,8 @@ local function unfucked_SetPos(ent, pos, filter)
 			local diff = phys:InfMap_GetPos() - ent:InfMap_GetPos()
 		
 			phys:InfMap_SetPos(pos + diff, true)
-			phys:SetVelocityInstantaneous(vel)
-			phys:SetAngleVelocityInstantaneous(ang_vel)
+			phys:SetVelocity(vel)
+			phys:SetAngleVelocity(ang_vel)
 		end
 	end
 	
@@ -45,10 +45,10 @@ local function unfucked_SetVelAng(ent, vel, ang)
 	
 	if phys:IsValid() then 
 		if ang then phys:SetAngles(ang) end
-		phys:SetVelocityInstantaneous(vel)
+		phys:SetVelocity(vel)
 	else
 		if ang then ent:SetAngles(ang) end
-		ent:SetVelocityInstantaneous(vel)
+		ent:SetVelocity(vel)
 	end
 end
 
