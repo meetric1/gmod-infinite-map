@@ -147,12 +147,18 @@ function PhysObjMT:GetVelocityAtPoint(pos)
 	return self:InfMap_GetVelocityAtPoint(-InfMap.unlocalize_vector(-pos, self:GetEntity().CHUNK_OFFSET))
 end
 
+PhysObjMT.InfMap_CalculateForceOffset = PhysObjMT.InfMap_CalculateForceOffset or PhysObjMT.CalculateForceOffset
+function PhysObjMT:CalculateForceOffset(impulse, pos)
+	return self:InfMap_CalculateForceOffset(impulse, InfMap.localize_vector(pos))
+end
+
 PhysObjMT.InfMap_SetMaterial = PhysObjMT.InfMap_SetMaterial or PhysObjMT.SetMaterial
 function PhysObjMT:SetMaterial(mat)	// if a mat is set it will seperate qphysics and vphysics on terrain entities, disable it
 	if IsValid(self:GetEntity()) and !InfMap.disable_pickup[self:GetEntity():GetClass()] then 
 		return self:InfMap_SetMaterial(mat)
 	end
 end
+
 /*************** Vehicle Metatable *****************/
 
 // these 3 functions cause stack overflow since vehicle is dirived from the entity metatable
