@@ -1,7 +1,7 @@
 AddCSLuaFile()
 
 ENT.Type = "anim"
-ENT.Base = "base_gmodentity"
+--ENT.Base = "base_gmodentity"
 
 ENT.Category		= "Other"
 ENT.PrintName		= "Obj_c"
